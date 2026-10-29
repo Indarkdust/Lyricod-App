@@ -387,6 +387,35 @@ public class LyricsProviderTests
         Assert.Equal(0, fixture.Provider.CachedCount());
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task DurationCorrectionKeepsManualLyricsAndTiming(bool existingChoice)
+    {
+        using var fixture = new Fixture(_ => throw new Exception("Manual cache should avoid the network"));
+        var stale = Track() with { Duration = 0 };
+        var corrected = stale with { Duration = 120 };
+        var oldFile = fixture.Seed(stale);
+        var overrideFile = Path.Combine(Path.GetDirectoryName(oldFile)!, "overrides");
+        var overrides = new TrackOverrides(overrideFile);
+        overrides[stale] = new TrackOverride { Lyrics = LyricsRef.Netease(7), Offset = 1.5 };
+        if (existingChoice)
+        {
+            var newFile = fixture.Seed(corrected);
+            File.WriteAllText(newFile, File.ReadAllText(newFile).Replace("Hello", "Correct recording").Replace("\"7\"", "\"8\""));
+            overrides[corrected] = new TrackOverride { Lyrics = LyricsRef.Netease(8), Offset = 0.25 };
+        }
+        var transition = fixture.Provider.CorrectDuration(stale, 120, overrides);
+        var saved = new TrackOverrides(overrideFile);
+        var lyrics = await fixture.Provider.GetLyrics(transition, pinned: saved[transition].Lyrics, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(stale.TrackId, transition.TrackId);
+        Assert.Equal(existingChoice ? "Correct recording" : "Hello", lyrics?.Lines[0].Text);
+        Assert.Equal(LyricsRef.Netease(existingChoice ? 8 : 7), lyrics?.Ref);
+        Assert.Equal(existingChoice ? 0.25 : 1.5, saved[transition].Offset);
+        Assert.True(saved[stale].IsEmpty);
+        Assert.False(File.Exists(oldFile));
+    }
+
     static HttpResponseMessage Response(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body) };
 

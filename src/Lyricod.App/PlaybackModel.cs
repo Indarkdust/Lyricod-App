@@ -222,9 +222,10 @@ public sealed class PlaybackModel
             // Some players (QQ Music) report a new song with the last one's length for a moment.
             // The length helps pick the right lyrics, so search again with the real one, once.
             _lengthCorrected = true;
-            Track = current with { Duration = now.Duration };
+            _loading?.Cancel();
+            Track = _provider.CorrectDuration(current, now.Duration, _overrides);
             change |= Change.Track;
-            ApplyOffset(); // the length is part of the song's key, so its saved timing may differ
+            ApplyOffset();
             LoadLyrics(Track, ignoreCache: false);
         }
         // Browsers hand over the cover a moment after the song: ask again on the next few reports.

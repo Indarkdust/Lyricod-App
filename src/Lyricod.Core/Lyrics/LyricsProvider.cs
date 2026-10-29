@@ -179,6 +179,27 @@ public sealed class LyricsProvider
         try { File.Delete(CacheFile(CacheKey(track))); } catch (IOException) { }
     }
 
+    /// <summary>Keep manual choices when the same playing song reports its real length.</summary>
+    public Track CorrectDuration(Track track, double duration, TrackOverrides overrides)
+    {
+        var corrected = track with { Duration = duration };
+        var pinned = overrides[track].Lyrics;
+        overrides.Move(track, corrected);
+        var oldFile = CacheFile(CacheKey(track));
+        var newFile = CacheFile(CacheKey(corrected));
+        // Only manual lyrics belong to the corrected recording without another search.
+        if (oldFile != newFile && pinned != null && ReadCache(oldFile)?.SongRef == pinned)
+        {
+            try
+            {
+                if (!File.Exists(newFile) && overrides[corrected].Lyrics == pinned) File.Move(oldFile, newFile);
+                else File.Delete(oldFile);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        }
+        return corrected;
+    }
+
     // ---- Main lookup ----
 
     /// <param name="search">The player's acceptance bar and this lookup's best score.</param>

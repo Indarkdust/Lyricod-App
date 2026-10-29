@@ -121,6 +121,35 @@ public class MatchingAndCacheTests
         Assert.DoesNotContain("0039MnYb0qxYhV", File.ReadAllText(file));
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void MovingOverridesFillsEachMissingFieldAndRemovesOldKey(bool hasPin, bool hasOffset)
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "lyricod-tests", Guid.NewGuid().ToString());
+        var file = Path.Combine(dir, "overrides.json");
+        try
+        {
+            var stale = T("Hello", "Singer", 0);
+            var to = stale with { Duration = 120 };
+            var overrides = new TrackOverrides(file);
+            overrides[stale] = new TrackOverride { NeteaseId = 123, Offset = 1.5 };
+            overrides[to] = new TrackOverride { Lyrics = hasPin ? LyricsRef.Netease(456) : null, Offset = hasOffset ? 0.25 : null };
+            overrides.Move(stale, to);
+            var saved = new TrackOverrides(file);
+            Assert.Equal(LyricsRef.Netease(hasPin ? 456 : 123), saved[to].Lyrics);
+            Assert.Equal(hasOffset ? 0.25 : 1.5, saved[to].Offset);
+            Assert.True(saved[stale].IsEmpty);
+            Assert.DoesNotContain(LyricsProvider.CacheKey(stale), File.ReadAllText(file));
+            saved.Move(stale, to); // missing source is harmless
+            saved.Move(to, to with { Duration = 120.5 }); // same whole-second key
+            Assert.Equal(saved[to].Lyrics, new TrackOverrides(file)[to].Lyrics);
+        }
+        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+    }
+
     /// Cache files written by the macOS app read the same here.
     [Fact]
     public void ReadsMacCacheFormat()

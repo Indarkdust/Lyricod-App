@@ -46,9 +46,27 @@ public sealed class TrackOverrides
         {
             var key = LyricsProvider.CacheKey(track);
             if (value.IsEmpty) _map.Remove(key); else _map[key] = value;
-            var tmp = _file + ".tmp";
-            File.WriteAllText(tmp, JsonSerializer.Serialize(_map));
-            File.Move(tmp, _file, overwrite: true);
+            Save();
         }
+    }
+
+    /// <summary>Fill missing choices at the corrected key, then forget the old key.</summary>
+    public void Move(Track from, Track to)
+    {
+        var oldKey = LyricsProvider.CacheKey(from);
+        var newKey = LyricsProvider.CacheKey(to);
+        if (oldKey == newKey || !_map.Remove(oldKey, out var old)) return;
+        var choice = _map.GetValueOrDefault(newKey) ?? new TrackOverride();
+        if (choice.Lyrics == null) choice.Lyrics = old.Lyrics;
+        choice.Offset ??= old.Offset;
+        if (!choice.IsEmpty) _map[newKey] = choice;
+        Save();
+    }
+
+    void Save()
+    {
+        var tmp = _file + ".tmp";
+        File.WriteAllText(tmp, JsonSerializer.Serialize(_map));
+        File.Move(tmp, _file, overwrite: true);
     }
 }
