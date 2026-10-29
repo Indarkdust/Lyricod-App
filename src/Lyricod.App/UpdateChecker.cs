@@ -16,6 +16,9 @@ public sealed class UpdateChecker : IDisposable
     /// A test build keeps the last released version, so the next release still counts as newer.</summary>
     public static string? TestBuild { get; } = typeof(App).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
         .FirstOrDefault(a => a.Key == "LyricodTestBuild")?.Value is { Length: > 0 } build ? build : null;
+    /// <summary>Debug: LYRICOD_UPDATE_FEED=url reads the release list from a copy of it instead of GitHub,
+    /// to try an update before the releases can be seen.</summary>
+    static readonly string Feed = Environment.GetEnvironmentVariable("LYRICOD_UPDATE_FEED") is { Length: > 0 } feed ? feed : UpdateCheck.Endpoint;
     public static string DisplayVersion => TestBuild is { } build ? L.Format("TestBuildVersion", Version, build) : Version;
     public bool Checking { get; private set; }
     public UpdateResult? Result { get; private set; }
@@ -50,7 +53,7 @@ public sealed class UpdateChecker : IDisposable
         try
         {
             Notify();
-            outcome = await UpdateCheck.FetchAsync(_client, Version);
+            outcome = await UpdateCheck.FetchAsync(_client, Version, Feed);
         }
         catch (Exception) { outcome = new(UpdateStatus.CouldntCheck); } // never stuck on "Checking"
         finally { Checking = false; }

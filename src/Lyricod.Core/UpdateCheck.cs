@@ -50,9 +50,9 @@ public static class UpdateCheck
         catch (Exception e) when (e is JsonException or InvalidOperationException or KeyNotFoundException) { return failed; }
     }
 
-    public static async Task<UpdateResult> FetchAsync(HttpClient client, string currentVersion)
+    public static async Task<UpdateResult> FetchAsync(HttpClient client, string currentVersion, string endpoint = Endpoint)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, Endpoint);
+        using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
         request.Headers.Accept.ParseAdd("application/vnd.github+json");
         request.Headers.UserAgent.ParseAdd($"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Lyricod/{currentVersion} (+https://github.com/Indarkdust/Lyricod-App)");
         try
