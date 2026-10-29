@@ -3,7 +3,11 @@ using System.Text.Json;
 
 namespace Lyricod.Core;
 
-public sealed record AppRelease(Version Version, Uri Url);
+public sealed record AppRelease(Version Version, Uri Url)
+{
+    public IReadOnlyList<UpdateAsset> Assets { get; init; } = [];
+}
+public sealed record UpdateAsset(string Name, long Size, Uri Url, string? Sha256);
 public enum UpdateStatus { UpToDate, Available, CouldntCheck }
 public sealed record UpdateResult(UpdateStatus Status, AppRelease? Release = null);
 
@@ -42,7 +46,7 @@ public static class UpdateCheck
                 if (draft || prerelease || tag == null || !tag.StartsWith("v", StringComparison.Ordinal)
                     || ParseVersion(tag[1..]) is not { } version
                     || !Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != "https") continue;
-                if (newest == null || version > newest.Version) newest = new AppRelease(version, uri);
+                if (newest == null || version > newest.Version) newest = new AppRelease(version, uri) { Assets = ReadAssets(release) };
             }
             if (newest == null) return failed;
             return newest.Version > current ? new(UpdateStatus.Available, newest) : new(UpdateStatus.UpToDate);
@@ -50,11 +54,33 @@ public static class UpdateCheck
         catch (Exception e) when (e is JsonException or InvalidOperationException or KeyNotFoundException) { return failed; }
     }
 
+    static IReadOnlyList<UpdateAsset> ReadAssets(JsonElement release)
+    {
+        var result = new List<UpdateAsset>();
+        if (!release.TryGetProperty("assets", out var assets) || assets.ValueKind != JsonValueKind.Array) return result;
+        foreach (var asset in assets.EnumerateArray())
+        {
+            if (asset.ValueKind != JsonValueKind.Object
+                || !asset.TryGetProperty("name", out var name) || name.ValueKind != JsonValueKind.String
+                || !asset.TryGetProperty("size", out var size) || size.ValueKind != JsonValueKind.Number || !size.TryGetInt64(out long bytes)
+                || !asset.TryGetProperty("browser_download_url", out var url) || url.ValueKind != JsonValueKind.String
+                || !Uri.TryCreate(url.GetString(), UriKind.Absolute, out var uri)) continue;
+            string? digest = asset.TryGetProperty("digest", out var d) && d.ValueKind == JsonValueKind.String ? d.GetString() : null;
+            string? hash = digest is { Length: 71 } && digest.StartsWith("sha256:", StringComparison.Ordinal)
+                && digest[7..].All(Uri.IsHexDigit) ? digest[7..] : null;
+            result.Add(new(name.GetString()!, bytes, uri, hash));
+        }
+        return result;
+    }
+
+    public static string UserAgent(string version) =>
+        $"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Lyricod/{version} (+https://github.com/Indarkdust/Lyricod-App)";
+
     public static async Task<UpdateResult> FetchAsync(HttpClient client, string currentVersion, string endpoint = Endpoint)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
         request.Headers.Accept.ParseAdd("application/vnd.github+json");
-        request.Headers.UserAgent.ParseAdd($"Mozilla/5.0 (Windows NT 10.0; Win64; x64) Lyricod/{currentVersion} (+https://github.com/Indarkdust/Lyricod-App)");
+        request.Headers.UserAgent.ParseAdd(UserAgent(currentVersion));
         try
         {
             using var response = await client.SendAsync(request);
