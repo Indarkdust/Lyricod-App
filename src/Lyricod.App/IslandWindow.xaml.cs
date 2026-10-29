@@ -527,7 +527,7 @@ public sealed partial class IslandWindow : Window
             case nameof(Settings.ShowIsland):
                 UpdateVisibility();
                 break;
-            case nameof(Settings.IslandAlbumColour) or nameof(Settings.SungColor):
+            case nameof(Settings.IslandAlbumColour) or nameof(Settings.IslandColor):
                 ApplyColour();
                 break;
             case nameof(Settings.IslandSecondLine):
@@ -583,9 +583,9 @@ public sealed partial class IslandWindow : Window
         ApplyColour();
     }
 
-    /// <summary>The album's colour, or the sung colour from Desktop.</summary>
+    /// <summary>The album's colour, or the island's chosen colour.</summary>
     Windows.UI.Color LyricColour =>
-        _settings.IslandAlbumColour && _model.ArtworkColor is { } c ? c : DesktopLyricsWindow.ParseColor(_settings.SungColor);
+        _settings.IslandAlbumColour && _model.ArtworkColor is { } c ? c : DesktopLyricsWindow.ParseColor(_settings.IslandColor);
 
     void ApplyColour()
     {

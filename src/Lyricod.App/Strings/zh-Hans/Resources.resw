@@ -72,7 +72,8 @@
   <data name="HoverNothing" xml:space="preserve"><value>无操作</value></data>
   <data name="HoverByDirection" xml:space="preserve"><value>从下方移入时隐藏，从两侧移入时展开</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>按专辑封面为歌词着色</value></data>
-  <data name="AlbumColourDetail" xml:space="preserve"><value>关闭时使用桌面歌词的已唱颜色。</value></data>
+  <data name="AlbumColourDetail" xml:space="preserve"><value>关闭时使用下方选择的歌词颜色。</value></data>
+  <data name="IslandColour" xml:space="preserve"><value>歌词颜色</value></data>
   <data name="Open" xml:space="preserve"><value>打开</value></data>
   <data name="LyricsWindowLabel" xml:space="preserve"><value>歌词窗口</value></data>
   <data name="LyricsWindowDetail" xml:space="preserve"><value>在专辑封面上显示整首歌词。按 F11 全屏，按空格键播放或暂停。</value></data>

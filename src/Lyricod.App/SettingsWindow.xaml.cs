@@ -224,6 +224,14 @@ public sealed partial class SettingsWindow : Window
             (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing")),
             (IslandHover.ByDirection, L.Get("HoverByDirection"))));
         Card(L.Get("AlbumColour"), L.Get("AlbumColourDetail"), Toggle(nameof(Settings.IslandAlbumColour), () => _settings.IslandAlbumColour, v => _settings.IslandAlbumColour = v));
+        var colours = new ContentControl
+        {
+            Content = Colours(nameof(Settings.IslandColor), () => _settings.IslandColor, v => _settings.IslandColor = v),
+        };
+        void SyncColours() => colours.IsEnabled = !_settings.IslandAlbumColour;
+        Watch(nameof(Settings.IslandAlbumColour), SyncColours);
+        SyncColours();
+        Card(L.Get("IslandColour"), null, colours);
         Card(L.Get("HideWhenPaused"), L.Get("HideWhenPausedDetail"), Toggle(nameof(Settings.IslandHideWhenPaused),
             () => _settings.IslandHideWhenPaused, v => _settings.IslandHideWhenPaused = v));
         Card(L.Get("AudioBars"), L.Get("AudioBarsDetail"), Toggle(nameof(Settings.IslandAudioBars), () => _settings.IslandAudioBars, v => _settings.IslandAudioBars = v));
@@ -639,14 +647,16 @@ public sealed partial class SettingsWindow : Window
         return Row(slider, label);
     }
 
-    FrameworkElement Colours()
+    FrameworkElement Colours() => Colours(nameof(Settings.SungColor), () => _settings.SungColor, v => _settings.SungColor = v);
+
+    FrameworkElement Colours(string property, Func<string> get, Action<string> set)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         var swatches = new List<(Button Button, string Hex)>();
         foreach (var hex in PresetColours)
         {
             var swatch = Swatch(DesktopLyricsWindow.ParseColor(hex));
-            swatch.Click += (_, _) => _settings.SungColor = hex;
+            swatch.Click += (_, _) => set(hex);
             ToolTipService.SetToolTip(swatch, hex);
             swatches.Add((swatch, hex));
             row.Children.Add(swatch);
@@ -654,10 +664,10 @@ public sealed partial class SettingsWindow : Window
         // Any colour, from a picker.
         var picker = new ColorPicker
         {
-            Color = DesktopLyricsWindow.ParseColor(_settings.SungColor), IsAlphaEnabled = false,
+            Color = DesktopLyricsWindow.ParseColor(get()), IsAlphaEnabled = false,
             IsMoreButtonVisible = false, IsColorChannelTextInputVisible = false,
         };
-        picker.ColorChanged += (_, e) => _settings.SungColor = Hex(e.NewColor);
+        picker.ColorChanged += (_, e) => set(Hex(e.NewColor));
         var custom = new Button
         {
             Width = 32, Height = 32, Padding = new Thickness(0), CornerRadius = new CornerRadius(16),
@@ -669,11 +679,11 @@ public sealed partial class SettingsWindow : Window
 
         void Sync()
         {
-            var current = _settings.SungColor.ToUpperInvariant();
+            var current = get().ToUpperInvariant();
             foreach (var (button, hex) in swatches) button.BorderThickness = new Thickness(hex == current ? 3 : 1);
             custom.BorderThickness = new Thickness(PresetColours.Contains(current) ? 1 : 3);
         }
-        Watch(nameof(Settings.SungColor), Sync);
+        Watch(property, Sync);
         Sync();
         return row;
     }

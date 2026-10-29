@@ -10,9 +10,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/Lyricod.Core/Lyricod.Core.csproj" />
+    <Compile Include="../../src/Lyricod.App/Settings.cs" Link="Settings.cs" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
-    <Compile Include="../../src/Lyricod.App/Settings.cs" Link="Settings.cs" />
   </ItemGroup>
 </Project>

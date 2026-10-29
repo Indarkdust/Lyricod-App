@@ -34,7 +34,7 @@ public enum LyricsTextSize { Automatic, Small, Medium, Large }
 /// The user's settings, saved as JSON next to the lyrics cache. Defaults follow the macOS
 /// app. Change notifications arrive on the thread that made the change (the UI thread).
 /// </summary>
-public sealed class Settings : INotifyPropertyChanged
+public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 {
     public static readonly string DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lyricod");
     static readonly string FilePath = Path.Combine(DataDir, "settings.json");
@@ -55,6 +55,7 @@ public sealed class Settings : INotifyPropertyChanged
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
+    string? _islandColor;
     SecondLine _islandSecondLine = SecondLine.None;
     IslandWeight _islandWeight = IslandWeight.Semibold;
     SungEffect _islandEffect = SungEffect.Sweep;
@@ -111,8 +112,10 @@ public sealed class Settings : INotifyPropertyChanged
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }
-    /// <summary>Tint the island's lyric with the album cover's colour instead of the sung colour.</summary>
+    /// <summary>Tint the island's lyric with the album cover's colour instead of its chosen colour.</summary>
     public bool IslandAlbumColour { get => _islandAlbumColour; set => Set(ref _islandAlbumColour, value); }
+    /// <summary>"#RRGGBB", used when album colour is off or unavailable.</summary>
+    public string IslandColor { get => _islandColor ?? "#8CD9FF"; set => Set(ref _islandColor, value); }
     public SecondLine IslandSecondLine { get => _islandSecondLine; set => Set(ref _islandSecondLine, value); }
     public IslandWeight IslandWeight { get => _islandWeight; set => Set(ref _islandWeight, value); }
     public SungEffect IslandEffect { get => _islandEffect; set => Set(ref _islandEffect, value); }
@@ -122,6 +125,12 @@ public sealed class Settings : INotifyPropertyChanged
     public IslandSize IslandSize { get => _islandSize; set => Set(ref _islandSize, Enum.IsDefined(value) ? value : IslandSize.Medium); }
     /// <summary>Text width at Medium size, before a long line is split into pieces.</summary>
     public int IslandMaxTextWidth { get => _islandMaxTextWidth; set => Set(ref _islandMaxTextWidth, Math.Clamp(value, 320, 600)); }
+
+    void IJsonOnDeserialized.OnDeserialized()
+    {
+        // Old files used the desktop colour. Copy it once, after all properties were read.
+        _islandColor ??= _sungColor;
+    }
 
     public LyricsBackground LyricsBackground { get => _lyricsBackground; set => Set(ref _lyricsBackground, value); }
     public LyricsTextSize LyricsTextSize { get => _lyricsTextSize; set => Set(ref _lyricsTextSize, value); }

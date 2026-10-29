@@ -72,7 +72,8 @@
   <data name="HoverNothing" xml:space="preserve"><value>Nothing</value></data>
   <data name="HoverByDirection" xml:space="preserve"><value>Hide from below, expand from the sides</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>Colour lyrics from the album cover</value></data>
-  <data name="AlbumColourDetail" xml:space="preserve"><value>Otherwise the island uses the sung colour from Desktop lyrics.</value></data>
+  <data name="AlbumColourDetail" xml:space="preserve"><value>Otherwise the island uses the lyric colour chosen below.</value></data>
+  <data name="IslandColour" xml:space="preserve"><value>Lyric colour</value></data>
   <data name="Open" xml:space="preserve"><value>Open</value></data>
   <data name="LyricsWindowLabel" xml:space="preserve"><value>Lyrics window</value></data>
   <data name="LyricsWindowDetail" xml:space="preserve"><value>The whole song over the album art. Press F11 for full screen, Space to play or pause.</value></data>
