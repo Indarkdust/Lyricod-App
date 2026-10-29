@@ -70,6 +70,7 @@
   <data name="OnHover" xml:space="preserve"><value>指针悬停时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>无操作</value></data>
+  <data name="HoverByDirection" xml:space="preserve"><value>从下方移入时隐藏，从两侧移入时展开</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>按专辑封面为歌词着色</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>关闭时使用桌面歌词的已唱颜色。</value></data>
   <data name="Open" xml:space="preserve"><value>打开</value></data>

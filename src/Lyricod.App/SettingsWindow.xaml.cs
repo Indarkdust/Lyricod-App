@@ -221,7 +221,8 @@ public sealed partial class SettingsWindow : Window
     {
         Card(L.Get("ShowIsland"), L.Get("ShowIslandDetail"), Toggle(nameof(Settings.ShowIsland), () => _settings.ShowIsland, v => _settings.ShowIsland = v));
         Card(L.Get("OnHover"), null, Choice(nameof(Settings.IslandHover), () => _settings.IslandHover, v => _settings.IslandHover = v,
-            (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing"))));
+            (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing")),
+            (IslandHover.ByDirection, L.Get("HoverByDirection"))));
         Card(L.Get("AlbumColour"), L.Get("AlbumColourDetail"), Toggle(nameof(Settings.IslandAlbumColour), () => _settings.IslandAlbumColour, v => _settings.IslandAlbumColour = v));
         Card(L.Get("HideWhenPaused"), L.Get("HideWhenPausedDetail"), Toggle(nameof(Settings.IslandHideWhenPaused),
             () => _settings.IslandHideWhenPaused, v => _settings.IslandHideWhenPaused = v));

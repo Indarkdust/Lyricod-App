@@ -73,6 +73,8 @@ public sealed partial class IslandWindow : Window
     Storyboard? _widthAnimation, _heightAnimation, _lineAnimation;
     bool _waitingForWidth, _widthAnimating, _transitionPending;
     bool _shown, _hovered, _expanded, _barsRunning, _closed;
+    IslandHover _hoverAction;
+    (double X, double Y)? _lastOutside;
     int _barRate;
     /// <summary>The player the meter listens to, or null when it's off.</summary>
     string? _meteredApp;
@@ -227,6 +229,7 @@ public sealed partial class IslandWindow : Window
             _pointerTimer.Stop();
             _progressTimer.Stop();
             SetHovered(false);
+            _lastOutside = null;
             AnimateShown(false, () => { if (!_shown && !_closed) AppWindow.Hide(); });
         }
         UpdateBars();
@@ -286,20 +289,32 @@ public sealed partial class IslandWindow : Window
         if (inside)
         {
             _lastInside = now;
-            if (!_hovered) SetHovered(true);
+            if (!_hovered)
+            {
+                // Use the same two-pixel margin as the hover check.
+                bool fromBelow = IslandEntry.IsFromBelow(p.X, p.Y, left - 2, top, width + 4, height + 2, _lastOutside);
+                SetHovered(true, fromBelow);
+            }
         }
-        else if (_hovered && now - _lastInside > 0.3) SetHovered(false); // a moment's grace when brushing past
+        else
+        {
+            _lastOutside = (p.X, p.Y);
+            if (_hovered && now - _lastInside > 0.3) SetHovered(false); // a moment's grace when brushing past
+        }
     }
 
-    void SetHovered(bool hovered)
+    void SetHovered(bool hovered, bool fromBelow = false)
     {
         if (hovered == _hovered) return;
         _hovered = hovered;
-        bool expand = hovered && _settings.IslandHover == IslandHover.Expand;
+        if (hovered)
+            _hoverAction = _settings.IslandHover == IslandHover.ByDirection
+                ? (fromBelow ? IslandHover.Hide : IslandHover.Expand) : _settings.IslandHover;
+        bool expand = hovered && _hoverAction == IslandHover.Expand;
         // Takes clicks only while expanded; otherwise whatever is underneath stays usable.
         _overlay.SetClickThrough(!expand);
         // "Hide": out of the way while the pointer is over it, so what's underneath can be seen too.
-        if (_settings.IslandHover == IslandHover.Hide) Fade(Pill, hovered ? 0 : 1, hovered ? 0.16 : 0.28, delay: hovered ? 0 : 0.12);
+        if (_hoverAction == IslandHover.Hide) Fade(Pill, hovered ? 0 : 1, hovered ? 0.16 : 0.28, delay: hovered ? 0 : 0.12);
         if (expand != _expanded)
         {
             _expanded = expand;

@@ -7,7 +7,7 @@ using Lyricod.Core;
 namespace Lyricod;
 
 /// <summary>What the island does while the pointer is over it.</summary>
-public enum IslandHover { Expand, Hide, Nothing }
+public enum IslandHover { Expand, Hide, Nothing, ByDirection }
 
 /// <summary>Weight of the island's lyric font.</summary>
 public enum IslandWeight { Regular, Medium, Semibold, Bold, Heavy }

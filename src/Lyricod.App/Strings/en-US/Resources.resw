@@ -70,6 +70,7 @@
   <data name="OnHover" xml:space="preserve"><value>On hover</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Nothing</value></data>
+  <data name="HoverByDirection" xml:space="preserve"><value>Hide from below, expand from the sides</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>Colour lyrics from the album cover</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>Otherwise the island uses the sung colour from Desktop lyrics.</value></data>
   <data name="Open" xml:space="preserve"><value>Open</value></data>
