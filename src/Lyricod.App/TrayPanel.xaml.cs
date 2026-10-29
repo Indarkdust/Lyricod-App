@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Globalization;
+using Lyricod.Core;
 using Lyricod.Platform;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -189,6 +190,16 @@ public sealed partial class TrayPanel : Window
             LyricsStatus.Text = status;
             LyricsStatus.TextWrapping = _model.IsNotSong ? TextWrapping.Wrap : TextWrapping.NoWrap;
             LyricsStatus.TextTrimming = _model.IsNotSong ? TextTrimming.None : TextTrimming.CharacterEllipsis;
+            // NetEase on its own doesn't say where it is in the song, so the lyrics can drift.
+            bool drifting = track != null && _model.NowPlaying is { HasTimeline: false } now && MusicPlayers.IsNetease(now.AppId);
+            var tip = drifting ? Visibility.Visible : Visibility.Collapsed;
+            if (NeteaseTip.Visibility != tip)
+            {
+                NeteaseTip.Content = L.Get("NeteaseTip");
+                NeteaseTip.NavigateUri = new Uri(L.Get("NeteaseGuideUrl"));
+                NeteaseTip.Visibility = tip;
+                statusChanged = true;
+            }
             if (_shown && statusChanged) SizeToContent();
             LyricsIcon.Glyph = _model.LyricsPinned ? "\uE718" : "\uE8BD"; // pin, or a speech bubble
             double offset = _model.SongOffset;

@@ -83,4 +83,14 @@ public class LyricsSearchTests
         Assert.True(score < LyricsSearch.ConfidentScore);
         Assert.False(new LyricsSearch(false).Accepts(score, true));
     }
+
+    [Theory]
+    [InlineData("cloudmusic.exe", true)]
+    [InlineData("CloudMusic.EXE", true)]
+    [InlineData(@"C:\Program Files\NetEase\CloudMusic\cloudmusic.exe", true)]
+    [InlineData("QQMusic.exe", false)]
+    [InlineData("MSEdge", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void KnowsNetease(string? appId, bool netease) => Assert.Equal(netease, MusicPlayers.IsNetease(appId));
 }

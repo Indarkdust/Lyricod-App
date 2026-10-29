@@ -240,6 +240,8 @@
   <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} is available</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>Download…</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>Update available: {0}</value></data>
+  <data name="NeteaseTip" xml:space="preserve"><value>NetEase isn’t sharing its position, so lyrics can drift. How to fix</value></data>
+  <data name="NeteaseGuideUrl" xml:space="preserve"><value>https://github.com/Indarkdust/Lyricod-App#netease-cloud-music</value></data>
   <data name="Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
   <data name="CopyDiagnostics" xml:space="preserve"><value>Copy Diagnostics</value></data>
   <data name="ShowDiagnostics" xml:space="preserve"><value>Show</value></data>

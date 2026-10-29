@@ -240,6 +240,8 @@
   <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} 已发布</value></data>
   <data name="DownloadUpdate" xml:space="preserve"><value>下载…</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>有可用更新：{0}</value></data>
+  <data name="NeteaseTip" xml:space="preserve"><value>网易云音乐未提供播放进度，歌词可能不同步。查看解决方法</value></data>
+  <data name="NeteaseGuideUrl" xml:space="preserve"><value>https://github.com/Indarkdust/Lyricod-App/blob/main/README.zh-CN.md#%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90</value></data>
   <data name="Diagnostics" xml:space="preserve"><value>诊断信息</value></data>
   <data name="CopyDiagnostics" xml:space="preserve"><value>复制诊断信息</value></data>
   <data name="ShowDiagnostics" xml:space="preserve"><value>显示</value></data>

@@ -128,6 +128,8 @@
                 </StackPanel>
             </Border>
 
+            <!-- NetEase without its position: how to get it (the README's NetEase section). -->
+            <HyperlinkButton x:Name="NeteaseTip" Visibility="Collapsed" FontSize="12" Padding="2,0" />
             <HyperlinkButton x:Name="UpdateLink" Visibility="Collapsed" FontSize="12" Padding="2,0" />
 
             <!-- Footer. -->

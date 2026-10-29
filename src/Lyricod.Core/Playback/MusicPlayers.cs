@@ -17,6 +17,10 @@ public static class MusicPlayers
         "AmazonMobileLLC.AmazonMusic_", "Deezer.62021768415AF_",
     ];
 
+    /// <summary>NetEase Cloud Music, which only reports its position with a plugin (InfLink-rs).</summary>
+    public static bool IsNetease(string? appId) =>
+        !string.IsNullOrWhiteSpace(appId) && appId.Replace('\\', '/').Split('/')[^1].Equals("cloudmusic.exe", StringComparison.OrdinalIgnoreCase);
+
     public static bool IsMusicPlayer(string? appId)
     {
         if (string.IsNullOrWhiteSpace(appId)) return false;
