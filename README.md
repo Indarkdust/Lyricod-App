@@ -33,7 +33,7 @@ When a song gets the wrong lyrics, open **Choose Lyrics** (tray panel, lyrics wi
 - **Lyrics window**: background, text size, translations, pronunciation, centred lines, blur, sung-lyrics effect, auto-hiding controls
 - **Lyrics**: the lyrics font, timing for all songs and the current one, pronunciation and its languages, songwriter credits, the current song's source, saved lyrics
 - **Shortcuts**: global keys for playback, the three views and timing
-- **About**: version, update checks, diagnostics to copy into a problem report, credits
+- **About**: version, updates, diagnostics to copy into a problem report, credits
 
 ## Privacy
 
@@ -55,7 +55,7 @@ Download from this repository's Releases:
 
 Lyricod isn't signed yet, so Windows may warn the first time: choose **More info › Run anyway**. Lyricod lives in the notification area.
 
-To update, run the new installer, or quit Lyricod and replace the whole Lyricod folder. Your settings and saved lyrics, in `%LOCALAPPDATA%\Lyricod`, are kept either way. Uninstall from Settings › Apps; that folder stays, so delete it too if you want everything gone.
+Lyricod looks for a new version once a day (you can turn this off in Settings › About). When one is out, choose **Download and Install** in Settings › About, or the update link in the tray panel: Lyricod downloads it, checks it and restarts into it, whether you installed it or use the zip. You can also update by hand: run the new installer, or quit Lyricod and replace the whole Lyricod folder. Your settings and saved lyrics, in `%LOCALAPPDATA%\Lyricod`, are kept either way. Uninstall from Settings › Apps; that folder stays, so delete it too if you want everything gone.
 
 ## Font
 
