@@ -41,6 +41,7 @@ static int ShowError(DWORD error)
     return 1;
 }
 
+/// <summary>Said after the old Lyricod is running again, so it's back without waiting for OK.</summary>
 static void ShowUpdateError(DWORD error)
 {
     std::wstring message =
@@ -197,8 +198,8 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
     const std::wstring launcher = root + L"Lyricod.exe", oldLauncher = root + L"Lyricod.exe.old-" + stamp;
     if (!Exists(fresh + L"\\Lyricod.exe"))
     {
-        ShowUpdateError(ERROR_FILE_NOT_FOUND);
         StartApp(root, L"");
+        ShowUpdateError(ERROR_FILE_NOT_FOUND);
         return 1;
     }
 
@@ -206,15 +207,15 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
 
     if (DWORD error = Move(app, old))
     {
-        ShowUpdateError(error);
         StartApp(root, L"");
+        ShowUpdateError(error);
         return 1;
     }
     if (DWORD error = Move(fresh, app))
     {
         Move(old, app);
-        ShowUpdateError(error);
         StartApp(root, L"");
+        ShowUpdateError(error);
         return 1;
     }
 
@@ -251,8 +252,8 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
         if (Move(app, fresh) == ERROR_SUCCESS && Move(old, app) == ERROR_SUCCESS)
         {
             if (Exists(oldLauncher) && Move(launcher, self) == ERROR_SUCCESS) Move(oldLauncher, launcher);
-            ShowUpdateError(error);
             StartApp(root, L"");
+            ShowUpdateError(error);
         }
         else ShowError(error);
         return 1;
