@@ -35,12 +35,16 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - name: Publish
-        run: dotnet publish src/Lyricod.App/Lyricod.App.csproj -c Release -p:Platform=${{ matrix.platform }} -r ${{ matrix.rid }} -o publish/${{ matrix.rid }}
+        shell: pwsh
+        run: |
+          # Marked as a test build in About and diagnostics; releases come from release.yml unmarked.
+          $build = "${{ github.run_number }}-$($env:GITHUB_SHA.Substring(0, 7))"
+          dotnet publish src/Lyricod.App/Lyricod.App.csproj -c Release -p:Platform=${{ matrix.platform }} -r ${{ matrix.rid }} -o publish/${{ matrix.rid }} "-p:LyricodTestBuild=$build"
       - name: Package portable zip
         shell: pwsh
         run: |
           $version = (Get-Content VERSION -Raw).Trim()
-          ./scripts/package-portable.ps1 -Version $version -Arch '${{ matrix.platform }}' -PublishFolder 'publish/${{ matrix.rid }}' -OutputFolder publish
+          ./scripts/package-portable.ps1 -Version $version -Arch '${{ matrix.platform }}' -PublishFolder 'publish/${{ matrix.rid }}' -OutputFolder publish -Label 'test.${{ github.run_number }}'
       - uses: actions/upload-artifact@v7
         with:
           name: Lyricod-${{ matrix.rid }}

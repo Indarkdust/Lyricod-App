@@ -9,7 +9,7 @@
     Title="Lyricod Island">
 
     <Grid x:Name="Root" Background="Transparent" RequestedTheme="Dark">
-        <Border x:Name="Pill" Background="Black" CornerRadius="0,0,16,16" HorizontalAlignment="Center"
+        <Border x:Name="Pill" Background="Black" CornerRadius="0,0,12,12" HorizontalAlignment="Center"
                 VerticalAlignment="Top" Width="300" Height="34">
             <Grid>
                 <Grid.RowDefinitions>
@@ -19,13 +19,13 @@
                 </Grid.RowDefinitions>
 
                 <!-- Cover, lyric, bars. -->
-                <Grid x:Name="MainRow" Padding="14,0" ColumnSpacing="10">
+                <Grid x:Name="MainRow" Padding="6,0" ColumnSpacing="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition x:Name="CoverColumn" Width="22" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition x:Name="BarsColumn" Width="22" />
                     </Grid.ColumnDefinitions>
-                    <Border x:Name="ArtFrame" Width="22" Height="22" CornerRadius="5" Background="#33FFFFFF">
+                    <Border x:Name="ArtFrame" Width="22" Height="22" CornerRadius="6" Background="#33FFFFFF">
                         <Image x:Name="Art" Stretch="UniformToFill" />
                     </Border>
                     <Grid Grid.Column="1" x:Name="LyricBox" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -41,7 +41,7 @@
 
                 <!-- Translation, pronunciation or the next line, as the island's layout asks. -->
                 <TextBlock x:Name="Second" Grid.Row="1" FontSize="11" Foreground="White" Opacity="0.6"
-                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="46,-4,46,4"
+                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="38,-4,38,4"
                            Visibility="Collapsed" />
 
                 <!-- Hover: a mini player. -->

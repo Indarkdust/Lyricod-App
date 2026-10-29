@@ -44,6 +44,10 @@
     <!-- Tray icon, transparent backdrop and window-style helpers (MIT). -->
     <PackageReference Include="WinUIEx" Version="2.9.3" />
   </ItemGroup>
+  <!-- CI marks its builds (run number and commit) so a shared test build isn't taken for a release. -->
+  <ItemGroup Condition="'$(LyricodTestBuild)' != ''">
+    <AssemblyMetadata Include="LyricodTestBuild" Value="$(LyricodTestBuild)" />
+  </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\Lyricod.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\Lyricod-256.png" CopyToOutputDirectory="PreserveNewest" />

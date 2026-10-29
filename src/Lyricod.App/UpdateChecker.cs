@@ -1,3 +1,4 @@
+using System.Reflection;
 using Lyricod.Core;
 using Microsoft.UI.Dispatching;
 
@@ -11,6 +12,11 @@ public sealed class UpdateChecker : IDisposable
     readonly HttpClient _client = new() { Timeout = TimeSpan.FromSeconds(15) };
     bool _disposed;
     public static string Version => typeof(App).Assembly.GetName().Version?.ToString(3) ?? "dev";
+    /// <summary>"57-abc1234" (CI run and commit) on a test build; null on a release or a local build.
+    /// A test build keeps the last released version, so the next release still counts as newer.</summary>
+    public static string? TestBuild { get; } = typeof(App).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+        .FirstOrDefault(a => a.Key == "LyricodTestBuild")?.Value is { Length: > 0 } build ? build : null;
+    public static string DisplayVersion => TestBuild is { } build ? L.Format("TestBuildVersion", Version, build) : Version;
     public bool Checking { get; private set; }
     public UpdateResult? Result { get; private set; }
     public AppRelease? Available { get; private set; }

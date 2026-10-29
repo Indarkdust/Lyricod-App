@@ -35,10 +35,13 @@ public sealed partial class IslandWindow : Window
         IslandSize.ExtraLarge => 1.4,
         _ => 1,
     };
-    double RowHeight => 34 * LayoutScale;
+    // The cover sits as far from the side as from the bottom, and its corner is the island's corner
+    // minus that gap, so the two corners share a centre (as on the Mac: 12 and 6).
+    const double CoverInset = 6, CoverSize = 22, CoverRadius = 6, PillRadius = CoverInset + CoverRadius;
+    double RowHeight => (CoverSize + 2 * CoverInset) * LayoutScale;
     double SecondHeight => 18 * LayoutScale;
     double ExpandedHeight => 84 * LayoutScale;
-    double SideWidth => 46 * LayoutScale; // padding, cover (or bars) and gap on each side
+    double SideWidth => (CoverInset + CoverSize + 10) * LayoutScale; // inset, cover (or bars) and gap on each side
     double MinText => 80 * LayoutScale; // a short line still gets a pill, not a stub
     double MaxText => Math.Min(_settings.IslandMaxTextWidth * LayoutScale,
         Math.Max(MinText, _screenWidth - 2 * SideWidth - 20 * LayoutScale));
@@ -326,11 +329,11 @@ public sealed partial class IslandWindow : Window
         double s = LayoutScale;
         LyricRow.Height = new GridLength(RowHeight);
         SecondRow.Height = new GridLength(HasSecondRow ? SecondHeight : 0);
-        MainRow.Padding = new Thickness(14 * s, 0, 14 * s, 0);
+        MainRow.Padding = new Thickness(CoverInset * s, 0, CoverInset * s, 0);
         MainRow.ColumnSpacing = 10 * s;
-        CoverColumn.Width = BarsColumn.Width = new GridLength(22 * s);
-        ArtFrame.Width = ArtFrame.Height = 22 * s;
-        ArtFrame.CornerRadius = new CornerRadius(5 * s);
+        CoverColumn.Width = BarsColumn.Width = new GridLength(CoverSize * s);
+        ArtFrame.Width = ArtFrame.Height = CoverSize * s;
+        ArtFrame.CornerRadius = new CornerRadius(CoverRadius * s);
         Bars.Height = BarHeight;
         Bars.Spacing = 1.5 * s;
         for (int i = 0; i < _bars.Count; i++)
@@ -418,7 +421,7 @@ public sealed partial class IslandWindow : Window
             };
             story.Begin();
         }
-        double radius = (_expanded ? 20 : 16) * LayoutScale;
+        double radius = (_expanded ? 20 : PillRadius) * LayoutScale;
         Pill.CornerRadius = new CornerRadius(0, 0, radius, radius);
         if (!_waitingForWidth) RevealText();
     }

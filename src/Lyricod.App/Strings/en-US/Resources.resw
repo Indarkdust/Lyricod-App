@@ -13,6 +13,7 @@
   <data name="Quit" xml:space="preserve"><value>Quit Lyricod</value></data>
   <data name="MoveHint" xml:space="preserve"><value>Drag to move · lock it again from the tray icon</value></data>
   <data name="Version" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="TestBuildVersion" xml:space="preserve"><value>{0} (test build {1})</value></data>
   <data name="Tagline" xml:space="preserve"><value>Synced lyrics on your desktop.</value></data>
   <data name="LyricsHeader" xml:space="preserve"><value>Lyrics</value></data>
   <data name="NetEase" xml:space="preserve"><value>NetEase Cloud Music</value></data>

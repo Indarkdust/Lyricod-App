@@ -438,7 +438,8 @@ public sealed class PlaybackModel
     static readonly string? DebugStatePath = Environment.GetEnvironmentVariable("LYRICOD_STATE_FILE");
 
     public string DiagnosticsText => Diagnostics.Text(
-        $"{UpdateChecker.Version} ({typeof(App).Assembly.GetName().Version?.Revision ?? 0})",
+        UpdateChecker.TestBuild is { } build ? $"{UpdateChecker.Version} (test build {build})"
+            : $"{UpdateChecker.Version} ({typeof(App).Assembly.GetName().Version?.Revision ?? 0})",
         $"Windows {Environment.OSVersion.Version}",
         System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant(),
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,

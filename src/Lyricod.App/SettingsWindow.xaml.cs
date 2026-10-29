@@ -454,7 +454,7 @@ public sealed partial class SettingsWindow : Window
             Width = 80, Height = 80, HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 0, 0, 8),
         });
         top.Children.Add(Centred(new TextBlock { Text = "Lyricod", Style = Style("TitleTextBlockStyle") }));
-        top.Children.Add(Centred(new TextBlock { Text = L.Format("Version", typeof(App).Assembly.GetName().Version?.ToString(3) ?? "dev"), Style = Style("Detail") }));
+        top.Children.Add(Centred(new TextBlock { Text = L.Format("Version", UpdateChecker.DisplayVersion), Style = Style("Detail") }));
         top.Children.Add(Centred(new TextBlock { Text = L.Get("Tagline"), Margin = new Thickness(0, 6, 0, 0) }));
         top.Children.Add(Centred(new HyperlinkButton { Content = "GitHub", NavigateUri = new Uri("https://github.com/Indarkdust/Lyricod-App") }));
         Page.Children.Add(top);

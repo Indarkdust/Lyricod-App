@@ -13,6 +13,7 @@
   <data name="Quit" xml:space="preserve"><value>退出 Lyricod</value></data>
   <data name="MoveHint" xml:space="preserve"><value>拖动以移动 · 在托盘图标中重新锁定</value></data>
   <data name="Version" xml:space="preserve"><value>版本 {0}</value></data>
+  <data name="TestBuildVersion" xml:space="preserve"><value>{0}（测试版 {1}）</value></data>
   <data name="Tagline" xml:space="preserve"><value>在桌面上显示同步歌词。</value></data>
   <data name="LyricsHeader" xml:space="preserve"><value>歌词</value></data>
   <data name="NetEase" xml:space="preserve"><value>网易云音乐</value></data>

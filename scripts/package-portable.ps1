@@ -4,7 +4,9 @@ param(
     [Parameter(Mandatory)][string] $Version,
     [Parameter(Mandatory)][ValidateSet('x64', 'arm64')][string] $Arch,
     [Parameter(Mandatory)][string] $PublishFolder,
-    [Parameter(Mandatory)][string] $OutputFolder
+    [Parameter(Mandatory)][string] $OutputFolder,
+    # For CI test builds, e.g. "test.57": goes in the zip's name so it isn't taken for a release.
+    [ValidatePattern('^[a-z0-9.]*$')][string] $Label = ''
 )
 
 Set-StrictMode -Version Latest
@@ -106,7 +108,8 @@ set
         throw "Unexpected language folders: $($unexpectedCultures.Name -join ', ')"
     }
 
-    $zip = Join-Path $output "Lyricod-$Version-windows-$Arch.zip"
+    $name = if ($Label) { "Lyricod-$Version-$Label-windows-$Arch.zip" } else { "Lyricod-$Version-windows-$Arch.zip" }
+    $zip = Join-Path $output $name
     # Include the Lyricod directory itself, and preserve every published file, including hidden ones.
     Add-Type -AssemblyName System.IO.Compression.ZipFile
     if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip }
