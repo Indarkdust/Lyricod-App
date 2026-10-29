@@ -5,6 +5,23 @@ namespace Lyricod.Core.Tests;
 public class DiagnosticsTests
 {
     [Fact]
+    public void ReportsRecognitionAndAnInvariantScore()
+    {
+        var old = CultureInfo.CurrentCulture;
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
+            string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0,
+                musicPlayer: false, treatedAsSong: false, bestMatchScore: 4.5);
+            Assert.Contains("Music player: no\nTreated as a song: no\nBest match score: 4.5\n", text);
+            string pinned = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, true, 0, 0,
+                musicPlayer: false, treatedAsSong: true);
+            Assert.Contains("Treated as a song: yes\nBest match score: unverified\n", pinned);
+        }
+        finally { CultureInfo.CurrentCulture = old; }
+    }
+
+    [Fact]
     public void SongAndLyricsDetailsStayEnglish()
     {
         var old = CultureInfo.CurrentCulture;

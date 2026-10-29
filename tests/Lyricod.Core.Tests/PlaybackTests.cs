@@ -3,6 +3,25 @@ namespace Lyricod.Core.Tests;
 public class PlaybackTests
 {
     [Fact]
+    public void BrowserStaysHiddenUntilLyricsArriveAndResetsForTheNextTrack()
+    {
+        Assert.Equal(SongState.Checking, SongRecognition.Classify(false, false, true, false));
+        Assert.Equal(SongState.NotSong, SongRecognition.Classify(false, false, false, false));
+        Assert.Equal(SongState.Checking, SongRecognition.Classify(false, false, true, false));
+        Assert.Equal(SongState.Song, SongRecognition.Classify(false, false, false, true));
+        Assert.Equal(SongState.Checking, SongRecognition.Classify(false, false, true, false));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public void MusicPlayersAndManualPinsStaySongsWithoutLyrics(bool musicPlayer, bool pinned)
+    {
+        Assert.Equal(SongState.Song, SongRecognition.Classify(musicPlayer, pinned, true, false));
+        Assert.Equal(SongState.Song, SongRecognition.Classify(musicPlayer, pinned, false, false));
+    }
+
+    [Fact]
     public void PlayheadCarriesForwardOnlyWhilePlaying()
     {
         var p = new Playhead();
