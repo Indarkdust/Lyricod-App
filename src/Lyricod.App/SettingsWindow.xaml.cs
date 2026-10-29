@@ -310,6 +310,8 @@ public sealed partial class SettingsWindow : Window
         Note(L.Get(Lyricod.Platform.JapaneseReader.IsAvailable ? "PronunciationNote" : "PronunciationNoteNoReader"));
 
         Heading(L.Get("SourcesHeading"));
+        Card(L.Get("LookUpOtherPlayers"), L.Get("LookUpOtherPlayersDetail"),
+            Toggle(nameof(Settings.LookUpOtherPlayers), () => _settings.LookUpOtherPlayers, v => _settings.LookUpOtherPlayers = v));
         var status = new StackPanel { HorizontalAlignment = HorizontalAlignment.Right };
         var title = new TextBlock { TextAlignment = TextAlignment.Right, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 220 };
         var kind = new TextBlock { Style = Style("Detail"), TextAlignment = TextAlignment.Right };
@@ -323,7 +325,7 @@ public sealed partial class SettingsWindow : Window
         {
             title.Text = _model.Track?.Title ?? L.Get("NothingPlaying");
             kind.Text = LyricsStatus();
-            again.IsEnabled = _model.Track != null && !_model.IsSearching;
+            again.IsEnabled = _model.Track != null && !_model.IsSearching && _model.AutomaticLookupAllowed;
             choose.IsEnabled = _model.Track != null;
         });
         Card(L.Get("CurrentSong"), null, Row(status, again, choose));

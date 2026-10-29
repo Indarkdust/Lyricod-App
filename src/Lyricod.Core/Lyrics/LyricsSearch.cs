@@ -1,11 +1,12 @@
 namespace Lyricod.Core;
 
 /// <summary>Acceptance and diagnostics for one automatic lookup.</summary>
-public sealed class LyricsSearch(bool isMusicPlayer)
+public sealed class LyricsSearch(bool isMusicPlayer, bool lookUpOtherPlayers = true)
 {
     // An exact title and artist score 6; an exact title and length alone score 5.5.
     public const double ConfidentScore = 5.5;
     public bool IsMusicPlayer { get; } = isMusicPlayer;
+    public bool AutomaticLookupAllowed { get; } = isMusicPlayer || lookUpOtherPlayers;
     public double? BestScore { get; private set; }
 
     /// <summary>Music sources keep their existing thresholds; other players need evidence.</summary>

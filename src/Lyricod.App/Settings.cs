@@ -92,6 +92,7 @@ public sealed class Settings : INotifyPropertyChanged
 
     double _offset;
     bool _showCredits;
+    bool _lookUpOtherPlayers = true;
     List<LyricLanguage> _pronunciationLanguages = [LyricLanguage.Japanese, LyricLanguage.Korean];
 
     public bool ShowDesktopLyrics { get => _showDesktopLyrics; set => Set(ref _showDesktopLyrics, value); }
@@ -143,6 +144,7 @@ public sealed class Settings : INotifyPropertyChanged
     /// <summary>Seconds for every song; positive shows lyrics earlier.</summary>
     public double Offset { get => _offset; set => Set(ref _offset, Math.Round(value, 2)); }
     public bool ShowCredits { get => _showCredits; set => Set(ref _showCredits, value); }
+    public bool LookUpOtherPlayers { get => _lookUpOtherPlayers; set => Set(ref _lookUpOtherPlayers, value); }
     /// <summary>Languages that get a pronunciation line. Chinese is off by default.</summary>
     public List<LyricLanguage> PronunciationLanguages { get => _pronunciationLanguages; set => Set(ref _pronunciationLanguages, value); }
 

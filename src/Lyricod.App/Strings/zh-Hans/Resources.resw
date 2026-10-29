@@ -110,6 +110,8 @@
   <data name="ShowCredits" xml:space="preserve"><value>显示词曲作者信息</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词来源自带的罗马音；没有时由 Lyricod 用 Windows 的日语读音功能生成，部分汉字可能读错。桌面歌词、歌词岛和歌词窗口各自选择是否显示翻译和音译。</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语罗马音来自歌词来源（如有）。如需 Lyricod 为其他歌曲生成，请在 Windows 设置 › 时间和语言 › 语言和区域 中添加日语。</value></data>
+  <data name="LookUpOtherPlayers" xml:space="preserve"><value>为浏览器和其他应用查找歌词</value></data>
+  <data name="LookUpOtherPlayersDetail" xml:space="preserve"><value>在音乐播放器以外的应用中播放内容时，Lyricod 会将标题和歌手（或频道）发送到网易云音乐、QQ音乐和 LRCLIB，判断播放的是否是歌曲。关闭后，仅为音乐播放器查找歌词。</value></data>
   <data name="SourcesHeading" xml:space="preserve"><value>来源</value></data>
   <data name="CurrentSong" xml:space="preserve"><value>当前歌曲</value></data>
   <data name="SearchAgain" xml:space="preserve"><value>重新搜索</value></data>

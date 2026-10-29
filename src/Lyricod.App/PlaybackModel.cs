@@ -26,6 +26,7 @@ public sealed class PlaybackModel
     public Lyrics? Lyrics { get; private set; }
     public bool IsSearching { get; private set; }
     public bool IsMusicPlayer => MusicPlayers.IsMusicPlayer(NowPlaying?.AppId);
+    public bool AutomaticLookupAllowed => new LyricsSearch(IsMusicPlayer, _settings.LookUpOtherPlayers).AutomaticLookupAllowed;
     SongState Recognition => SongRecognition.Classify(IsMusicPlayer, LyricsPinned, IsSearching, _allLyrics != null);
     public bool IsSong => Track != null && Recognition == SongState.Song;
     public bool IsNotSong => Track != null && Recognition == SongState.NotSong;
@@ -284,7 +285,7 @@ public sealed class PlaybackModel
     /// <summary>Searches again for this song, skipping the saved lyrics.</summary>
     public void SearchAgain()
     {
-        if (Track is not { } t) return;
+        if (Track is not { } t || !AutomaticLookupAllowed) return;
         _provider.ClearCache(t);
         LoadLyrics(t, ignoreCache: true);
     }
@@ -336,10 +337,10 @@ public sealed class PlaybackModel
         _allLyrics = null;
         Lyrics = null;
         CurrentIndex = null;
-        IsSearching = true;
         BestMatchScore = null;
-        var search = new LyricsSearch(IsMusicPlayer);
+        var search = new LyricsSearch(IsMusicPlayer, _settings.LookUpOtherPlayers);
         var pinned = _overrides[track].Lyrics;
+        IsSearching = search.AutomaticLookupAllowed || pinned != null;
         Changed?.Invoke(Change.Lyrics | Change.Line);
         _ = Task.Run(async () =>
         {
@@ -412,18 +413,25 @@ public sealed class PlaybackModel
 
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
     {
-        switch (e.PropertyName)
+        try
         {
-            case nameof(Settings.ShowCredits) or nameof(Settings.PronunciationLanguages):
-                ApplyDisplayFilters();
-                break;
-            case nameof(Settings.Offset):
-                ApplyOffset();
-                break;
-            case nameof(Settings.PlayerChoice):
-                _media.Choice = _settings.PlayerChoice;
-                break;
+            switch (e.PropertyName)
+            {
+                case nameof(Settings.ShowCredits) or nameof(Settings.PronunciationLanguages):
+                    ApplyDisplayFilters();
+                    break;
+                case nameof(Settings.LookUpOtherPlayers):
+                    if (Track is { } track) LoadLyrics(track, ignoreCache: false);
+                    break;
+                case nameof(Settings.Offset):
+                    ApplyOffset();
+                    break;
+                case nameof(Settings.PlayerChoice):
+                    _media.Choice = _settings.PlayerChoice;
+                    break;
+            }
         }
+        catch (Exception error) { LastError = "settings: " + error.Message; }
     }
 
     // ---- Timing ----
@@ -481,7 +489,7 @@ public sealed class PlaybackModel
         System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant(),
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,
         SongOffset, _settings.Offset, LastError, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind, IsMusicPlayer, IsSong, BestMatchScore);
+        NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind, IsMusicPlayer, IsSong, BestMatchScore, AutomaticLookupAllowed);
 
     void WriteDebugState(double position)
     {
@@ -497,6 +505,7 @@ public sealed class PlaybackModel
                 synced = Lyrics?.IsSynced, firstLine = Lyrics?.Lines.FirstOrDefault()?.Start, index = CurrentIndex, line = CurrentLine?.Text, error = LastError,
                 meter = Platform.AudioMeter.LastStatus,
                 musicPlayer = IsMusicPlayer, song = IsSong, bestMatchScore = BestMatchScore,
+                automaticLookupAllowed = AutomaticLookupAllowed,
             }));
         }
         catch (IOException) { }

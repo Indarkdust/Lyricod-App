@@ -206,11 +206,11 @@ public sealed class LyricsProvider
         var file = CacheFile(CacheKey(track));
         track = search.Prepare(track);
         if (!ignoreCache && ReadCache(file) is { } cachedRaw && (pinned == null || cachedRaw.SongRef == pinned)
-            && (pinned != null || search.Accepts(cachedRaw.MatchScore, cachedRaw.TitleMatched))
+            && (pinned != null || !search.AutomaticLookupAllowed || search.Accepts(cachedRaw.MatchScore, cachedRaw.TitleMatched))
             && cachedRaw.Parse() is { } cached) // cached junk (e.g. credits only) is fetched again
         {
             search.Observe(cachedRaw.MatchScore);
-            if (pinned != null || !NeedsWordCheck(cachedRaw, cached) || !WordCheckDue(file)) return cached;
+            if (!search.AutomaticLookupAllowed || pinned != null || !NeedsWordCheck(cachedRaw, cached) || !WordCheckDue(file)) return cached;
             onCached?.Invoke(cached);
             ct.ThrowIfCancellationRequested();
             var words = await WordTimed(await WithAliases(track, ct, allowGuess: search.IsMusicPlayer), cachedRaw, requireTitle: true, ct, search);
@@ -224,6 +224,7 @@ public sealed class LyricsProvider
             WriteCache(file, words);
             return upgraded;
         }
+        if (!search.AutomaticLookupAllowed && pinned == null) return null;
         if (pinned == null) track = await WithAliases(track, ct, allowGuess: search.IsMusicPlayer);
         RawLyrics? raw;
         if (pinned != null) raw = await Fetch(pinned, ct);

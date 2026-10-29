@@ -416,6 +416,63 @@ public class LyricsProviderTests
         Assert.False(File.Exists(oldFile));
     }
 
+    public static IEnumerable<object[]> LookupCases()
+    {
+        foreach (bool music in new[] { false, true })
+        foreach (bool setting in new[] { false, true })
+        foreach (bool cached in new[] { false, true })
+        foreach (bool pinned in new[] { false, true })
+            yield return [music, setting, cached, pinned];
+    }
+
+    [Theory]
+    [MemberData(nameof(LookupCases))]
+    public async Task AutomaticLookupRespectsPlayerSettingAndLocalChoices(bool music, bool setting, bool cached, bool pinned)
+    {
+        var requests = new List<string>();
+        using var fixture = new Fixture(request =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            requests.Add(path);
+            return Response(path.Contains("lyric/v1") ? NeteaseLyrics : "{}");
+        });
+        var track = Track();
+        if (cached) Fixture.Age(fixture.Seed(track, 6, true), 2); // a word upgrade would normally be due
+        var search = new LyricsSearch(MusicPlayers.IsMusicPlayer(music ? "Spotify.exe" : "MSEdge"), setting);
+        Assert.Equal(music || setting, search.AutomaticLookupAllowed);
+        var result = await fixture.Provider.GetLyrics(track, search: search,
+            pinned: pinned ? LyricsRef.Netease(7) : null, ct: TestContext.Current.CancellationToken);
+        bool expectedRequests = pinned ? !cached : music || setting;
+        Assert.Equal(expectedRequests, requests.Count > 0);
+        Assert.Equal(cached || pinned, result != null);
+        if (pinned) Assert.All(requests, path => Assert.Contains("lyric/v1", path));
+        if (!music && !setting && !cached && !pinned)
+            Assert.Equal(SongState.NotSong, SongRecognition.Classify(music, pinned, search.AutomaticLookupAllowed, result != null));
+    }
+
+    [Fact]
+    public async Task OptOutKeepsUnverifiedLocalLyricsWithoutUpgradingThem()
+    {
+        using var fixture = new Fixture(_ => throw new Exception("Opt-out must not request the network"));
+        Fixture.Age(fixture.Seed(Track()), 2);
+        var result = await fixture.Provider.GetLyrics(Track(), search: new LyricsSearch(false, false), ct: TestContext.Current.CancellationToken);
+        Assert.Equal("Hello", result?.Lines[0].Text);
+    }
+
+    [Fact]
+    public async Task ChangingLookupSettingAppliesToTheSameTrack()
+    {
+        var requests = 0;
+        using var fixture = new Fixture(_ => { requests++; return Response("{}"); });
+        var track = Track();
+        foreach (bool setting in new[] { false, true, false, true })
+        {
+            int before = requests;
+            Assert.Null(await fixture.Provider.GetLyrics(track, search: new LyricsSearch(false, setting), ct: TestContext.Current.CancellationToken));
+            Assert.Equal(setting, requests > before);
+        }
+    }
+
     static HttpResponseMessage Response(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body) };
 

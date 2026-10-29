@@ -110,6 +110,8 @@
   <data name="ShowCredits" xml:space="preserve"><value>Show songwriter credits</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>Japanese uses the lyrics source's own romaji when it has some; otherwise Lyricod works it out with Windows' Japanese reader, and may misread some kanji. Desktop lyrics, Lyricod Island and the lyrics window each choose whether to show translations and pronunciation.</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>Japanese romaji comes from the lyrics source when it has some. For Lyricod to work it out for other songs, add Japanese in Windows Settings › Time &amp; language › Language &amp; region.</value></data>
+  <data name="LookUpOtherPlayers" xml:space="preserve"><value>Look up lyrics for browsers and other apps</value></data>
+  <data name="LookUpOtherPlayersDetail" xml:space="preserve"><value>When something plays outside a music player, Lyricod sends its title and artist (or channel) to NetEase Cloud Music, QQ Music and LRCLIB to see whether it's a song. Turn this off to look up lyrics only for music players.</value></data>
   <data name="SourcesHeading" xml:space="preserve"><value>Sources</value></data>
   <data name="CurrentSong" xml:space="preserve"><value>Current song</value></data>
   <data name="SearchAgain" xml:space="preserve"><value>Search again</value></data>

@@ -9,7 +9,7 @@ public static class Diagnostics
         string? playerName, string? playerId, bool isPlaying, Track? track, Lyrics? lyrics,
         bool searching, bool pinned, double songOffset, double offset, string? lastError = null, string? userProfile = null,
         bool? playerTimeline = null, (int Width, int Height)? cover = null, string? font = null, InstallKind? installKind = null,
-        bool? musicPlayer = null, bool? treatedAsSong = null, double? bestMatchScore = null)
+        bool? musicPlayer = null, bool? treatedAsSong = null, double? bestMatchScore = null, bool? automaticLookupAllowed = null)
     {
         // Error messages and some player ids carry paths with the user's name in them.
         playerId = Redact(playerId, userProfile);
@@ -37,6 +37,7 @@ public static class Diagnostics
             rows.Add(song);
         }
         if (musicPlayer is { } music) rows.Add($"Music player: {(music ? "yes" : "no")}");
+        if (automaticLookupAllowed is { } lookup) rows.Add($"Automatic lyric lookup: {(lookup ? "allowed" : "blocked")}");
         if (treatedAsSong is { } songState)
         {
             rows.Add($"Treated as a song: {(songState ? "yes" : "no")}");
