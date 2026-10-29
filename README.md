@@ -48,7 +48,7 @@ When a song gets the wrong lyrics, open **Choose Lyrics** (tray panel, lyrics wi
 ## Privacy
 
 - **Bars that follow the music** listen only to the player Lyricod is following, through Windows' audio APIs. Nothing is recorded, stored or sent. Turn it off in Settings › Lyricod Island.
-- To find lyrics, Lyricod sends the song's title, artist and length to NetEase, QQ Music and LRCLIB.
+- To find lyrics, Lyricod sends the song's title, artist and length to NetEase, QQ Music and LRCLIB. That includes what plays in a browser or another app that isn't a music player (a video's title and channel, say), since that's how Lyricod tells whether it's a song. To look up lyrics only for music players, turn off Settings › Lyrics › Look up lyrics for browsers and other apps. Nothing else about what you watch or browse is sent.
 - Once a day it asks GitHub whether there's a newer version. Turn that off in Settings › About.
 
 ## Requirements
