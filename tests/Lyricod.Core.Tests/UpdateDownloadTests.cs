@@ -112,6 +112,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Directory.CreateDirectory(Path.Combine(_directory, "app.old-12345", "x"));
         Directory.CreateDirectory(Path.Combine(_directory, "app"));
         File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.new"), "stale");
+        File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.old-12345"), "old launcher");
         File.WriteAllText(Path.Combine(_directory, "settings.json"), "keep");
         PortableUpdate.Cleanup(_directory, Path.Combine(_directory, "Updates"), new(1, 2, 3));
         Assert.False(Directory.Exists(Path.Combine(_directory, "Updates", "1.0.0")));
@@ -121,6 +122,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Assert.False(Directory.Exists(Path.Combine(_directory, "app.new")));
         Assert.False(Directory.Exists(Path.Combine(_directory, "app.old")));
         Assert.False(Directory.Exists(Path.Combine(_directory, "app.old-12345")));
+        Assert.False(File.Exists(Path.Combine(_directory, "Lyricod.exe.old-12345")));
         Assert.True(Directory.Exists(Path.Combine(_directory, "app")));
         Assert.True(File.Exists(Path.Combine(_directory, "settings.json")));
     }

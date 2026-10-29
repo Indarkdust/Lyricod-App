@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <cwchar>
 #include <string>
 #include <vector>
 
@@ -6,8 +7,11 @@
 //
 // With "--apply-update <pid>" it finishes an update instead. Lyricod has put the new version beside
 // the old one (app.new, Lyricod.exe.new, README.txt.new), started this new launcher as
-// Lyricod.exe.new and is quitting. Once it has gone, this swaps the folders, starts the new
-// Lyricod and removes the old files. If the swap fails, the old Lyricod is put back and started.
+// Lyricod.exe.new and is quitting. Once it has gone, this moves the old app and launcher aside
+// under names no earlier update can have taken (app.old-<n>, Lyricod.exe.old-<n>), moves the new
+// ones in, starts the new Lyricod and removes the old files. Whatever can't be removed yet (say a
+// file another program still has open) is tried again at Lyricod's next start and at the next
+// update, and never blocks one. If the swap fails, the old Lyricod is put back and started.
 
 static std::wstring SystemMessage(DWORD error)
 {
@@ -147,6 +151,25 @@ static void DeleteTree(const std::wstring& path)
     RemoveDirectoryW(path.c_str());
 }
 
+/// <summary>Removes what earlier updates left behind: app.old…, Lyricod.exe.old….</summary>
+static void DeleteLeftovers(const std::wstring& root)
+{
+    for (const wchar_t* prefix : { L"app.old", L"Lyricod.exe.old" })
+    {
+        std::vector<std::wstring> names;
+        WIN32_FIND_DATAW entry;
+        HANDLE find = FindFirstFileW((root + prefix + L"*").c_str(), &entry);
+        if (find == INVALID_HANDLE_VALUE) continue;
+        do
+        {
+            // The pattern can also match short (8.3) names, so check the real one.
+            if (_wcsnicmp(entry.cFileName, prefix, wcslen(prefix)) == 0) names.push_back(entry.cFileName);
+        } while (FindNextFileW(find, &entry));
+        FindClose(find);
+        for (const auto& name : names) DeleteTree(root + name);
+    }
+}
+
 static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD oldProcess)
 {
     // Wait for the old Lyricod to quit; it was told to right after starting this.
@@ -161,8 +184,9 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
         }
     }
 
-    const std::wstring app = root + L"app", fresh = root + L"app.new", old = root + L"app.old";
-    const std::wstring launcher = root + L"Lyricod.exe", oldLauncher = root + L"Lyricod.exe.old";
+    const std::wstring stamp = std::to_wstring(GetTickCount64());
+    const std::wstring app = root + L"app", fresh = root + L"app.new", old = root + L"app.old-" + stamp;
+    const std::wstring launcher = root + L"Lyricod.exe", oldLauncher = root + L"Lyricod.exe.old-" + stamp;
     if (!Exists(fresh + L"\\Lyricod.exe"))
     {
         ShowUpdateError(ERROR_FILE_NOT_FOUND);
@@ -170,10 +194,7 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
         return 1;
     }
 
-    // Leftovers of an earlier update that couldn't be removed then.
-    DeleteTree(old);
-    if (Exists(old)) Move(old, old + L"-" + std::to_wstring(GetTickCount64()));
-    DeleteTree(oldLauncher);
+    DeleteLeftovers(root);
 
     if (DWORD error = Move(app, old))
     {

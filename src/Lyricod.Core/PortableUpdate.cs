@@ -64,8 +64,9 @@ public static class PortableUpdate
             if (portableRoot != null)
             {
                 foreach (string name in StagedNames.Concat(["app.old", "Lyricod.exe.old"])) TryDelete(Path.Combine(portableRoot, name));
-                // The launcher renames an app.old it couldn't delete to app.old-<number>.
+                // The launcher moves the old app and launcher aside as app.old-<n> and Lyricod.exe.old-<n>.
                 foreach (string directory in Directory.EnumerateDirectories(portableRoot, "app.old-*")) TryDelete(directory);
+                foreach (string file in Directory.EnumerateFiles(portableRoot, "Lyricod.exe.old-*")) TryDelete(file);
             }
             if (Directory.Exists(updatesDirectory))
                 foreach (string directory in Directory.EnumerateDirectories(updatesDirectory))
