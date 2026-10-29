@@ -50,31 +50,25 @@ public sealed class LyricsProvider
 
     async Task<JsonNode?> GetJson(HttpRequestMessage req, CancellationToken ct, bool require200 = false)
     {
-        try
-        {
-            using var res = await _http.SendAsync(req, ct).ConfigureAwait(false);
-            if (!res.IsSuccessStatusCode || require200 && res.StatusCode != HttpStatusCode.OK) return null;
-            var text = await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
-            return JsonNode.Parse(text);
-        }
-        catch (Exception e) when (e is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException)
-        {
-            if (ct.IsCancellationRequested) throw;
-            return null;
-        }
+        var text = await GetText(req, ct, require200).ConfigureAwait(false);
+        try { return text == null ? null : JsonNode.Parse(text); }
+        catch (JsonException) { return null; }
     }
 
-    async Task<string?> GetText(HttpRequestMessage req, CancellationToken ct)
+    async Task<string?> GetText(HttpRequestMessage req, CancellationToken ct, bool require200 = false)
     {
         try
         {
-            using var res = await _http.SendAsync(req, ct).ConfigureAwait(false);
-            if (!res.IsSuccessStatusCode) return null;
-            return await res.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
+            using var request = req;
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            timeout.CancelAfter(_http.Timeout);
+            using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
+            if (!res.IsSuccessStatusCode || require200 && res.StatusCode != HttpStatusCode.OK) return null;
+            return await LyricData.ReadText(res.Content, timeout.Token).ConfigureAwait(false);
         }
-        catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
+        catch (Exception e) when (e is HttpRequestException or OperationCanceledException or IOException or InvalidDataException or InvalidOperationException)
         {
-            if (ct.IsCancellationRequested) throw;
+            ct.ThrowIfCancellationRequested();
             return null;
         }
     }

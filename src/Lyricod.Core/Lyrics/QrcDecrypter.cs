@@ -47,6 +47,7 @@ public static class QrcDecrypter
 
     public static string? Decrypt(string hex)
     {
+        if (hex.Length > LyricData.MaxBytes * 2) return null;
         if (HexBytes(hex) is not { Length: > 0 } bytes || bytes.Length % 8 != 0) return null;
         var block = new byte[8];
         for (int i = 0; i < bytes.Length; i += 8)
@@ -55,15 +56,18 @@ public static class QrcDecrypter
             foreach (var k in Schedule) Crypt(block, k);
             Array.Copy(block, 0, bytes, i, 8);
         }
+        return Inflate(bytes);
+    }
+
+    internal static string? Inflate(byte[] bytes)
+    {
         // A zlib stream: skip its 2-byte header and inflate the raw deflate data.
         if (bytes.Length <= 2) return null;
         try
         {
             using var input = new MemoryStream(bytes, 2, bytes.Length - 2);
             using var deflate = new DeflateStream(input, CompressionMode.Decompress);
-            using var output = new MemoryStream();
-            deflate.CopyTo(output);
-            var raw = output.ToArray();
+            var raw = LyricData.Read(deflate);
             if (raw.Length == 0) return null;
             int skip = raw.Length >= 3 && raw[0] == 0xEF && raw[1] == 0xBB && raw[2] == 0xBF ? 3 : 0;
             return new UTF8Encoding(false, true).GetString(raw, skip, raw.Length - skip);
