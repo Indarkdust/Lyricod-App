@@ -15,9 +15,19 @@ Synced, word-by-word lyrics for Windows: in a pill at the top of your screen, fl
 
 ## Players
 
-Lyricod follows any player that shows up in Windows' media controls (the media panel above the volume slider): Spotify, QQ Music, NetEase Cloud Music, Apple Music, browsers and more. It follows the one that's playing, or the one you choose in Settings › General.
+Lyricod follows any player that shows up in Windows' media controls (the media panel above the volume slider): Spotify, QQ Music, NetEase Cloud Music, Apple Music, browsers and more. It follows the one that's playing, or the one you choose in Settings › General. A video in a browser is left alone unless it's clearly a song, such as an official music video.
 
-Most players tell Windows where they are in the song, so the lyrics stay in step even when you skip around. For one that doesn't, Lyricod times the song from when it starts. NetEase Cloud Music on its own doesn't report its position; with the InfLink-rs plugin for BetterNCM, with its SMTC option on, it does, and hands over the full-size cover too.
+Most players tell Windows where they are in the song, so the lyrics stay in step even when you skip around. For one that doesn't, Lyricod times the song from when it starts. NetEase Cloud Music is one of those: see below.
+
+## NetEase Cloud Music
+
+NetEase Cloud Music tells Windows what's playing but not where it is in the song, so Lyricod times the song itself, and the lyrics can drift when you skip around or pause; the tray panel then shows a link to this section. The free **InfLink-rs** plugin makes NetEase share its exact position, and its full-size cover too. It runs inside **BetterNCM**, a plugin loader for NetEase Cloud Music. Both are made by other people, not by Lyricod, and they change how NetEase Cloud Music runs, so install them only if you're happy to.
+
+1. Quit NetEase Cloud Music. Download `betterncm_installer.exe` from [BetterNCM Installer's releases](https://github.com/std-microblock/BetterNCM-Installer/releases/latest), run it and install BetterNCM.
+2. Open NetEase Cloud Music, find **InfLink-rs** in BetterNCM's plugin store and install it. Or download `InfLink-rs.plugin` from [its releases](https://github.com/apoint123/inflink-rs/releases/latest) and copy it into `C:\betterncm\plugins`.
+3. Restart NetEase Cloud Music and turn on InfLink-rs's SMTC option in its settings.
+
+Lyricod picks it up by itself: the tray panel's link goes away, and Settings › About › Diagnostics shows that the player reports its position. InfLink-rs is tested with NetEase Cloud Music 3.1.20 to 3.1.41 (and 2.10.13). If NetEase misbehaves after one of its updates, update the plugin, or remove BetterNCM by deleting `msimg32.dll` from NetEase Cloud Music's folder. Don't install the older InfLink alongside InfLink-rs.
 
 ## Lyrics
 

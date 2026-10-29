@@ -15,9 +15,19 @@ Windows 上的逐字同步歌词：显示在屏幕顶部的歌词岛、悬浮在
 
 ## 支持的播放器
 
-Lyricod 会跟随任何出现在 Windows 媒体控件（音量滑块上方的媒体面板）中的播放器：Spotify、QQ 音乐、网易云音乐、Apple Music、浏览器等。它会跟随正在播放的那一个，也可以在 设置 › 通用 中指定。
+Lyricod 会跟随任何出现在 Windows 媒体控件（音量滑块上方的媒体面板）中的播放器：Spotify、QQ 音乐、网易云音乐、Apple Music、浏览器等。它会跟随正在播放的那一个，也可以在 设置 › 通用 中指定。浏览器中播放的视频不会被当作歌曲，除非它明显是一首歌，例如官方音乐视频。
 
-大多数播放器会告诉 Windows 当前播放到哪里，所以即使来回拖动进度，歌词也能保持同步；对于不提供进度的播放器，Lyricod 会从歌曲开始时自行计时。网易云音乐本身不提供播放进度；安装 BetterNCM 的 InfLink-rs 插件并打开其中的 SMTC 选项后就会提供，同时还会提供完整尺寸的专辑封面。
+大多数播放器会告诉 Windows 当前播放到哪里，所以即使来回拖动进度，歌词也能保持同步；对于不提供进度的播放器，Lyricod 会从歌曲开始时自行计时。网易云音乐就是这样，请看下一节。
+
+## 网易云音乐
+
+网易云音乐会告诉 Windows 正在播放什么，但不会告诉它播放到哪里，所以 Lyricod 只能自行计时，拖动进度或暂停后歌词可能会不同步；这时托盘面板中会出现指向本节的链接。免费插件 **InfLink-rs** 可以让网易云音乐提供准确的播放进度，以及完整尺寸的专辑封面。它运行在网易云音乐的插件加载器 **BetterNCM** 中。两者都由其他作者开发，并非 Lyricod 的一部分，而且会改变网易云音乐的运行方式，请在你愿意的情况下再安装。
+
+1. 退出网易云音乐。从 [BetterNCM Installer 的发布页面](https://github.com/std-microblock/BetterNCM-Installer/releases/latest)下载 `betterncm_installer.exe`，运行它并安装 BetterNCM。
+2. 打开网易云音乐，在 BetterNCM 的插件商店中找到并安装 **InfLink-rs**。也可以从[它的发布页面](https://github.com/apoint123/inflink-rs/releases/latest)下载 `InfLink-rs.plugin`，复制到 `C:\betterncm\plugins` 文件夹。
+3. 重启网易云音乐，并在 InfLink-rs 的设置中打开 SMTC 选项。
+
+Lyricod 会自动识别：托盘面板中的链接会消失，设置 › 关于 › 诊断信息中也会显示播放器提供了播放进度。InfLink-rs 在网易云音乐 3.1.20 至 3.1.41（以及 2.10.13）上测试过。如果网易云音乐更新后出现问题，请更新插件，或者删除网易云音乐安装文件夹中的 `msimg32.dll` 来移除 BetterNCM。不要同时安装旧版 InfLink 和 InfLink-rs。
 
 ## 歌词
 
