@@ -27,6 +27,16 @@ public class DiagnosticsTests
         finally { CultureInfo.CurrentCulture = old; }
     }
 
+    [Theory]
+    [InlineData(InstallKind.Installer, "installer")]
+    [InlineData(InstallKind.Portable, "portable")]
+    [InlineData(InstallKind.Unknown, "unknown")]
+    public void ReportsInstallKindWithoutAPath(InstallKind kind, string label)
+    {
+        string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0, installKind: kind);
+        Assert.Contains($"\nInstall: {label}\n", text);
+    }
+
     [Fact]
     public void OmitsUnavailableDetails()
     {

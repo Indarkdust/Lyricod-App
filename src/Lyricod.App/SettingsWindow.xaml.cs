@@ -462,26 +462,7 @@ public sealed partial class SettingsWindow : Window
         Heading(L.Get("Updates"));
         Card(L.Get("AutomaticUpdates"), null, Toggle(nameof(Settings.CheckForUpdatesAutomatically),
             () => _settings.CheckForUpdatesAutomatically, v => _settings.CheckForUpdatesAutomatically = v));
-        var updateStatus = new TextBlock { Style = Style("Detail"), TextWrapping = TextWrapping.Wrap };
-        var check = new Button { Content = L.Get("CheckNow") };
-        check.Click += async (_, _) => { try { await _updates.CheckAsync(); } catch (Exception) { } }; // see UpdateChecker
-        var download = new HyperlinkButton { Content = L.Get("DownloadUpdate") };
-        void ShowUpdateStatus()
-        {
-            check.IsEnabled = !_updates.Checking;
-            updateStatus.Text = _updates.Checking ? L.Get("CheckingUpdates") : _updates.Result?.Status switch
-            {
-                UpdateStatus.UpToDate => L.Get("UpToDate"),
-                UpdateStatus.CouldntCheck => L.Get("CouldntCheckUpdates"),
-                UpdateStatus.Available => L.Format("NewVersionAvailable", _updates.Result.Release!.Version.ToString(3)),
-                _ => "",
-            };
-            download.Visibility = _updates.Available == null ? Visibility.Collapsed : Visibility.Visible;
-            download.NavigateUri = _updates.Available?.Url;
-        }
-        _songWatchers.Add(ShowUpdateStatus);
-        ShowUpdateStatus();
-        Group(updateStatus, Row(check, download));
+        UpdateControls();
 
         Heading(L.Get("Diagnostics"));
         var diagnostics = new TextBlock

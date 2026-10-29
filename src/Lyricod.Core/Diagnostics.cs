@@ -8,12 +8,13 @@ public static class Diagnostics
     public static string Text(string version, string system, string architecture,
         string? playerName, string? playerId, bool isPlaying, Track? track, Lyrics? lyrics,
         bool searching, bool pinned, double songOffset, double offset, string? lastError = null, string? userProfile = null,
-        bool? playerTimeline = null, (int Width, int Height)? cover = null, string? font = null)
+        bool? playerTimeline = null, (int Width, int Height)? cover = null, string? font = null, InstallKind? installKind = null)
     {
         // Error messages and some player ids carry paths with the user's name in them.
         playerId = Redact(playerId, userProfile);
         lastError = Redact(lastError, userProfile);
         var rows = new List<string> { $"Lyricod {version} · {system} · {architecture}" };
+        if (installKind is { } installation) rows.Add($"Install: {installation.ToString().ToLowerInvariant()}");
         if (font != null) rows.Add($"Font: {Redact(font, userProfile)}");
         if (playerId != null)
         {

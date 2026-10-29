@@ -5,7 +5,7 @@ using Microsoft.UI.Dispatching;
 namespace Lyricod;
 
 /// <summary>All state and notifications live on the UI thread.</summary>
-public sealed class UpdateChecker : IDisposable
+public sealed partial class UpdateChecker : IDisposable
 {
     readonly Settings _settings;
     readonly DispatcherQueueTimer _timer;
@@ -28,6 +28,8 @@ public sealed class UpdateChecker : IDisposable
     public UpdateChecker(Settings settings, DispatcherQueue queue)
     {
         _settings = settings;
+        _queue = queue;
+        _cleanup = Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0)));
         _timer = queue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(10);
         _timer.Tick += async (_, _) =>
@@ -46,7 +48,7 @@ public sealed class UpdateChecker : IDisposable
 
     public async Task CheckAsync(bool manual = true)
     {
-        if (Checking || _disposed) return;
+        if (Checking || _disposed || State == UpdateState.Applying) return;
         Checking = true;
         _settings.LastUpdateCheck = DateTimeOffset.UtcNow;
         UpdateResult outcome;
@@ -57,24 +59,29 @@ public sealed class UpdateChecker : IDisposable
         }
         catch (Exception) { outcome = new(UpdateStatus.CouldntCheck); } // never stuck on "Checking"
         finally { Checking = false; }
-        if (_disposed) return;
+        if (_disposed || State == UpdateState.Applying) return;
         if (manual || outcome.Status != UpdateStatus.CouldntCheck) Result = outcome;
-        if (outcome.Status == UpdateStatus.Available) Available = outcome.Release;
-        else if (outcome.Status == UpdateStatus.UpToDate) Available = null;
+        if (outcome.Status == UpdateStatus.Available) SetRelease(outcome.Release);
+        else if (outcome.Status == UpdateStatus.UpToDate) SetRelease(null);
         Notify();
     }
 
     /// <summary>A listener's exception mustn't reach the timer or click that started the check.</summary>
     void Notify()
     {
-        try { Changed?.Invoke(); }
-        catch (Exception) { }
+        if (Changed == null) return;
+        foreach (Action listener in Changed.GetInvocationList())
+        {
+            try { listener(); }
+            catch (Exception) { }
+        }
     }
 
     public void Dispose()
     {
         _disposed = true;
         _timer.Stop();
+        Cancel();
         _client.Dispose();
     }
 }

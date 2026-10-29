@@ -261,4 +261,20 @@
   <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all MiSans files. Close Lyricod and try again.</value></data>
   <data name="FontLoadFailed" xml:space="preserve"><value>MiSans could not be loaded or copied to the app folder. Lyrics are using Microsoft YaHei.</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>Could not list installed fonts.</value></data>
+  <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and Install</value></data>
+  <data name="UpdateWhatsNew" xml:space="preserve"><value>What’s new</value></data>
+  <data name="UpdateRestart" xml:space="preserve"><value>Restart to Update</value></data>
+  <data name="UpdateRestartNote" xml:space="preserve"><value>Lyricod will close and open again to finish the update.</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>Downloading update… {0}%</value></data>
+  <data name="UpdatePercent" xml:space="preserve"><value>{0}%</value></data>
+  <data name="UpdateRestartVersion" xml:space="preserve"><value>Restart to update to {0}</value></data>
+  <data name="UpdatePreparing" xml:space="preserve"><value>Checking and preparing the update…</value></data>
+  <data name="UpdateApplying" xml:space="preserve"><value>Preparing to restart…</value></data>
+  <data name="UpdateRetry" xml:space="preserve"><value>Retry</value></data>
+  <data name="UpdateDamaged" xml:space="preserve"><value>The download was damaged. Please try again.</value></data>
+  <data name="UpdateTimeout" xml:space="preserve"><value>The download stopped responding. Please try again.</value></data>
+  <data name="UpdateFailed" xml:space="preserve"><value>Couldn’t download or prepare the update. Please try again, or download it from the release page.</value></data>
+  <data name="UpdateNotWritable" xml:space="preserve"><value>Lyricod can’t write to this folder. Download the update from the release page and move Lyricod to a folder you can write to.</value></data>
+  <data name="UpdateApplyFailed" xml:space="preserve"><value>Couldn’t start the update. Please try again, or download it from the release page.</value></data>
+  <data name="UpdateOpenPageFailed" xml:space="preserve"><value>Couldn’t open the release page. Please try again.</value></data>
 </root>

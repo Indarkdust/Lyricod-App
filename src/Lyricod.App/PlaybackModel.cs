@@ -444,7 +444,7 @@ public sealed class PlaybackModel
         System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant(),
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,
         SongOffset, _settings.Offset, LastError, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText);
+        NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind);
 
     void WriteDebugState(double position)
     {

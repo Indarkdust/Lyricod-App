@@ -32,6 +32,16 @@ public partial class App : Application
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
+        try { await LaunchAsync(); }
+        catch (Exception e)
+        {
+            System.Diagnostics.Debug.WriteLine(e);
+            Quit();
+        }
+    }
+
+    async Task LaunchAsync()
+    {
         // One Lyricod at a time.
         if (!AppInstance.FindOrRegisterForKey("Lyricod").IsCurrent)
         {
@@ -168,11 +178,19 @@ public partial class App : Application
     /// </summary>
     void Quit() => Quit(restart: false);
 
+    public void QuitForUpdate() => Quit(restart: false);
+
     void Quit(bool restart)
     {
         if (_quitting) return;
         _quitting = true;
-        if (!DispatcherQueue.GetForCurrentThread().TryEnqueue(() => ShutDown(restart))) ShutDown(restart);
+        void Finish()
+        {
+            try { ShutDown(restart); }
+            catch (Exception) { Exit(); }
+        }
+        try { if (!DispatcherQueue.GetForCurrentThread().TryEnqueue(Finish)) Finish(); }
+        catch (Exception) { Finish(); }
     }
 
     /// <summary>

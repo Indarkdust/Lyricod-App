@@ -38,6 +38,11 @@ public sealed partial class TrayPanel : Window
         InitializeComponent();
         _updates = updates;
         _updates.Changed += OnUpdatesChanged;
+        UpdateLink.Click += async (_, _) =>
+        {
+            try { await _updates.ActivateAsync(); }
+            catch (Exception) { }
+        };
         _model = model;
         _settings = settings;
         _openLyricsWindow = openLyricsWindow;
@@ -73,7 +78,7 @@ public sealed partial class TrayPanel : Window
 
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);
-        _progressTimer.Tick += (_, _) => _progress.Update();
+        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception) { } };
 
         Activated += (_, e) => { if (e.WindowActivationState == WindowActivationState.Deactivated) Hide(); };
         Root.KeyDown += (_, e) => { if (e.Key == Windows.System.VirtualKey.Escape) Hide(); };
@@ -91,7 +96,7 @@ public sealed partial class TrayPanel : Window
     void OnUpdatesChanged()
     {
         if (!_shown) return;
-        Update();
+        RefreshUpdate();
         SizeToContent();
     }
 
@@ -148,34 +153,49 @@ public sealed partial class TrayPanel : Window
         AppWindow.Hide();
     }
 
-    async void Update()
+    void RefreshUpdate()
     {
         UpdateLink.Visibility = _updates.Available == null ? Visibility.Collapsed : Visibility.Visible;
-        UpdateLink.Content = _updates.Available is { } release ? L.Format("UpdateAvailable", release.Version.ToString(3)) : "";
-        UpdateLink.NavigateUri = _updates.Available?.Url;
-        var track = _model.Track;
-        SongTitle.Text = track?.Title ?? L.Get("NothingPlaying");
-        SongArtist.Text = track?.Artist ?? L.Get("PlaySomething");
-        ProgressHost.Visibility = TransportHost.Visibility = track != null ? Visibility.Visible : Visibility.Collapsed;
-        _transport.Update();
-        _progress.Update();
-        if (_model.IsPlaying && _shown) _progressTimer.Start(); else _progressTimer.Stop();
+        UpdateLink.Content = _updates.Available is { } release ? _updates.State switch
+        {
+            UpdateState.Downloading => L.Format("UpdateDownloading", _updates.Progress?.Percent ?? 0),
+            UpdateState.Ready => L.Format("UpdateRestartVersion", release.Version.ToString(3)),
+            UpdateState.Applying => L.Get("UpdateApplying"),
+            _ => L.Format("UpdateAvailable", release.Version.ToString(3)),
+        } : "";
+        UpdateLink.IsEnabled = _updates.State is not (UpdateState.Downloading or UpdateState.Applying);
+    }
 
-        DesktopTile.IsChecked = _settings.ShowDesktopLyrics;
-        IslandTile.IsChecked = _settings.ShowIsland;
+    async void Update()
+    {
+        try
+        {
+            RefreshUpdate();
+            var track = _model.Track;
+            SongTitle.Text = track?.Title ?? L.Get("NothingPlaying");
+            SongArtist.Text = track?.Artist ?? L.Get("PlaySomething");
+            ProgressHost.Visibility = TransportHost.Visibility = track != null ? Visibility.Visible : Visibility.Collapsed;
+            _transport.Update();
+            _progress.Update();
+            if (_model.IsPlaying && _shown) _progressTimer.Start(); else _progressTimer.Stop();
 
-        ThisSong.Opacity = track != null ? 1 : 0.5;
-        LyricsRow.IsEnabled = EarlierButton.IsEnabled = LaterButton.IsEnabled = track != null;
-        LyricsStatus.Text = LyricsStatusText();
-        LyricsIcon.Glyph = _model.LyricsPinned ? "\uE718" : "\uE8BD"; // pin, or a speech bubble
-        double offset = _model.SongOffset;
-        string amount = Math.Abs(offset).ToString("0.00", CultureInfo.CurrentCulture);
-        // A positive offset moves the lyrics' clock ahead, so they show earlier.
-        TimingStatus.Text = offset > 0 ? L.Format("LyricsEarlierBy", amount)
-            : offset < 0 ? L.Format("LyricsLaterBy", amount) : L.Get("MatchesTheSong");
+            DesktopTile.IsChecked = _settings.ShowDesktopLyrics;
+            IslandTile.IsChecked = _settings.ShowIsland;
 
-        var art = await Images.FromBytes(_model.Artwork, 112);
-        if (ReferenceEquals(track, _model.Track)) Art.Source = art;
+            ThisSong.Opacity = track != null ? 1 : 0.5;
+            LyricsRow.IsEnabled = EarlierButton.IsEnabled = LaterButton.IsEnabled = track != null;
+            LyricsStatus.Text = LyricsStatusText();
+            LyricsIcon.Glyph = _model.LyricsPinned ? "\uE718" : "\uE8BD"; // pin, or a speech bubble
+            double offset = _model.SongOffset;
+            string amount = Math.Abs(offset).ToString("0.00", CultureInfo.CurrentCulture);
+            // A positive offset moves the lyrics' clock ahead, so they show earlier.
+            TimingStatus.Text = offset > 0 ? L.Format("LyricsEarlierBy", amount)
+                : offset < 0 ? L.Format("LyricsLaterBy", amount) : L.Get("MatchesTheSong");
+
+            var art = await Images.FromBytes(_model.Artwork, 112);
+            if (ReferenceEquals(track, _model.Track)) Art.Source = art;
+        }
+        catch (Exception) { }
     }
 
     string LyricsStatusText()

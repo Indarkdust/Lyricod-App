@@ -261,4 +261,20 @@
   <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 MiSans 文件。请关闭 Lyricod 后重试。</value></data>
   <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 MiSans 或将其复制到应用文件夹。歌词将使用微软雅黑显示。</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>无法读取已安装的字体。</value></data>
+  <data name="UpdateDownloadInstall" xml:space="preserve"><value>下载并安装</value></data>
+  <data name="UpdateWhatsNew" xml:space="preserve"><value>更新内容</value></data>
+  <data name="UpdateRestart" xml:space="preserve"><value>重启并更新</value></data>
+  <data name="UpdateRestartNote" xml:space="preserve"><value>Lyricod 将关闭并重新打开，以完成更新。</value></data>
+  <data name="UpdateDownloading" xml:space="preserve"><value>正在下载更新… {0}%</value></data>
+  <data name="UpdatePercent" xml:space="preserve"><value>{0}%</value></data>
+  <data name="UpdateRestartVersion" xml:space="preserve"><value>重启并更新至 {0}</value></data>
+  <data name="UpdatePreparing" xml:space="preserve"><value>正在检查并准备更新…</value></data>
+  <data name="UpdateApplying" xml:space="preserve"><value>正在准备重启…</value></data>
+  <data name="UpdateRetry" xml:space="preserve"><value>重试</value></data>
+  <data name="UpdateDamaged" xml:space="preserve"><value>下载的文件已损坏，请重试。</value></data>
+  <data name="UpdateTimeout" xml:space="preserve"><value>下载长时间没有响应，请重试。</value></data>
+  <data name="UpdateFailed" xml:space="preserve"><value>无法下载或准备更新。请重试，或前往发布页面下载。</value></data>
+  <data name="UpdateNotWritable" xml:space="preserve"><value>无法写入 Lyricod 所在的文件夹。请前往发布页面下载更新，并将 Lyricod 移到有写入权限的文件夹中。</value></data>
+  <data name="UpdateApplyFailed" xml:space="preserve"><value>无法启动更新。请重试，或前往发布页面下载。</value></data>
+  <data name="UpdateOpenPageFailed" xml:space="preserve"><value>无法打开发布页面，请重试。</value></data>
 </root>
