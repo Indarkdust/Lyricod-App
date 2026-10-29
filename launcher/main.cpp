@@ -12,6 +12,10 @@
 // ones in, starts the new Lyricod and removes the old files. Whatever can't be removed yet (say a
 // file another program still has open) is tried again at Lyricod's next start and at the next
 // update, and never blocks one. If the swap fails, the old Lyricod is put back and started.
+//
+// The old copy stays until the new Lyricod says it has started properly (it sets the event named in
+// LYRICOD_UPDATE_SIGNAL once its windows and tray icon are up). If it exits or hangs instead, the
+// old copy is put back and started.
 
 static std::wstring SystemMessage(DWORD error)
 {
@@ -83,7 +87,10 @@ static DWORD UpdateRequest(const wchar_t* arguments)
     return digits && *cursor == 0 ? id : 0;
 }
 
-static DWORD StartApp(const std::wstring& root, const wchar_t* arguments)
+static const wchar_t SignalVariable[] = L"LYRICOD_UPDATE_SIGNAL";
+
+/// <summary>Starts app\Lyricod.exe; with <paramref name="processOut"/>, hands back its process handle.</summary>
+static DWORD StartApp(const std::wstring& root, const wchar_t* arguments, HANDLE* processOut = nullptr)
 {
     const std::wstring directory = root + L"app";
     const std::wstring executable = directory + L"\\Lyricod.exe";
@@ -99,7 +106,8 @@ static DWORD StartApp(const std::wstring& root, const wchar_t* arguments)
     // Let Lyricod bring its own windows to the front, as it could if started directly.
     AllowSetForegroundWindow(process.dwProcessId);
     CloseHandle(process.hThread);
-    CloseHandle(process.hProcess);
+    if (processOut) *processOut = process.hProcess;
+    else CloseHandle(process.hProcess);
     return ERROR_SUCCESS;
 }
 
@@ -215,11 +223,34 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
         Move(oldLauncher, launcher);
     Move(root + L"README.txt.new", root + L"README.txt", MOVEFILE_REPLACE_EXISTING);
 
-    if (DWORD error = StartApp(root, L""))
+    // Start the new Lyricod and wait for it to say it's up; the old copy stays until then.
+    const std::wstring signalName = L"Local\\Lyricod-UpdateStarted-" + std::to_wstring(GetCurrentProcessId()) + L"-" + stamp;
+    HANDLE started = CreateEventW(nullptr, TRUE, FALSE, signalName.c_str());
+    if (started) SetEnvironmentVariableW(SignalVariable, signalName.c_str());
+    HANDLE process = nullptr;
+    DWORD error = StartApp(root, L"", started ? &process : nullptr);
+    if (started) SetEnvironmentVariableW(SignalVariable, nullptr);
+    if (error == ERROR_SUCCESS && started && process)
     {
-        // The new app won't start: put the old one back rather than leave a Lyricod that can't run.
+        HANDLE waits[] = { started, process };
+        const DWORD waited = WaitForMultipleObjects(2, waits, FALSE, 90000);
+        if (waited != WAIT_OBJECT_0)
+        {
+            // It quit, crashed or hung before it was up.
+            if (waited == WAIT_TIMEOUT) TerminateProcess(process, 1);
+            WaitForSingleObject(process, 10000);
+            error = waited == WAIT_TIMEOUT ? ERROR_TIMEOUT : ERROR_PROCESS_ABORTED;
+        }
+    }
+    if (process) CloseHandle(process);
+    if (started) CloseHandle(started);
+
+    if (error != ERROR_SUCCESS)
+    {
+        // Put the old app and launcher back and start them, rather than leave a Lyricod that can't run.
         if (Move(app, fresh) == ERROR_SUCCESS && Move(old, app) == ERROR_SUCCESS)
         {
+            if (Exists(oldLauncher) && Move(launcher, self) == ERROR_SUCCESS) Move(oldLauncher, launcher);
             ShowUpdateError(error);
             StartApp(root, L"");
         }

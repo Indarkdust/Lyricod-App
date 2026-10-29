@@ -127,6 +127,21 @@ public sealed class UpdateDownloadTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_directory, "settings.json")));
     }
 
+    [Fact]
+    public void CleanupRightAfterAnUpdateLeavesTheOldCopyToTheLauncher()
+    {
+        Directory.CreateDirectory(Path.Combine(_directory, "app.old-777", "x"));
+        File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.old-777"), "old launcher");
+        Directory.CreateDirectory(Path.Combine(_directory, "app.new"));
+        PortableUpdate.Cleanup(_directory, Path.Combine(_directory, "Updates"), new(1, 2, 3), keepOldCopies: true);
+        Assert.True(Directory.Exists(Path.Combine(_directory, "app.old-777")));
+        Assert.True(File.Exists(Path.Combine(_directory, "Lyricod.exe.old-777")));
+        Assert.False(Directory.Exists(Path.Combine(_directory, "app.new")));
+        PortableUpdate.Cleanup(_directory, Path.Combine(_directory, "Updates"), new(1, 2, 3));
+        Assert.False(Directory.Exists(Path.Combine(_directory, "app.old-777")));
+        Assert.False(File.Exists(Path.Combine(_directory, "Lyricod.exe.old-777")));
+    }
+
     public void Dispose() { if (Directory.Exists(_directory)) Directory.Delete(_directory, true); }
 
     sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler

@@ -45,6 +45,7 @@ public partial class App : Application
         // One Lyricod at a time.
         if (!AppInstance.FindOrRegisterForKey("Lyricod").IsCurrent)
         {
+            Platform.UpdateHealth.SignalStarted(); // it runs: another Lyricod is just already open
             Exit();
             return;
         }
@@ -71,6 +72,8 @@ public partial class App : Application
         _tray.ContextMenu += (_, e) => e.Flyout = BuildMenu();
         _tray.Selected += (_, _) => _panel.Toggle();
         _tray.IsVisible = true;
+        // After a portable update: the windows and tray icon are up, so the launcher can let the old copy go.
+        Platform.UpdateHealth.SignalStarted();
         _model.Changed += change =>
         {
             if (change.HasFlag(PlaybackModel.Change.Track) && _tray != null)

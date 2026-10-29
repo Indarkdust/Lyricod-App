@@ -6,6 +6,18 @@ namespace Lyricod.Platform;
 static partial class Win32
 {
     public const uint WM_HOTKEY = 0x0312;
+    public const uint EVENT_MODIFY_STATE = 0x0002;
+
+    [LibraryImport("kernel32.dll", EntryPoint = "OpenEventW", StringMarshalling = StringMarshalling.Utf16, SetLastError = true)]
+    public static partial nint OpenEvent(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, string name);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetEvent(nint handle);
+
+    [LibraryImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool CloseHandle(nint handle);
     public const uint MOD_NOREPEAT = 0x4000;
 
     [LibraryImport("user32.dll", SetLastError = true)]

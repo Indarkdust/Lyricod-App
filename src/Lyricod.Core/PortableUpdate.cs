@@ -56,17 +56,23 @@ public static class PortableUpdate
         }
     }
 
-    public static void Cleanup(string? portableRoot, string updatesDirectory, Version runningVersion)
+    /// <param name="keepOldCopies">Right after an update, while the launcher still keeps the old app and
+    /// launcher (app.old-…, Lyricod.exe.old-…) in case this one doesn't start: leave them to it.</param>
+    public static void Cleanup(string? portableRoot, string updatesDirectory, Version runningVersion, bool keepOldCopies = false)
     {
         // Startup cleanup must never prevent the app from opening.
         try
         {
             if (portableRoot != null)
             {
-                foreach (string name in StagedNames.Concat(["app.old", "Lyricod.exe.old"])) TryDelete(Path.Combine(portableRoot, name));
-                // The launcher moves the old app and launcher aside as app.old-<n> and Lyricod.exe.old-<n>.
-                foreach (string directory in Directory.EnumerateDirectories(portableRoot, "app.old-*")) TryDelete(directory);
-                foreach (string file in Directory.EnumerateFiles(portableRoot, "Lyricod.exe.old-*")) TryDelete(file);
+                foreach (string name in StagedNames) TryDelete(Path.Combine(portableRoot, name));
+                if (!keepOldCopies)
+                {
+                    foreach (string name in new[] { "app.old", "Lyricod.exe.old" }) TryDelete(Path.Combine(portableRoot, name));
+                    // The launcher moves the old app and launcher aside as app.old-<n> and Lyricod.exe.old-<n>.
+                    foreach (string directory in Directory.EnumerateDirectories(portableRoot, "app.old-*")) TryDelete(directory);
+                    foreach (string file in Directory.EnumerateFiles(portableRoot, "Lyricod.exe.old-*")) TryDelete(file);
+                }
             }
             if (Directory.Exists(updatesDirectory))
                 foreach (string directory in Directory.EnumerateDirectories(updatesDirectory))

@@ -29,7 +29,8 @@ public sealed partial class UpdateChecker : IDisposable
     {
         _settings = settings;
         _queue = queue;
-        _cleanup = Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0)));
+        bool keepOldCopies = Platform.UpdateHealth.Pending; // the launcher removes them once this one is up
+        _cleanup = Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0), keepOldCopies));
         _timer = queue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(10);
         _timer.Tick += async (_, _) =>
