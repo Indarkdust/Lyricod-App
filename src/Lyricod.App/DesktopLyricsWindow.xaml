@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The floating lyric strip over every app: the line being sung, its sung part sweeping in the
+     sung colour word by word, and a smaller line under it. Click-through while locked. -->
+<Window
+    x:Class="Lyricod.DesktopLyricsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Lyricod Desktop Lyrics">
+
+    <Grid x:Name="Root" Background="Transparent" PointerPressed="OnPointerPressed">
+        <!-- While unlocked: the strip's bounds, so it's clear what can be dragged. -->
+        <Border x:Name="MoveFrame" CornerRadius="16" Visibility="Collapsed"
+                Background="#B0202024" BorderBrush="#40FFFFFF" BorderThickness="1">
+            <TextBlock x:Name="MoveHint" FontSize="11" Foreground="#B0FFFFFF" Margin="0,6,12,0"
+                       HorizontalAlignment="Right" VerticalAlignment="Top" />
+        </Border>
+
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="4" Padding="24,10">
+            <!-- The text, then over it the sung colour in the text's shape, fading out over a soft
+                 edge where the singing is. The shadow hosts sit underneath and carry composition
+                 drop shadows. -->
+            <Grid x:Name="LineHost" HorizontalAlignment="Center">
+                <Grid.RenderTransform>
+                    <ScaleTransform x:Name="LineScale" />
+                </Grid.RenderTransform>
+                <Grid x:Name="LineShadow" />
+                <TextBlock x:Name="Dim" Foreground="White" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                           HorizontalAlignment="Left" IsHitTestVisible="False" />
+                <Grid x:Name="LitHost" IsHitTestVisible="False" />
+            </Grid>
+            <Grid HorizontalAlignment="Center">
+                <Grid x:Name="SecondShadow" />
+                <TextBlock x:Name="Second" Foreground="White" TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" IsHitTestVisible="False" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Measures text in the lyric font. Invisible but laid out: a collapsed element measures as zero. -->
+        <TextBlock x:Name="Measurer" Opacity="0" IsHitTestVisible="False"
+                   HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="NoWrap" />
+    </Grid>
+</Window>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Lyricod.ChooseLyricsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Window.SystemBackdrop><MicaBackdrop /></Window.SystemBackdrop>
+    <Grid x:Name="Root" PreviewKeyDown="OnKeyDown">
+        <Grid.Resources>
+            <Style x:Key="Detail" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+            <Style x:Key="PreviewText" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+            </Style>
+            <Style x:Key="TranslationText" TargetType="TextBlock" BasedOn="{StaticResource PreviewText}">
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Style>
+            <Style x:Key="Badge" TargetType="Border">
+                <Setter Property="CornerRadius" Value="12" />
+                <Setter Property="Padding" Value="6,2" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+            </Style>
+            <DataTemplate x:Key="ResultTemplate">
+                <Grid Padding="0,4" ColumnSpacing="8" HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3">
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                            <Border Grid.Column="1" Style="{StaticResource Badge}" Background="{ThemeResource AccentFillColorDefaultBrush}" Visibility="{Binding InUse}">
+                                <TextBlock Text="{Binding InUseText}" FontSize="10" Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource Badge}" Background="{ThemeResource SystemFillColorSuccessBackgroundBrush}" Visibility="{Binding Best}">
+                                <TextBlock Text="{Binding BestText}" FontSize="10" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                            </Border>
+                        </Grid>
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Border BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="8" Padding="5,1" Visibility="{Binding ShowSource}">
+                                <TextBlock Text="{Binding Source}" Style="{StaticResource Detail}" FontSize="10" />
+                            </Border>
+                            <TextBlock Grid.Column="1" Text="{Binding Detail}" Style="{StaticResource Detail}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </Grid>
+                    </StackPanel>
+                    <Grid Grid.Column="1" VerticalAlignment="Top" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding Duration}" Style="{StaticResource Detail}" Visibility="{Binding OtherLength}" />
+                        <TextBlock Text="{Binding Duration}" FontSize="12" Foreground="{ThemeResource SystemFillColorSuccessBrush}" Visibility="{Binding MatchingLength}" />
+                    </Grid>
+                </Grid>
+            </DataTemplate>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid x:Name="TitleBar" Background="Transparent" Margin="0,0,140,0" Padding="16,0,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                <Image Source="ms-appx:///Assets/Lyricod-256.png" Width="16" Height="16" />
+                <TextBlock x:Name="TitleText" FontSize="12" VerticalAlignment="Center" />
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1" Padding="16" ColumnSpacing="12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="48" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <Border Width="48" Height="48" CornerRadius="10" Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                <Image x:Name="Cover" Stretch="UniformToFill" />
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                <TextBlock x:Name="SongTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="SongDetail" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <Border x:Name="PinnedBadge" Grid.Column="2" CornerRadius="14" Padding="10,5" Background="#26FF9500" VerticalAlignment="Center" Visibility="Collapsed">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <FontIcon Glyph="&#xE718;" FontSize="12" Foreground="#FF9500" />
+                    <TextBlock x:Name="PinnedText" FontSize="12" FontWeight="SemiBold" Foreground="#FF9500" />
+                </StackPanel>
+            </Border>
+        </Grid>
+        <Border Grid.Row="2" BorderThickness="0,1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="390" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Grid x:Name="SearchColumn">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                    <Grid Margin="12,12,12,0" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBox x:Name="Query" CornerRadius="16" Padding="32,5,12,5" />
+                        <FontIcon Glyph="&#xE721;" FontSize="14" HorizontalAlignment="Left" Margin="12,0,0,0" IsHitTestVisible="False" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ProgressRing x:Name="SearchProgress" Grid.Column="1" Width="20" Height="20" IsActive="False" Visibility="Collapsed" />
+                    </Grid>
+                    <Grid x:Name="SourceFilters" Grid.Row="1" Margin="12" ColumnSpacing="2">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <ToggleButton x:Name="AllFilter" Click="OnFilter" IsChecked="True" HorizontalAlignment="Stretch" Padding="4,6" />
+                        <ToggleButton x:Name="NeteaseFilter" Grid.Column="1" Click="OnFilter" HorizontalAlignment="Stretch" Padding="4,6" />
+                        <ToggleButton x:Name="QqFilter" Grid.Column="2" Click="OnFilter" HorizontalAlignment="Stretch" Padding="4,6" />
+                        <ToggleButton x:Name="LrclibFilter" Grid.Column="3" Click="OnFilter" HorizontalAlignment="Stretch" Padding="4,6" />
+                    </Grid>
+                    <ListView x:Name="Results" Grid.Row="2" Margin="6,0,6,6" SelectionMode="Single" SelectionChanged="OnSelectionChanged" ItemTemplate="{StaticResource ResultTemplate}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /></Style>
+                        </ListView.ItemContainerStyle>
+                    </ListView>
+                    <StackPanel x:Name="EmptyResults" Grid.Row="2" Margin="24" Spacing="8" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE8FD;" FontSize="28" Opacity="0.6" />
+                        <TextBlock x:Name="EmptyTitle" FontSize="18" FontWeight="SemiBold" TextAlignment="Center" />
+                        <TextBlock x:Name="EmptyHint" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                </Grid>
+                <Border Grid.Column="1" BorderThickness="1,0,0,0" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+                    <Grid>
+                        <ScrollViewer x:Name="PreviewScroll" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                            <StackPanel x:Name="PreviewLines" Padding="20" Spacing="12" />
+                        </ScrollViewer>
+                        <ProgressRing x:Name="PreviewProgress" Width="28" Height="28" IsActive="False" Visibility="Collapsed" />
+                        <StackPanel x:Name="PreviewMessage" Margin="24" Spacing="8" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE8A4;" FontSize="28" Opacity="0.6" />
+                            <TextBlock x:Name="PreviewTitle" FontSize="18" FontWeight="SemiBold" TextAlignment="Center" />
+                            <TextBlock x:Name="PreviewHint" TextWrapping="Wrap" TextAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
+        <Grid Grid.Row="3" Padding="16" ColumnSpacing="8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <Button x:Name="AutomaticButton" HorizontalAlignment="Left" Click="OnAutomatic" />
+            <Button x:Name="CancelButton" Grid.Column="1" Click="OnCancel" />
+            <Button x:Name="UseButton" Grid.Column="2" Click="OnUse" Style="{StaticResource AccentButtonStyle}" IsEnabled="False" />
+        </Grid>
+    </Grid>
+</Window>

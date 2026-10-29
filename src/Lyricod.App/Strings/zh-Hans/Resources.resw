@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="NothingPlaying" xml:space="preserve"><value>没有在播放</value></data>
+  <data name="Searching" xml:space="preserve"><value>正在查找歌词…</value></data>
+  <data name="NoLyrics" xml:space="preserve"><value>未找到歌词</value></data>
+  <data name="NoLyricsDetail" xml:space="preserve"><value>手动搜索并选择正确的歌曲。</value></data>
+  <data name="DesktopLyrics" xml:space="preserve"><value>桌面歌词</value></data>
+  <data name="LockDesktopLyrics" xml:space="preserve"><value>锁定桌面歌词</value></data>
+  <data name="Quit" xml:space="preserve"><value>退出 Lyricod</value></data>
+  <data name="MoveHint" xml:space="preserve"><value>拖动以移动 · 在托盘图标中重新锁定</value></data>
+  <data name="Version" xml:space="preserve"><value>版本 {0}</value></data>
+  <data name="Tagline" xml:space="preserve"><value>在桌面上显示同步歌词。</value></data>
+  <data name="LyricsHeader" xml:space="preserve"><value>歌词</value></data>
+  <data name="NetEase" xml:space="preserve"><value>网易云音乐</value></data>
+  <data name="QQMusic" xml:space="preserve"><value>QQ音乐</value></data>
+  <data name="SourceDetail" xml:space="preserve"><value>歌词、翻译和逐字时间。</value></data>
+  <data name="LyricsHelperDetail" xml:space="preserve"><value>QQ音乐逐字歌词的解密代码移植自 Lyrics Helper，采用 Apache License 2.0 授权。</value></data>
+  <data name="LrclibDetail" xml:space="preserve"><value>开放、由社区维护的同步歌词。</value></data>
+  <data name="LyricsRights" xml:space="preserve"><value>歌词版权归各自的权利人所有，仅供个人使用。</value></data>
+  <data name="FontHeader" xml:space="preserve"><value>字体</value></data>
+  <data name="MiSansName" xml:space="preserve"><value>MiSans（小米）</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>歌词默认使用微软雅黑。你可以在「设置 › 歌词」中下载小米 MiSans 字体。</value></data>
+  <data name="ViewLicence" xml:space="preserve"><value>查看 MiSans 许可协议</value></data>
+  <data name="BuiltWith" xml:space="preserve"><value>使用的组件</value></data>
+  <data name="WinUIExDetail" xml:space="preserve"><value>托盘图标和窗口辅助功能。MIT 许可证。</value></data>
+  <data name="ToolGoodDetail" xml:space="preserve"><value>拼音及繁简中文转换。Apache License 2.0。</value></data>
+  <data name="PlatformNote" xml:space="preserve"><value>基于 Microsoft 的 .NET 和 Windows App SDK 构建。</value></data>
+  <data name="Trademarks" xml:space="preserve"><value>商标</value></data>
+  <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯或小米没有关联，也未获得其认可或赞助。</value></data>
+  <data name="LyricsWindowMenu" xml:space="preserve"><value>歌词窗口…</value></data>
+  <data name="SettingsMenu" xml:space="preserve"><value>设置…</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>Lyricod 设置</value></data>
+  <data name="LyricsWindowTitle" xml:space="preserve"><value>歌词窗口</value></data>
+  <data name="PaneGeneral" xml:space="preserve"><value>通用</value></data>
+  <data name="PaneDesktop" xml:space="preserve"><value>桌面歌词</value></data>
+  <data name="PaneIsland" xml:space="preserve"><value>歌词岛</value></data>
+  <data name="PaneLyricsWindow" xml:space="preserve"><value>歌词窗口</value></data>
+  <data name="PaneLyrics" xml:space="preserve"><value>歌词</value></data>
+  <data name="PaneAbout" xml:space="preserve"><value>关于</value></data>
+  <data name="OpenAtStartup" xml:space="preserve"><value>Windows 启动时打开 Lyricod</value></data>
+  <data name="OpenAtStartupDetail" xml:space="preserve"><value>在通知区域中静默启动。</value></data>
+  <data name="PlayerHeading" xml:space="preserve"><value>播放器</value></data>
+  <data name="NowPlayingLabel" xml:space="preserve"><value>正在播放</value></data>
+  <data name="PlayerLabel" xml:space="preserve"><value>来自</value></data>
+  <data name="PlayerNote" xml:space="preserve"><value>Lyricod 跟随 Windows 媒体控件中的播放器（按音量键时出现的面板）：Spotify、Apple Music、QQ音乐、网易云音乐、浏览器中的音乐网站等大多数播放器。同时打开多个时，跟随正在播放的那个。</value></data>
+  <data name="ShowDesktopLyrics" xml:space="preserve"><value>显示桌面歌词</value></data>
+  <data name="LockDetail" xml:space="preserve"><value>锁定时，点击会穿过歌词，不会挡住下面的内容。解锁后可以拖到别处。</value></data>
+  <data name="PositionLabel" xml:space="preserve"><value>位置</value></data>
+  <data name="ResetPosition" xml:space="preserve"><value>复位到底部居中</value></data>
+  <data name="AppearanceHeading" xml:space="preserve"><value>外观</value></data>
+  <data name="TextSize" xml:space="preserve"><value>字号</value></data>
+  <data name="Points" xml:space="preserve"><value>{0} pt</value></data>
+  <data name="SungColour" xml:space="preserve"><value>已唱颜色</value></data>
+  <data name="CustomColour" xml:space="preserve"><value>自选颜色</value></data>
+  <data name="LayoutLabel" xml:space="preserve"><value>歌词下方</value></data>
+  <data name="LayoutDetail" xml:space="preserve"><value>歌曲有翻译或音译时才会显示。</value></data>
+  <data name="LayoutTranslationOrNext" xml:space="preserve"><value>翻译，没有时显示下一行</value></data>
+  <data name="LayoutTranslation" xml:space="preserve"><value>翻译</value></data>
+  <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>音译，没有时显示翻译</value></data>
+  <data name="LayoutPronunciation" xml:space="preserve"><value>音译</value></data>
+  <data name="LayoutNext" xml:space="preserve"><value>下一行</value></data>
+  <data name="LayoutNone" xml:space="preserve"><value>无（单行）</value></data>
+  <data name="ShowIsland" xml:space="preserve"><value>显示歌词岛</value></data>
+  <data name="ShowIslandDetail" xml:space="preserve"><value>屏幕顶部的胶囊，显示正在唱的歌词。播放时出现；未展开时点击会穿过它。</value></data>
+  <data name="OnHover" xml:space="preserve"><value>指针悬停时</value></data>
+  <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
+  <data name="HoverNothing" xml:space="preserve"><value>无操作</value></data>
+  <data name="AlbumColour" xml:space="preserve"><value>按专辑封面为歌词着色</value></data>
+  <data name="AlbumColourDetail" xml:space="preserve"><value>关闭时使用桌面歌词的已唱颜色。</value></data>
+  <data name="Open" xml:space="preserve"><value>打开</value></data>
+  <data name="LyricsWindowLabel" xml:space="preserve"><value>歌词窗口</value></data>
+  <data name="LyricsWindowDetail" xml:space="preserve"><value>在专辑封面上显示整首歌词。按 F11 全屏，按空格键播放或暂停。</value></data>
+  <data name="BackgroundLabel" xml:space="preserve"><value>背景</value></data>
+  <data name="BackgroundArtwork" xml:space="preserve"><value>流动的专辑封面</value></data>
+  <data name="BackgroundColour" xml:space="preserve"><value>专辑颜色</value></data>
+  <data name="BackgroundDark" xml:space="preserve"><value>深色</value></data>
+  <data name="TextHeading" xml:space="preserve"><value>文字</value></data>
+  <data name="SizeAutomatic" xml:space="preserve"><value>自动</value></data>
+  <data name="SizeSmall" xml:space="preserve"><value>小</value></data>
+  <data name="SizeMedium" xml:space="preserve"><value>中</value></data>
+  <data name="SizeLarge" xml:space="preserve"><value>大</value></data>
+  <data name="ShowTranslations" xml:space="preserve"><value>显示翻译</value></data>
+  <data name="ShowPronunciation" xml:space="preserve"><value>显示音译</value></data>
+  <data name="CentreLines" xml:space="preserve"><value>居中显示</value></data>
+  <data name="TranslationsTip" xml:space="preserve"><value>显示或隐藏翻译</value></data>
+  <data name="PronunciationTip" xml:space="preserve"><value>显示或隐藏音译</value></data>
+  <data name="FullScreenTip" xml:space="preserve"><value>全屏 (F11)</value></data>
+  <data name="Previous" xml:space="preserve"><value>上一首</value></data>
+  <data name="PlayPause" xml:space="preserve"><value>播放/暂停</value></data>
+  <data name="CantSeek" xml:space="preserve"><value>无法在 Lyricod 中调整这个播放器的进度。</value></data>
+  <data name="Next" xml:space="preserve"><value>下一首</value></data>
+  <data name="TimingHeading" xml:space="preserve"><value>时间</value></data>
+  <data name="AllSongs" xml:space="preserve"><value>所有歌曲</value></data>
+  <data name="ThisSong" xml:space="preserve"><value>本歌曲</value></data>
+  <data name="OffsetEarlier" xml:space="preserve"><value>歌词提前</value></data>
+  <data name="OffsetLater" xml:space="preserve"><value>歌词推后</value></data>
+  <data name="Reset" xml:space="preserve"><value>重置</value></data>
+  <data name="TimingNote" xml:space="preserve"><value>正数让歌词提前，负数让歌词推后。前者用于所有歌曲；后者只用于正在播放的歌曲，并会记住。</value></data>
+  <data name="DisplayHeading" xml:space="preserve"><value>显示</value></data>
+  <data name="PronunciationFor" xml:space="preserve"><value>音译语言</value></data>
+  <data name="PronunciationForDetail" xml:space="preserve"><value>用拉丁字母标注的读音：罗马音、韩语罗马字或拼音。</value></data>
+  <data name="Japanese" xml:space="preserve"><value>日语</value></data>
+  <data name="Korean" xml:space="preserve"><value>韩语</value></data>
+  <data name="Chinese" xml:space="preserve"><value>中文</value></data>
+  <data name="ShowCredits" xml:space="preserve"><value>显示词曲作者信息</value></data>
+  <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词来源自带的罗马音；没有时由 Lyricod 用 Windows 的日语读音功能生成，部分汉字可能读错。桌面歌词、歌词岛和歌词窗口各自选择是否显示翻译和音译。</value></data>
+  <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语罗马音来自歌词来源（如有）。如需 Lyricod 为其他歌曲生成，请在 Windows 设置 › 时间和语言 › 语言和区域 中添加日语。</value></data>
+  <data name="SourcesHeading" xml:space="preserve"><value>来源</value></data>
+  <data name="CurrentSong" xml:space="preserve"><value>当前歌曲</value></data>
+  <data name="SearchAgain" xml:space="preserve"><value>重新搜索</value></data>
+  <data name="KindWords" xml:space="preserve"><value>逐字</value></data>
+  <data name="KindLines" xml:space="preserve"><value>逐行</value></data>
+  <data name="KindPlain" xml:space="preserve"><value>未同步</value></data>
+  <data name="SavedLyrics" xml:space="preserve"><value>已保存的歌词</value></data>
+  <data name="SavedLyricsDetail" xml:space="preserve"><value>首次搜索后会保存歌词，下次即可立即载入。</value></data>
+  <data name="OneSong" xml:space="preserve"><value>1 首歌</value></data>
+  <data name="NSongs" xml:space="preserve"><value>{0} 首歌</value></data>
+  <data name="Clear" xml:space="preserve"><value>清除</value></data>
+  <data name="PaneShortcuts" xml:space="preserve"><value>快捷键</value></data>
+  <data name="ShortcutPlayback" xml:space="preserve"><value>播放</value></data>
+  <data name="ShortcutShow" xml:space="preserve"><value>显示</value></data>
+  <data name="ShortcutPlayPause" xml:space="preserve"><value>播放/暂停</value></data>
+  <data name="ShortcutNext" xml:space="preserve"><value>下一首</value></data>
+  <data name="ShortcutPrevious" xml:space="preserve"><value>上一首</value></data>
+  <data name="ShortcutToggleDesktop" xml:space="preserve"><value>显示/隐藏桌面歌词</value></data>
+  <data name="ShortcutToggleIsland" xml:space="preserve"><value>显示/隐藏歌词岛</value></data>
+  <data name="ShortcutToggleLyricsWindow" xml:space="preserve"><value>打开/关闭歌词窗口</value></data>
+  <data name="ShortcutLyricsEarlier" xml:space="preserve"><value>歌词提前 0.5 秒</value></data>
+  <data name="ShortcutLyricsLater" xml:space="preserve"><value>歌词推后 0.5 秒</value></data>
+  <data name="ShortcutTimingNote" xml:space="preserve"><value>调整正在播放的歌曲的时间，与“歌词”设置中的“本歌曲”相同。</value></data>
+  <data name="ShortcutNote" xml:space="preserve"><value>快捷键在任何应用中都有效。单击一个按钮后按下按键，需包含 Ctrl、Alt 或 Win，或单独使用功能键。按 Esc 取消，按 Backspace 或 Delete 清除。如果显示为不可用，说明 Windows 或其他应用正在使用它。</value></data>
+  <data name="ShortcutRecord" xml:space="preserve"><value>录制快捷键</value></data>
+  <data name="ShortcutPressKeys" xml:space="preserve"><value>请按键…</value></data>
+  <data name="ShortcutInvalid" xml:space="preserve"><value>请使用 Ctrl、Alt 或 Win，或使用功能键。</value></data>
+  <data name="ShortcutDuplicate" xml:space="preserve"><value>已用于“{0}”。</value></data>
+  <data name="ShortcutUnavailable" xml:space="preserve"><value>不可用。Windows 或其他应用可能已使用此快捷键。</value></data>
+  <data name="KeyCtrl" xml:space="preserve"><value>Ctrl</value></data>
+  <data name="KeyAlt" xml:space="preserve"><value>Alt</value></data>
+  <data name="KeyWin" xml:space="preserve"><value>Win</value></data>
+  <data name="KeyShift" xml:space="preserve"><value>Shift</value></data>
+  <data name="KeyNumpad" xml:space="preserve"><value>数字键盘 </value></data>
+  <data name="KeyBackspace" xml:space="preserve"><value>Backspace</value></data>
+  <data name="KeyTab" xml:space="preserve"><value>Tab</value></data>
+  <data name="KeyEnter" xml:space="preserve"><value>Enter</value></data>
+  <data name="KeyPause" xml:space="preserve"><value>Pause</value></data>
+  <data name="KeyCapsLock" xml:space="preserve"><value>Caps Lock</value></data>
+  <data name="KeyEsc" xml:space="preserve"><value>Esc</value></data>
+  <data name="KeySpace" xml:space="preserve"><value>空格</value></data>
+  <data name="KeyPageUp" xml:space="preserve"><value>Page Up</value></data>
+  <data name="KeyPageDown" xml:space="preserve"><value>Page Down</value></data>
+  <data name="KeyEnd" xml:space="preserve"><value>End</value></data>
+  <data name="KeyHome" xml:space="preserve"><value>Home</value></data>
+  <data name="KeyInsert" xml:space="preserve"><value>Insert</value></data>
+  <data name="KeyDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="BackgroundStillArtwork" xml:space="preserve"><value>静止的专辑封面</value></data>
+  <data name="BlurDistant" xml:space="preserve"><value>模糊远离当前句的歌词</value></data>
+  <data name="PlaySomething" xml:space="preserve"><value>在播放器中播放歌曲</value></data>
+  <data name="ChooseLyricsTip" xml:space="preserve"><value>选择歌词…</value></data>
+  <data name="SettingsTip" xml:space="preserve"><value>设置</value></data>
+  <data name="NoneFoundChoose" xml:space="preserve"><value>未找到 · 去选择…</value></data>
+  <data name="LyricsEarlierBy" xml:space="preserve"><value>歌词提前 {0} 秒</value></data>
+  <data name="LyricsLaterBy" xml:space="preserve"><value>歌词延后 {0} 秒</value></data>
+  <data name="MatchesTheSong" xml:space="preserve"><value>与歌曲同步</value></data>
+  <data name="AnimationLabel" xml:space="preserve"><value>动画</value></data>
+  <data name="AnimationDetail" xml:space="preserve"><value>歌词岛音量条的流畅度。越流畅越耗电。</value></data>
+  <data name="FrameRateLow" xml:space="preserve"><value>省电（15 fps）</value></data>
+  <data name="FrameRateBalanced" xml:space="preserve"><value>均衡（30 fps）</value></data>
+  <data name="FrameRateSmooth" xml:space="preserve"><value>流畅（60 fps）</value></data>
+  <data name="LanguageLabel" xml:space="preserve"><value>语言</value></data>
+  <data name="LanguageSystem" xml:space="preserve"><value>跟随系统</value></data>
+  <data name="RestartNow" xml:space="preserve"><value>立即重新启动</value></data>
+  <data name="RestartToChangeLanguage" xml:space="preserve"><value>需要重新启动 Lyricod 才能切换语言。</value></data>
+  <data name="FollowLabel" xml:space="preserve"><value>跟随</value></data>
+  <data name="FollowAuto" xml:space="preserve"><value>正在播放的播放器</value></data>
+  <data name="FollowDetail" xml:space="preserve"><value>播放器播放过歌曲后会显示在这里。</value></data>
+  <data name="HoverHide" xml:space="preserve"><value>隐藏，以便使用下方的内容</value></data>
+  <data name="AudioBars" xml:space="preserve"><value>音量条随音乐跳动</value></data>
+  <data name="AudioBarsDetail" xml:space="preserve"><value>Lyricod 只监听你的播放器，不会录制或发送任何内容。</value></data>
+  <data name="HideWhenPaused" xml:space="preserve"><value>暂停时隐藏</value></data>
+  <data name="HideWhenPausedDetail" xml:space="preserve"><value>音乐停止片刻后歌词岛会淡出，再次播放时出现。</value></data>
+  <data name="StyleHeading" xml:space="preserve"><value>样式</value></data>
+  <data name="IslandSize" xml:space="preserve"><value>大小</value></data>
+  <data name="SizeExtraLarge" xml:space="preserve"><value>特大</value></data>
+  <data name="IslandMaxWidth" xml:space="preserve"><value>最大宽度</value></data>
+  <data name="IslandMaxWidthDetail" xml:space="preserve"><value>长句会分段显示，宽度上限随歌词岛大小调整。</value></data>
+  <data name="IslandWidthNarrow" xml:space="preserve"><value>窄</value></data>
+  <data name="IslandWidthStandard" xml:space="preserve"><value>标准</value></data>
+  <data name="IslandWidthWide" xml:space="preserve"><value>宽</value></data>
+  <data name="FontWeight" xml:space="preserve"><value>字重</value></data>
+  <data name="WeightRegular" xml:space="preserve"><value>常规</value></data>
+  <data name="WeightMedium" xml:space="preserve"><value>中等</value></data>
+  <data name="WeightSemibold" xml:space="preserve"><value>中粗</value></data>
+  <data name="WeightBold" xml:space="preserve"><value>粗体</value></data>
+  <data name="WeightHeavy" xml:space="preserve"><value>特粗</value></data>
+  <data name="SungLyrics" xml:space="preserve"><value>已唱歌词</value></data>
+  <data name="EffectSweep" xml:space="preserve"><value>颜色扫过</value></data>
+  <data name="EffectGlow" xml:space="preserve"><value>发光扫过</value></data>
+  <data name="EffectLine" xml:space="preserve"><value>整行亮起</value></data>
+  <data name="NextLine" xml:space="preserve"><value>换行</value></data>
+  <data name="TransitionInstant" xml:space="preserve"><value>立即</value></data>
+  <data name="TransitionSlide" xml:space="preserve"><value>向上滑动</value></data>
+  <data name="TransitionFade" xml:space="preserve"><value>淡入淡出</value></data>
+  <data name="AutoHideControls" xml:space="preserve"><value>指针静止时隐藏控件</value></data>
+  <data name="AutoHideControlsDetail" xml:space="preserve"><value>在宽窗口和全屏中播放时。</value></data>
+
+  <!-- Choose lyrics -->
+  <data name="ChooseLyricsTitle" xml:space="preserve"><value>选择歌词</value></data>
+  <data name="ChooseLyricsButton" xml:space="preserve"><value>选择…</value></data>
+  <data name="ChooseLyricsPinned" xml:space="preserve"><value>手动选择</value></data>
+  <data name="ChooseLyricsSearch" xml:space="preserve"><value>搜索歌词</value></data>
+  <data name="ChooseLyricsAll" xml:space="preserve"><value>全部</value></data>
+  <data name="ChooseLyricsNetease" xml:space="preserve"><value>网易云</value></data>
+  <data name="ChooseLyricsLrclib" xml:space="preserve"><value>LRCLIB</value></data>
+  <data name="ChooseLyricsNoResults" xml:space="preserve"><value>无结果</value></data>
+  <data name="ChooseLyricsSearchHint" xml:space="preserve"><value>试试歌曲原名，或歌手的中文名。</value></data>
+  <data name="ChooseLyricsSelect" xml:space="preserve"><value>选择一个结果</value></data>
+  <data name="ChooseLyricsPreviewHint" xml:space="preserve"><value>歌词会显示在这里，方便你先确认。</value></data>
+  <data name="ChooseLyricsNoLyrics" xml:space="preserve"><value>没有歌词</value></data>
+  <data name="ChooseLyricsNoLyricsHint" xml:space="preserve"><value>这个结果没有歌词。</value></data>
+  <data name="ChooseLyricsTranslated" xml:space="preserve"><value>· 含翻译</value></data>
+  <data name="ChooseLyricsAutomatic" xml:space="preserve"><value>使用自动匹配</value></data>
+  <data name="ChooseLyricsCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="ChooseLyricsUse" xml:space="preserve"><value>使用此歌词</value></data>
+  <data name="ChooseLyricsInUse" xml:space="preserve"><value>使用中</value></data>
+  <data name="ChooseLyricsBest" xml:space="preserve"><value>最佳匹配</value></data>
+  <data name="ChooseLyricsSource" xml:space="preserve"><value>来源</value></data>
+  <data name="ToggleOn" xml:space="preserve"><value>开</value></data>
+  <data name="ToggleOff" xml:space="preserve"><value>关</value></data>
+  <data name="Updates" xml:space="preserve"><value>更新</value></data>
+  <data name="AutomaticUpdates" xml:space="preserve"><value>自动检查更新</value></data>
+  <data name="CheckNow" xml:space="preserve"><value>立即检查</value></data>
+  <data name="CheckingUpdates" xml:space="preserve"><value>正在检查…</value></data>
+  <data name="UpToDate" xml:space="preserve"><value>Lyricod 已是最新版本。</value></data>
+  <data name="CouldntCheckUpdates" xml:space="preserve"><value>无法检查更新。</value></data>
+  <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} 已发布</value></data>
+  <data name="DownloadUpdate" xml:space="preserve"><value>下载…</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>有可用更新：{0}</value></data>
+  <data name="Diagnostics" xml:space="preserve"><value>诊断信息</value></data>
+  <data name="CopyDiagnostics" xml:space="preserve"><value>复制诊断信息</value></data>
+  <data name="ShowDiagnostics" xml:space="preserve"><value>显示</value></data>
+  <data name="HideDiagnostics" xml:space="preserve"><value>隐藏</value></data>
+  <data name="DiagnosticsDetail" xml:space="preserve"><value>报告问题时可附上的详细信息。</value></data>
+  <data name="LyricsFont" xml:space="preserve"><value>歌词字体</value></data>
+  <data name="FontDefault" xml:space="preserve"><value>微软雅黑（默认）</value></data>
+  <data name="FontRecommended" xml:space="preserve"><value>MiSans（推荐）</value></data>
+  <data name="FontSearch" xml:space="preserve"><value>搜索已安装的字体</value></data>
+  <data name="MiSansDownloadDetail" xml:space="preserve"><value>小米 MiSans：拉丁字母、中文和日文采用统一设计。Lyricod 将从小米下载约 15 MB 的字体文件，依据小米的许可协议使用。</value></data>
+  <data name="FontDownload" xml:space="preserve"><value>下载</value></data>
+  <data name="FontRemove" xml:space="preserve"><value>移除 MiSans</value></data>
+  <data name="FontRetry" xml:space="preserve"><value>重试</value></data>
+  <data name="FontDownloading" xml:space="preserve"><value>正在下载 MiSans…</value></data>
+  <data name="FontDownloadingArchive" xml:space="preserve"><value>服务器要求下载完整压缩包（约 228 MB），正在下载…</value></data>
+  <data name="FontDownloadingLicence" xml:space="preserve"><value>正在下载许可协议…</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 MiSans。</value></data>
+  <data name="FontDownloadTimeout" xml:space="preserve"><value>下载超时，请重试。</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 MiSans 文件。请关闭 Lyricod 后重试。</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 MiSans 或将其复制到应用文件夹。歌词将使用微软雅黑显示。</value></data>
+  <data name="FontListFailed" xml:space="preserve"><value>无法读取已安装的字体。</value></data>
+</root>

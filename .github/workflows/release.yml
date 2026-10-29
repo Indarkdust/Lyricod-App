@@ -1,0 +1,102 @@
+name: Windows release
+
+# Publishes Lyricod for Windows for a tag vX.Y.Z:
+# builds x64 and ARM64 installers and zips, and creates a draft GitHub release with the notes in
+# release-notes/X.Y.Z.md. Check the draft, then publish it. The tag must match
+# VERSION.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build downloadable artifacts without creating a release
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and draft the release
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check the version
+        id: version
+        shell: pwsh
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid VERSION: $version" }
+          if ($env:DRY_RUN -ne 'true') {
+            if ($env:RELEASE_REF -ne "refs/tags/v$version") { throw "Tag $env:RELEASE_TAG doesn't match VERSION ($version)" }
+            if (-not (Test-Path "release-notes/$version.md")) { throw "No release-notes/$version.md" }
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+      - name: Test
+        run: dotnet test --project tests/Lyricod.Core.Tests
+      - name: Find Inno Setup 6
+        id: inno
+        shell: pwsh
+        run: |
+          # Hosted Windows images normally include Inno Setup. Fall back to a pinned package.
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --version 6.7.1 --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+          }
+          if (-not (Test-Path $iscc)) { throw "ISCC not found at $iscc" }
+          Write-Host "Using $iscc"
+          "iscc=$iscc" >> $env:GITHUB_OUTPUT
+      - name: Publish, zip and build installers
+        shell: pwsh
+        env:
+          ISCC: ${{ steps.inno.outputs.iscc }}
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          foreach ($target in @(@{ Platform = 'x64'; Rid = 'win-x64'; Name = 'x64' }, @{ Platform = 'ARM64'; Rid = 'win-arm64'; Name = 'arm64' })) {
+            $out = "publish/$($target.Name)/Lyricod"
+            # No debug symbols in what people download.
+            dotnet publish src/Lyricod.App/Lyricod.App.csproj -c Release -p:Platform=$($target.Platform) -r $($target.Rid) -p:DebugType=none -o $out
+            if ($LASTEXITCODE -ne 0) { throw "Publish failed for $($target.Rid)" }
+            ./scripts/package-portable.ps1 -Version $version -Arch $target.Name -PublishFolder $out -OutputFolder publish
+            # Resolve the payload path: ISCC otherwise resolves paths relative to the script.
+            $source = (Resolve-Path $out).Path
+            & $env:ISCC "/DAppVersion=$version" "/DArch=$($target.Name)" "/DSourceDir=$source" installer/Lyricod.iss
+            if ($LASTEXITCODE -ne 0) { throw "Installer build failed for $($target.Name)" }
+            if (-not (Test-Path "publish/Lyricod-$version-windows-$($target.Name)-setup.exe")) {
+              throw "Installer missing for $($target.Name)"
+            }
+          }
+          Get-ChildItem publish/* -Include *.zip, *-setup.exe | Select-Object Name, Length
+      - name: Upload downloads for testing
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        uses: actions/upload-artifact@v7
+        with:
+          name: Lyricod-${{ steps.version.outputs.version }}-windows
+          path: |
+            publish/*.zip
+            publish/*-setup.exe
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
+      - name: Draft the release
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry_run
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $assets = (Get-ChildItem publish/* -Include *.zip, *-setup.exe).FullName
+          if ($assets.Count -ne 4) { throw "Expected two zips and two installers, found $($assets.Count) assets" }
+          gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "Lyricod for Windows $version" --notes-file "release-notes/$version.md"
+          if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed' }

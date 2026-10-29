@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="NothingPlaying" xml:space="preserve"><value>Nothing playing</value></data>
+  <data name="Searching" xml:space="preserve"><value>Searching for lyrics…</value></data>
+  <data name="NoLyrics" xml:space="preserve"><value>No lyrics found</value></data>
+  <data name="NoLyricsDetail" xml:space="preserve"><value>Search for them yourself and pick the right song.</value></data>
+  <data name="DesktopLyrics" xml:space="preserve"><value>Desktop lyrics</value></data>
+  <data name="LockDesktopLyrics" xml:space="preserve"><value>Lock desktop lyrics</value></data>
+  <data name="Quit" xml:space="preserve"><value>Quit Lyricod</value></data>
+  <data name="MoveHint" xml:space="preserve"><value>Drag to move · lock it again from the tray icon</value></data>
+  <data name="Version" xml:space="preserve"><value>Version {0}</value></data>
+  <data name="Tagline" xml:space="preserve"><value>Synced lyrics on your desktop.</value></data>
+  <data name="LyricsHeader" xml:space="preserve"><value>Lyrics</value></data>
+  <data name="NetEase" xml:space="preserve"><value>NetEase Cloud Music</value></data>
+  <data name="QQMusic" xml:space="preserve"><value>QQ Music</value></data>
+  <data name="SourceDetail" xml:space="preserve"><value>Lyrics, translations and word-by-word timing.</value></data>
+  <data name="LyricsHelperDetail" xml:space="preserve"><value>QQ Music word-by-word lyrics are decrypted with code ported from Lyrics Helper, licensed under the Apache License 2.0.</value></data>
+  <data name="LrclibDetail" xml:space="preserve"><value>Open, community-maintained synced lyrics.</value></data>
+  <data name="LyricsRights" xml:space="preserve"><value>Lyrics are the property of their respective copyright holders and are shown for personal use only.</value></data>
+  <data name="FontHeader" xml:space="preserve"><value>Font</value></data>
+  <data name="MiSansName" xml:space="preserve"><value>MiSans by Xiaomi</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>Lyrics use Microsoft YaHei by default. MiSans by Xiaomi can be downloaded in Settings › Lyrics.</value></data>
+  <data name="ViewLicence" xml:space="preserve"><value>View the MiSans licence</value></data>
+  <data name="BuiltWith" xml:space="preserve"><value>Built With</value></data>
+  <data name="WinUIExDetail" xml:space="preserve"><value>Tray icon and window helpers. MIT License.</value></data>
+  <data name="ToolGoodDetail" xml:space="preserve"><value>Pinyin and Traditional–Simplified Chinese conversion. Apache License 2.0.</value></data>
+  <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
+  <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
+  <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent or Xiaomi.</value></data>
+  <data name="LyricsWindowMenu" xml:space="preserve"><value>Lyrics window…</value></data>
+  <data name="SettingsMenu" xml:space="preserve"><value>Settings…</value></data>
+  <data name="SettingsTitle" xml:space="preserve"><value>Lyricod settings</value></data>
+  <data name="LyricsWindowTitle" xml:space="preserve"><value>Lyrics window</value></data>
+  <data name="PaneGeneral" xml:space="preserve"><value>General</value></data>
+  <data name="PaneDesktop" xml:space="preserve"><value>Desktop lyrics</value></data>
+  <data name="PaneIsland" xml:space="preserve"><value>Lyricod Island</value></data>
+  <data name="PaneLyricsWindow" xml:space="preserve"><value>Lyrics window</value></data>
+  <data name="PaneLyrics" xml:space="preserve"><value>Lyrics</value></data>
+  <data name="PaneAbout" xml:space="preserve"><value>About</value></data>
+  <data name="OpenAtStartup" xml:space="preserve"><value>Open Lyricod when Windows starts</value></data>
+  <data name="OpenAtStartupDetail" xml:space="preserve"><value>It starts quietly in the notification area.</value></data>
+  <data name="PlayerHeading" xml:space="preserve"><value>Player</value></data>
+  <data name="NowPlayingLabel" xml:space="preserve"><value>Now playing</value></data>
+  <data name="PlayerLabel" xml:space="preserve"><value>From</value></data>
+  <data name="PlayerNote" xml:space="preserve"><value>Lyricod follows the player in Windows' media controls (the panel that appears with the volume keys): Spotify, Apple Music, QQ Music, NetEase Cloud Music, music sites in a browser and most others. With several open, it follows the one that's playing.</value></data>
+  <data name="ShowDesktopLyrics" xml:space="preserve"><value>Show desktop lyrics</value></data>
+  <data name="LockDetail" xml:space="preserve"><value>While locked, the lyrics are click-through and never block what's underneath. Unlock to drag them somewhere else.</value></data>
+  <data name="PositionLabel" xml:space="preserve"><value>Position</value></data>
+  <data name="ResetPosition" xml:space="preserve"><value>Reset to bottom centre</value></data>
+  <data name="AppearanceHeading" xml:space="preserve"><value>Appearance</value></data>
+  <data name="TextSize" xml:space="preserve"><value>Text size</value></data>
+  <data name="Points" xml:space="preserve"><value>{0} pt</value></data>
+  <data name="SungColour" xml:space="preserve"><value>Sung colour</value></data>
+  <data name="CustomColour" xml:space="preserve"><value>Any colour</value></data>
+  <data name="LayoutLabel" xml:space="preserve"><value>Under the line</value></data>
+  <data name="LayoutDetail" xml:space="preserve"><value>Translations and pronunciation show when the song has them.</value></data>
+  <data name="LayoutTranslationOrNext" xml:space="preserve"><value>Translation, else next line</value></data>
+  <data name="LayoutTranslation" xml:space="preserve"><value>Translation</value></data>
+  <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>Pronunciation, else translation</value></data>
+  <data name="LayoutPronunciation" xml:space="preserve"><value>Pronunciation</value></data>
+  <data name="LayoutNext" xml:space="preserve"><value>Next line</value></data>
+  <data name="LayoutNone" xml:space="preserve"><value>Nothing (single line)</value></data>
+  <data name="ShowIsland" xml:space="preserve"><value>Show Lyricod Island</value></data>
+  <data name="ShowIslandDetail" xml:space="preserve"><value>A pill at the top of the screen with the line being sung. It shows while something is playing, and clicks pass through it unless it's expanded.</value></data>
+  <data name="OnHover" xml:space="preserve"><value>On hover</value></data>
+  <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
+  <data name="HoverNothing" xml:space="preserve"><value>Nothing</value></data>
+  <data name="AlbumColour" xml:space="preserve"><value>Colour lyrics from the album cover</value></data>
+  <data name="AlbumColourDetail" xml:space="preserve"><value>Otherwise the island uses the sung colour from Desktop lyrics.</value></data>
+  <data name="Open" xml:space="preserve"><value>Open</value></data>
+  <data name="LyricsWindowLabel" xml:space="preserve"><value>Lyrics window</value></data>
+  <data name="LyricsWindowDetail" xml:space="preserve"><value>The whole song over the album art. Press F11 for full screen, Space to play or pause.</value></data>
+  <data name="BackgroundLabel" xml:space="preserve"><value>Background</value></data>
+  <data name="BackgroundArtwork" xml:space="preserve"><value>Moving album art</value></data>
+  <data name="BackgroundColour" xml:space="preserve"><value>Album colour</value></data>
+  <data name="BackgroundDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="TextHeading" xml:space="preserve"><value>Text</value></data>
+  <data name="SizeAutomatic" xml:space="preserve"><value>Automatic</value></data>
+  <data name="SizeSmall" xml:space="preserve"><value>Small</value></data>
+  <data name="SizeMedium" xml:space="preserve"><value>Medium</value></data>
+  <data name="SizeLarge" xml:space="preserve"><value>Large</value></data>
+  <data name="ShowTranslations" xml:space="preserve"><value>Show translations</value></data>
+  <data name="ShowPronunciation" xml:space="preserve"><value>Show pronunciation</value></data>
+  <data name="CentreLines" xml:space="preserve"><value>Centre lines</value></data>
+  <data name="TranslationsTip" xml:space="preserve"><value>Show or hide translations</value></data>
+  <data name="PronunciationTip" xml:space="preserve"><value>Show or hide pronunciation</value></data>
+  <data name="FullScreenTip" xml:space="preserve"><value>Full screen (F11)</value></data>
+  <data name="Previous" xml:space="preserve"><value>Previous</value></data>
+  <data name="PlayPause" xml:space="preserve"><value>Play or pause</value></data>
+  <data name="CantSeek" xml:space="preserve"><value>This player can't be moved to another point from Lyricod.</value></data>
+  <data name="Next" xml:space="preserve"><value>Next</value></data>
+  <data name="TimingHeading" xml:space="preserve"><value>Timing</value></data>
+  <data name="AllSongs" xml:space="preserve"><value>All songs</value></data>
+  <data name="ThisSong" xml:space="preserve"><value>This song</value></data>
+  <data name="OffsetEarlier" xml:space="preserve"><value>Lyrics earlier</value></data>
+  <data name="OffsetLater" xml:space="preserve"><value>Lyrics later</value></data>
+  <data name="Reset" xml:space="preserve"><value>Reset</value></data>
+  <data name="TimingNote" xml:space="preserve"><value>Positive shows lyrics earlier, negative later. The first applies to every song; the second only to the song playing now, and is remembered for it.</value></data>
+  <data name="DisplayHeading" xml:space="preserve"><value>Display</value></data>
+  <data name="PronunciationFor" xml:space="preserve"><value>Pronunciation for</value></data>
+  <data name="PronunciationForDetail" xml:space="preserve"><value>The line in Latin letters: romaji, romanised Korean or pinyin.</value></data>
+  <data name="Japanese" xml:space="preserve"><value>Japanese</value></data>
+  <data name="Korean" xml:space="preserve"><value>Korean</value></data>
+  <data name="Chinese" xml:space="preserve"><value>Chinese</value></data>
+  <data name="ShowCredits" xml:space="preserve"><value>Show songwriter credits</value></data>
+  <data name="PronunciationNote" xml:space="preserve"><value>Japanese uses the lyrics source's own romaji when it has some; otherwise Lyricod works it out with Windows' Japanese reader, and may misread some kanji. Desktop lyrics, Lyricod Island and the lyrics window each choose whether to show translations and pronunciation.</value></data>
+  <data name="PronunciationNoteNoReader" xml:space="preserve"><value>Japanese romaji comes from the lyrics source when it has some. For Lyricod to work it out for other songs, add Japanese in Windows Settings › Time &amp; language › Language &amp; region.</value></data>
+  <data name="SourcesHeading" xml:space="preserve"><value>Sources</value></data>
+  <data name="CurrentSong" xml:space="preserve"><value>Current song</value></data>
+  <data name="SearchAgain" xml:space="preserve"><value>Search again</value></data>
+  <data name="KindWords" xml:space="preserve"><value>Word by word</value></data>
+  <data name="KindLines" xml:space="preserve"><value>Line by line</value></data>
+  <data name="KindPlain" xml:space="preserve"><value>Unsynced</value></data>
+  <data name="SavedLyrics" xml:space="preserve"><value>Saved lyrics</value></data>
+  <data name="SavedLyricsDetail" xml:space="preserve"><value>Lyrics are saved after the first search, so songs load instantly next time.</value></data>
+  <data name="OneSong" xml:space="preserve"><value>1 song</value></data>
+  <data name="NSongs" xml:space="preserve"><value>{0} songs</value></data>
+  <data name="Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="PaneShortcuts" xml:space="preserve"><value>Shortcuts</value></data>
+  <data name="ShortcutPlayback" xml:space="preserve"><value>Playback</value></data>
+  <data name="ShortcutShow" xml:space="preserve"><value>Show</value></data>
+  <data name="ShortcutPlayPause" xml:space="preserve"><value>Play/pause</value></data>
+  <data name="ShortcutNext" xml:space="preserve"><value>Next track</value></data>
+  <data name="ShortcutPrevious" xml:space="preserve"><value>Previous track</value></data>
+  <data name="ShortcutToggleDesktop" xml:space="preserve"><value>Show/hide desktop lyrics</value></data>
+  <data name="ShortcutToggleIsland" xml:space="preserve"><value>Show/hide Lyricod Island</value></data>
+  <data name="ShortcutToggleLyricsWindow" xml:space="preserve"><value>Open/close lyrics window</value></data>
+  <data name="ShortcutLyricsEarlier" xml:space="preserve"><value>Lyrics 0.5 s earlier</value></data>
+  <data name="ShortcutLyricsLater" xml:space="preserve"><value>Lyrics 0.5 s later</value></data>
+  <data name="ShortcutTimingNote" xml:space="preserve"><value>Changes the timing of the song playing now, like This song in Lyrics settings.</value></data>
+  <data name="ShortcutNote" xml:space="preserve"><value>Shortcuts work in any app. Click a field and press the keys, using Ctrl, Alt or Win, or a function key on its own. Esc cancels; Backspace or Delete clears. If one shows as not working, Windows or another app is using it.</value></data>
+  <data name="ShortcutRecord" xml:space="preserve"><value>Record shortcut</value></data>
+  <data name="ShortcutPressKeys" xml:space="preserve"><value>Press keys…</value></data>
+  <data name="ShortcutInvalid" xml:space="preserve"><value>Use Ctrl, Alt or Win, or a function key.</value></data>
+  <data name="ShortcutDuplicate" xml:space="preserve"><value>Already used for “{0}”.</value></data>
+  <data name="ShortcutUnavailable" xml:space="preserve"><value>Not working. Windows or another app may be using this shortcut.</value></data>
+  <data name="KeyCtrl" xml:space="preserve"><value>Ctrl</value></data>
+  <data name="KeyAlt" xml:space="preserve"><value>Alt</value></data>
+  <data name="KeyWin" xml:space="preserve"><value>Win</value></data>
+  <data name="KeyShift" xml:space="preserve"><value>Shift</value></data>
+  <data name="KeyNumpad" xml:space="preserve"><value>Num </value></data>
+  <data name="KeyBackspace" xml:space="preserve"><value>Backspace</value></data>
+  <data name="KeyTab" xml:space="preserve"><value>Tab</value></data>
+  <data name="KeyEnter" xml:space="preserve"><value>Enter</value></data>
+  <data name="KeyPause" xml:space="preserve"><value>Pause</value></data>
+  <data name="KeyCapsLock" xml:space="preserve"><value>Caps Lock</value></data>
+  <data name="KeyEsc" xml:space="preserve"><value>Esc</value></data>
+  <data name="KeySpace" xml:space="preserve"><value>Space</value></data>
+  <data name="KeyPageUp" xml:space="preserve"><value>Page Up</value></data>
+  <data name="KeyPageDown" xml:space="preserve"><value>Page Down</value></data>
+  <data name="KeyEnd" xml:space="preserve"><value>End</value></data>
+  <data name="KeyHome" xml:space="preserve"><value>Home</value></data>
+  <data name="KeyInsert" xml:space="preserve"><value>Insert</value></data>
+  <data name="KeyDelete" xml:space="preserve"><value>Delete</value></data>
+  <data name="BackgroundStillArtwork" xml:space="preserve"><value>Still album art</value></data>
+  <data name="BlurDistant" xml:space="preserve"><value>Blur lines away from the one being sung</value></data>
+  <data name="PlaySomething" xml:space="preserve"><value>Play something in your music player</value></data>
+  <data name="ChooseLyricsTip" xml:space="preserve"><value>Choose lyrics…</value></data>
+  <data name="SettingsTip" xml:space="preserve"><value>Settings</value></data>
+  <data name="NoneFoundChoose" xml:space="preserve"><value>None found · Choose…</value></data>
+  <data name="LyricsEarlierBy" xml:space="preserve"><value>Lyrics {0} s earlier</value></data>
+  <data name="LyricsLaterBy" xml:space="preserve"><value>Lyrics {0} s later</value></data>
+  <data name="MatchesTheSong" xml:space="preserve"><value>Matches the song</value></data>
+  <data name="AnimationLabel" xml:space="preserve"><value>Animation</value></data>
+  <data name="AnimationDetail" xml:space="preserve"><value>How smoothly the island's bars move. Smoother uses more battery.</value></data>
+  <data name="FrameRateLow" xml:space="preserve"><value>Battery saver (15 fps)</value></data>
+  <data name="FrameRateBalanced" xml:space="preserve"><value>Balanced (30 fps)</value></data>
+  <data name="FrameRateSmooth" xml:space="preserve"><value>Smooth (60 fps)</value></data>
+  <data name="LanguageLabel" xml:space="preserve"><value>Language</value></data>
+  <data name="LanguageSystem" xml:space="preserve"><value>Windows' language</value></data>
+  <data name="RestartNow" xml:space="preserve"><value>Restart now</value></data>
+  <data name="RestartToChangeLanguage" xml:space="preserve"><value>Lyricod needs to restart to change language.</value></data>
+  <data name="FollowLabel" xml:space="preserve"><value>Follow</value></data>
+  <data name="FollowAuto" xml:space="preserve"><value>Whichever is playing</value></data>
+  <data name="FollowDetail" xml:space="preserve"><value>Players show here once they've played something.</value></data>
+  <data name="HoverHide" xml:space="preserve"><value>Hide, so what's underneath is usable</value></data>
+  <data name="AudioBars" xml:space="preserve"><value>Bars follow the music</value></data>
+  <data name="AudioBarsDetail" xml:space="preserve"><value>Lyricod listens only to your music player; nothing is recorded or sent.</value></data>
+  <data name="HideWhenPaused" xml:space="preserve"><value>Hide when paused</value></data>
+  <data name="HideWhenPausedDetail" xml:space="preserve"><value>The island goes away a moment after the music stops, and comes back when it plays.</value></data>
+  <data name="StyleHeading" xml:space="preserve"><value>Style</value></data>
+  <data name="IslandSize" xml:space="preserve"><value>Size</value></data>
+  <data name="SizeExtraLarge" xml:space="preserve"><value>Extra large</value></data>
+  <data name="IslandMaxWidth" xml:space="preserve"><value>Maximum width</value></data>
+  <data name="IslandMaxWidthDetail" xml:space="preserve"><value>Long lines split into pieces. The limit scales with the island size.</value></data>
+  <data name="IslandWidthNarrow" xml:space="preserve"><value>Narrow</value></data>
+  <data name="IslandWidthStandard" xml:space="preserve"><value>Standard</value></data>
+  <data name="IslandWidthWide" xml:space="preserve"><value>Wide</value></data>
+  <data name="FontWeight" xml:space="preserve"><value>Font weight</value></data>
+  <data name="WeightRegular" xml:space="preserve"><value>Regular</value></data>
+  <data name="WeightMedium" xml:space="preserve"><value>Medium</value></data>
+  <data name="WeightSemibold" xml:space="preserve"><value>Semibold</value></data>
+  <data name="WeightBold" xml:space="preserve"><value>Bold</value></data>
+  <data name="WeightHeavy" xml:space="preserve"><value>Heavy</value></data>
+  <data name="SungLyrics" xml:space="preserve"><value>Sung lyrics</value></data>
+  <data name="EffectSweep" xml:space="preserve"><value>Colour sweep</value></data>
+  <data name="EffectGlow" xml:space="preserve"><value>Glowing sweep</value></data>
+  <data name="EffectLine" xml:space="preserve"><value>Whole line</value></data>
+  <data name="NextLine" xml:space="preserve"><value>Next line</value></data>
+  <data name="TransitionInstant" xml:space="preserve"><value>Instant</value></data>
+  <data name="TransitionSlide" xml:space="preserve"><value>Slide up</value></data>
+  <data name="TransitionFade" xml:space="preserve"><value>Fade</value></data>
+  <data name="AutoHideControls" xml:space="preserve"><value>Hide controls when the pointer rests</value></data>
+  <data name="AutoHideControlsDetail" xml:space="preserve"><value>In wide windows and full screen, while playing.</value></data>
+
+  <!-- Choose lyrics -->
+  <data name="ChooseLyricsTitle" xml:space="preserve"><value>Choose lyrics</value></data>
+  <data name="ChooseLyricsButton" xml:space="preserve"><value>Choose…</value></data>
+  <data name="ChooseLyricsPinned" xml:space="preserve"><value>Chosen by you</value></data>
+  <data name="ChooseLyricsSearch" xml:space="preserve"><value>Search lyrics</value></data>
+  <data name="ChooseLyricsAll" xml:space="preserve"><value>All</value></data>
+  <data name="ChooseLyricsNetease" xml:space="preserve"><value>NetEase</value></data>
+  <data name="ChooseLyricsLrclib" xml:space="preserve"><value>LRCLIB</value></data>
+  <data name="ChooseLyricsNoResults" xml:space="preserve"><value>No results</value></data>
+  <data name="ChooseLyricsSearchHint" xml:space="preserve"><value>Try the song's original title or the artist's name in Chinese.</value></data>
+  <data name="ChooseLyricsSelect" xml:space="preserve"><value>Select a result</value></data>
+  <data name="ChooseLyricsPreviewHint" xml:space="preserve"><value>Its lyrics will appear here so you can check them first.</value></data>
+  <data name="ChooseLyricsNoLyrics" xml:space="preserve"><value>No lyrics</value></data>
+  <data name="ChooseLyricsNoLyricsHint" xml:space="preserve"><value>This result has no lyrics.</value></data>
+  <data name="ChooseLyricsTranslated" xml:space="preserve"><value>· Translated</value></data>
+  <data name="ChooseLyricsAutomatic" xml:space="preserve"><value>Use automatic match</value></data>
+  <data name="ChooseLyricsCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="ChooseLyricsUse" xml:space="preserve"><value>Use these lyrics</value></data>
+  <data name="ChooseLyricsInUse" xml:space="preserve"><value>In use</value></data>
+  <data name="ChooseLyricsBest" xml:space="preserve"><value>Best match</value></data>
+  <data name="ChooseLyricsSource" xml:space="preserve"><value>Source</value></data>
+  <data name="ToggleOn" xml:space="preserve"><value>On</value></data>
+  <data name="ToggleOff" xml:space="preserve"><value>Off</value></data>
+  <data name="Updates" xml:space="preserve"><value>Updates</value></data>
+  <data name="AutomaticUpdates" xml:space="preserve"><value>Check for updates automatically</value></data>
+  <data name="CheckNow" xml:space="preserve"><value>Check Now</value></data>
+  <data name="CheckingUpdates" xml:space="preserve"><value>Checking…</value></data>
+  <data name="UpToDate" xml:space="preserve"><value>Lyricod is up to date.</value></data>
+  <data name="CouldntCheckUpdates" xml:space="preserve"><value>Couldn’t check for updates.</value></data>
+  <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} is available</value></data>
+  <data name="DownloadUpdate" xml:space="preserve"><value>Download…</value></data>
+  <data name="UpdateAvailable" xml:space="preserve"><value>Update available: {0}</value></data>
+  <data name="Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
+  <data name="CopyDiagnostics" xml:space="preserve"><value>Copy Diagnostics</value></data>
+  <data name="ShowDiagnostics" xml:space="preserve"><value>Show</value></data>
+  <data name="HideDiagnostics" xml:space="preserve"><value>Hide</value></data>
+  <data name="DiagnosticsDetail" xml:space="preserve"><value>Details to include when you report a problem.</value></data>
+  <data name="LyricsFont" xml:space="preserve"><value>Lyrics font</value></data>
+  <data name="FontDefault" xml:space="preserve"><value>Microsoft YaHei (default)</value></data>
+  <data name="FontRecommended" xml:space="preserve"><value>MiSans (recommended)</value></data>
+  <data name="FontSearch" xml:space="preserve"><value>Search installed fonts</value></data>
+  <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans by Xiaomi: one design for Latin, Chinese and Japanese. Lyricod downloads it from Xiaomi, about 15 MB, under Xiaomi’s licence.</value></data>
+  <data name="FontDownload" xml:space="preserve"><value>Download</value></data>
+  <data name="FontRemove" xml:space="preserve"><value>Remove MiSans</value></data>
+  <data name="FontRetry" xml:space="preserve"><value>Retry</value></data>
+  <data name="FontDownloading" xml:space="preserve"><value>Downloading MiSans…</value></data>
+  <data name="FontDownloadingArchive" xml:space="preserve"><value>The server requires the full ZIP (about 228 MB). Downloading…</value></data>
+  <data name="FontDownloadingLicence" xml:space="preserve"><value>Downloading the licence…</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download MiSans.</value></data>
+  <data name="FontDownloadTimeout" xml:space="preserve"><value>The download timed out. Please retry.</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all MiSans files. Close Lyricod and try again.</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>MiSans could not be loaded or copied to the app folder. Lyrics are using Microsoft YaHei.</value></data>
+  <data name="FontListFailed" xml:space="preserve"><value>Could not list installed fonts.</value></data>
+</root>

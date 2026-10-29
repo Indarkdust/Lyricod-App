@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lyricod Island: a black pill hanging from the top centre of the screen with the line being
+     sung. On hover it grows into a mini player. The window around it is transparent and,
+     except while the pointer is over the pill, click-through. -->
+<Window
+    x:Class="Lyricod.IslandWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Lyricod Island">
+
+    <Grid x:Name="Root" Background="Transparent" RequestedTheme="Dark">
+        <Border x:Name="Pill" Background="Black" CornerRadius="0,0,16,16" HorizontalAlignment="Center"
+                VerticalAlignment="Top" Width="300" Height="34">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition x:Name="LyricRow" Height="34" />
+                    <RowDefinition x:Name="SecondRow" Height="0" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Cover, lyric, bars. -->
+                <Grid x:Name="MainRow" Padding="14,0" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="CoverColumn" Width="22" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition x:Name="BarsColumn" Width="22" />
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="ArtFrame" Width="22" Height="22" CornerRadius="5" Background="#33FFFFFF">
+                        <Image x:Name="Art" Stretch="UniformToFill" />
+                    </Border>
+                    <Grid Grid.Column="1" x:Name="LyricBox" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <!-- Dimmed by the wrapper, not the text: the sweep takes the text's shape. -->
+                        <Grid x:Name="LyricDim" Opacity="0.4">
+                            <TextBlock x:Name="Lyric" Foreground="White" FontSize="15" TextWrapping="NoWrap" />
+                        </Grid>
+                        <Grid x:Name="LyricSweep" IsHitTestVisible="False" />
+                    </Grid>
+                    <StackPanel x:Name="Bars" Grid.Column="2" Orientation="Horizontal" Spacing="1.5"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" Height="14" />
+                </Grid>
+
+                <!-- Translation, pronunciation or the next line, as the island's layout asks. -->
+                <TextBlock x:Name="Second" Grid.Row="1" FontSize="11" Foreground="White" Opacity="0.6"
+                           HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="46,-4,46,4"
+                           Visibility="Collapsed" />
+
+                <!-- Hover: a mini player. -->
+                <StackPanel x:Name="Expanded" Grid.Row="2" Padding="18,6,18,10" Spacing="6" Opacity="0" Visibility="Collapsed">
+                    <Grid x:Name="PlayerRow" ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border x:Name="BigArtFrame" Width="34" Height="34" CornerRadius="7" Background="#33FFFFFF">
+                            <Image x:Name="BigArt" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel x:Name="SongLabels" Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                            <TextBlock x:Name="SongTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="SongArtist" FontSize="12" Opacity="0.6" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel x:Name="TransportHost" Grid.Column="2" VerticalAlignment="Center" />
+                        <Rectangle x:Name="PlayerDivider" Grid.Column="3" Width="1" Height="18" Fill="#33FFFFFF" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="LyricsButton" Background="Transparent" BorderThickness="0" Padding="8,6">
+                                <FontIcon Glyph="&#xE8FD;" FontSize="13" />
+                            </Button>
+                            <Button x:Name="SettingsButton" Background="Transparent" BorderThickness="0" Padding="8,6">
+                                <FontIcon Glyph="&#xE713;" FontSize="13" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <Grid x:Name="ProgressHost" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <TextBlock x:Name="Measurer" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left"
+                   VerticalAlignment="Bottom" TextWrapping="NoWrap" FontSize="15" />
+    </Grid>
+</Window>

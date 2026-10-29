@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Windows app: WinUI 3 on the Windows App SDK, unpackaged and self-contained
+       (runs from a folder; no installer or Store needed). -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Lyricod</RootNamespace>
+    <AssemblyName>Lyricod</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <ApplicationIcon>Assets\Lyricod.ico</ApplicationIcon>
+    <!-- LibraryImport (Win32 calls) generates unsafe marshalling code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- Publishing leaves out the parts of .NET and the Windows SDK and WinUI projections that Lyricod never
+         calls (IL trimming). Partial: only assemblies marked as safe to trim are trimmed; Lyricod's own code,
+         Lyricod.Core and ToolGood.Words stay whole, so XAML bindings and JSON can still find their properties.
+         Trimming drops .NET's own precompiled code, so ReadyToRun precompiles what's left: without it Lyricod
+         starts more slowly than untrimmed; with it, faster (it precompiles Lyricod and the projections too). -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <PublishReadyToRun>true</PublishReadyToRun>
+    <!-- Two things trimming turns off by default that Lyricod needs: settings, the lyrics cache and per-song
+         choices are JSON read and written by reflection, and WinUIEx's backdrops use classic COM interfaces. -->
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Only the parts of Windows App SDK 2.5.1 that Lyricod uses, at the versions the 2.5.1 metapackage
+         (Microsoft.WindowsAppSDK) picks. The metapackage would also ship AI, machine learning (ONNX Runtime,
+         DirectML), Search, Widgets and DWriteCore, which Lyricod never loads: 63 MB of the published folder,
+         24 MB of each release zip.
+         Update all three together, to the versions listed in the next metapackage's dependencies. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="2.3.12" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.9" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+    <!-- Tray icon, transparent backdrop and window-style helpers (MIT). -->
+    <PackageReference Include="WinUIEx" Version="2.9.3" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Assets\Lyricod.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Lyricod-256.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Lyricod.Core/Lyricod.Core.csproj" />
+  </ItemGroup>
+  <!-- WinUI brings its built-in text (menus, accessibility names) in 86 languages, a folder each.
+       Lyricod is English and Chinese, so only those folders stay; other Windows languages fall back
+       to English. Windows App SDK adds them as plain copied files in the target this one follows. -->
+  <Target Name="KeepOnlyLyricodLanguages" AfterTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromComponents">
+    <ItemGroup>
+      <None Remove="@(None)" Condition="'%(None.Extension)' == '.mui' and
+            !$([System.Text.RegularExpressions.Regex]::IsMatch('%(None.Link)', '(?i)^(en-us|zh-cn|zh-tw)[\\/]'))" />
+    </ItemGroup>
+  </Target>
+</Project>
