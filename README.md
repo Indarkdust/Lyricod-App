@@ -6,7 +6,7 @@ Synced, word-by-word lyrics for Windows: in a pill at the top of your screen, fl
 
 ## What it shows
 
-- **Lyricod Island**: a black pill at the top of the screen with the cover, the line being sung sweeping word by word in the album's colour, and six bars that move with the music. It fits each line, can show the translation, pronunciation or next line underneath, and splits long lines into timed pieces. Hover to expand it into a mini player, to hide it so what's underneath is usable, or to do nothing. It goes away a moment after the music stops and comes back when it plays.
+- **Lyricod Island**: a black pill at the top of the screen with the cover, the line being sung sweeping word by word in the album's colour, and six bars that move with the music. It fits each line, can show the translation, pronunciation or next line underneath, and splits long lines into timed pieces. Hover to expand it into a mini player, to hide it so what's underneath is usable, or to do nothing; or let the direction decide: coming in from below hides it, from the sides expands it. It goes away a moment after the music stops and comes back when it plays.
 - **Desktop lyrics**: a click-through strip over every app, one or two lines. Unlock it in Settings to move it.
 - **Lyrics window**: the whole song scrolling over the album art. Click a line to jump to it. In a wide window or full screen (F11) the cover and controls sit beside the lyrics, and the text grows with the window; the controls fade while the pointer rests.
 - **Tray panel**: click Lyricod's icon in the notification area for the song with its controls, switches for the island and desktop lyrics, and this song's lyrics and timing.
@@ -39,9 +39,9 @@ When a song gets the wrong lyrics, open **Choose Lyrics** (tray panel, lyrics wi
 
 - **General**: open at login, animation frame rate, language, which player to follow
 - **Desktop lyrics**: show and lock the strip, its position, text size, sung colour, what goes under the line
-- **Lyricod Island**: show it, what hover does, album-colour lyrics, hide when paused, bars that follow the music, what goes under the line; style (size, maximum width, font weight, how sung lyrics and the next line appear)
+- **Lyricod Island**: show it, what hover does, album-colour lyrics or a colour of your own, hide when paused, bars that follow the music, what goes under the line; style (size, maximum width, font weight, how sung lyrics and the next line appear)
 - **Lyrics window**: background, text size, translations, pronunciation, centred lines, blur, sung-lyrics effect, auto-hiding controls
-- **Lyrics**: the lyrics font, timing for all songs and the current one, pronunciation and its languages, songwriter credits, the current song's source, saved lyrics
+- **Lyrics**: the lyrics font, whether to look up lyrics for browsers and other apps, timing for all songs and the current one, pronunciation and its languages, songwriter credits, the current song's source, saved lyrics
 - **Shortcuts**: global keys for playback, the three views and timing
 - **About**: version, updates, diagnostics to copy into a problem report, credits
 
