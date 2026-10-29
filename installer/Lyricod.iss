@@ -85,3 +85,35 @@ function RelaunchAfterUpdate: Boolean;
 begin
   Result := ExpandConstant('{param:relaunch|0}') = '1';
 end;
+
+// Setup overwrites files but never removes the ones a newer version no longer ships, so clear the
+// previous version out first. Only in a folder Lyricod was installed in (it has Lyricod.exe and the
+// uninstaller), and the uninstaller stays: the new version adds to its log. Settings and saved
+// lyrics live in {localappdata}\Lyricod, not here.
+procedure RemovePreviousVersion;
+var
+  Dir: String;
+  Found: TFindRec;
+begin
+  Dir := ExpandConstant('{app}');
+  if not (FileExists(Dir + '\Lyricod.exe') and FileExists(Dir + '\unins000.exe')) then Exit;
+  if FindFirst(Dir + '\*', Found) then
+  try
+    repeat
+      if (Found.Name <> '.') and (Found.Name <> '..') and (Pos('unins', Lowercase(Found.Name)) <> 1) then
+      begin
+        if (Found.Attributes and FILE_ATTRIBUTE_DIRECTORY) <> 0 then
+          DelTree(Dir + '\' + Found.Name, True, True, True)
+        else
+          DeleteFile(Dir + '\' + Found.Name);
+      end;
+    until not FindNext(Found);
+  finally
+    FindClose(Found);
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then RemovePreviousVersion;
+end;
