@@ -109,6 +109,7 @@ public sealed class UpdateDownloadTests : IDisposable
         foreach (string name in new[] { "1.0.0", "1.2.3", "2.0.0", "other" }) Directory.CreateDirectory(Path.Combine(_directory, "Updates", name));
         Directory.CreateDirectory(Path.Combine(_directory, "app.new"));
         Directory.CreateDirectory(Path.Combine(_directory, "app.old"));
+        Directory.CreateDirectory(Path.Combine(_directory, "app.old-12345", "x"));
         Directory.CreateDirectory(Path.Combine(_directory, "app"));
         File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.new"), "stale");
         File.WriteAllText(Path.Combine(_directory, "settings.json"), "keep");
@@ -119,6 +120,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Assert.True(Directory.Exists(Path.Combine(_directory, "Updates", "other")));
         Assert.False(Directory.Exists(Path.Combine(_directory, "app.new")));
         Assert.False(Directory.Exists(Path.Combine(_directory, "app.old")));
+        Assert.False(Directory.Exists(Path.Combine(_directory, "app.old-12345")));
         Assert.True(Directory.Exists(Path.Combine(_directory, "app")));
         Assert.True(File.Exists(Path.Combine(_directory, "settings.json")));
     }
