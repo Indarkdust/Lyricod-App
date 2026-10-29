@@ -23,16 +23,16 @@ public sealed class UpdateDownloadTests : IDisposable
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) });
         }));
         var progress = new ProgressLog();
-        string path = await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", progress, default);
-        Assert.Equal(Payload, await File.ReadAllBytesAsync(path));
+        string path = await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", progress, TestContext.Current.CancellationToken);
+        Assert.Equal(Payload, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
         Assert.False(File.Exists(path + ".part"));
         Assert.Equal(100, progress.Values.Last().Percent);
-        await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, default);
+        await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken);
         Assert.Equal(1, calls);
-        await File.WriteAllBytesAsync(path, new byte[Payload.Length]);
-        await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, default);
+        await File.WriteAllBytesAsync(path, new byte[Payload.Length], TestContext.Current.CancellationToken);
+        await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken);
         Assert.Equal(2, calls);
-        Assert.Equal(Payload, await File.ReadAllBytesAsync(path));
+        Assert.Equal(Payload, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -47,8 +47,11 @@ public sealed class UpdateDownloadTests : IDisposable
             "short" => Asset with { Size = Payload.Length + 1 },
             _ => Asset with { Size = Payload.Length - 1 },
         };
-        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) })));
-        await Assert.ThrowsAsync<DamagedUpdateException>(() => UpdateDownload.DownloadAsync(client, asset, _directory, "1.0.0", null, default));
+        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(Payload) { Headers = { ContentLength = asset.Size } },
+        })));
+        await Assert.ThrowsAsync<DamagedUpdateException>(() => UpdateDownload.DownloadAsync(client, asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken));
         Assert.Empty(Directory.GetFiles(_directory));
     }
 
@@ -65,8 +68,8 @@ public sealed class UpdateDownloadTests : IDisposable
     [Fact]
     public async Task StalledBodyTimesOutAndDeletesPart()
     {
-        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledStream()) })));
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, default,
+        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledStream()) { Headers = { ContentLength = Payload.Length } } })));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken,
             stallTimeout: TimeSpan.FromMilliseconds(50)));
         Assert.Empty(Directory.GetFiles(_directory));
     }
@@ -76,7 +79,28 @@ public sealed class UpdateDownloadTests : IDisposable
     {
         using var client = new HttpClient(new Handler((_, _) => throw new Exception("Must not send")));
         await Assert.ThrowsAsync<InvalidDataException>(() => UpdateDownload.DownloadAsync(client,
-            Asset with { Url = new("http://evil.test/update.zip") }, _directory, "1.0.0", null, default));
+            Asset with { Url = new("http://evil.test/update.zip") }, _directory, "1.0.0", null, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task TestFeedCanDownloadOverHttp()
+    {
+        var asset = Asset with { Url = new("http://vm.test:8000/update.zip") };
+        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) })));
+        string path = await UpdateDownload.DownloadAsync(client, asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken,
+            new("http://vm.test:8000/releases.json"));
+        Assert.True(await UpdateDownload.VerifyAsync(path, asset, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task RejectsAnInsecureFinalResponse()
+    {
+        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            RequestMessage = new(HttpMethod.Get, "http://cdn.test/update.zip"), Content = new ByteArrayContent(Payload),
+        })));
+        await Assert.ThrowsAsync<HttpRequestException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken));
+        Assert.Empty(Directory.GetFiles(_directory));
     }
 
     [Fact]

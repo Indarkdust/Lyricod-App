@@ -44,6 +44,7 @@ public static class UpdateDownload
             request.Headers.UserAgent.ParseAdd(UpdateCheck.UserAgent(currentVersion));
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
+            if (response.Content.Headers.ContentLength is { } length && length != asset.Size) throw new DamagedUpdateException();
             // HttpClientHandler also refuses HTTPS-to-HTTP redirects on .NET.
             if (asset.Url.Scheme == "https" && response.RequestMessage?.RequestUri?.Scheme == "http")
                 throw new HttpRequestException("Insecure download redirect.");
@@ -70,6 +71,7 @@ public static class UpdateDownload
             File.Move(part, final, true);
             return final;
         }
+        catch (HttpIOException e) when (e.HttpRequestError == HttpRequestError.ResponseEnded) { throw new DamagedUpdateException(); }
         finally { File.Delete(part); }
     }
 }

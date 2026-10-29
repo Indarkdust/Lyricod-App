@@ -50,10 +50,10 @@ public sealed partial class UpdateChecker : IDisposable
     {
         if (Checking || _disposed || State == UpdateState.Applying) return;
         Checking = true;
-        _settings.LastUpdateCheck = DateTimeOffset.UtcNow;
         UpdateResult outcome;
         try
         {
+            _settings.LastUpdateCheck = DateTimeOffset.UtcNow;
             Notify();
             outcome = await UpdateCheck.FetchAsync(_client, Version, Feed);
         }
