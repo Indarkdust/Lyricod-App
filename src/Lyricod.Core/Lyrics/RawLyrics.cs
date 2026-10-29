@@ -18,9 +18,20 @@ public sealed class RawLyrics
     /// <summary>Older macOS cache entries only recorded a NetEase id; see <see cref="SongRef"/>.</summary>
     [JsonPropertyName("neteaseID")] public long? NeteaseId { get; set; }
     [JsonPropertyName("ref")] public LyricsRef? Ref { get; set; }
+    [JsonPropertyName("matchScore")] public double? MatchScore { get; set; }
+    [JsonPropertyName("titleMatched")] public bool? TitleMatched { get; set; }
     // 0.1.0 saved a "wordsChecked" flag here; it's ignored now (see LyricsProvider.WordCheckDue).
 
     [JsonIgnore] public LyricsRef? SongRef => Ref ?? (NeteaseId is { } id ? LyricsRef.Netease(id) : null);
+
+    internal RawLyrics Matched(double score, bool titleMatched)
+    {
+        // LRCLIB's raw text can be shared by concurrent searches and manual previews.
+        var copy = (RawLyrics)MemberwiseClone();
+        copy.MatchScore = score;
+        copy.TitleMatched = titleMatched;
+        return copy;
+    }
 
     public Lyrics? Parse()
     {

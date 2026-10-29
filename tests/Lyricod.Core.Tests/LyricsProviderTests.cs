@@ -158,6 +158,235 @@ public class LyricsProviderTests
         Assert.Equal(expected, Assert.Single(results).Id.Id);
     }
 
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task TitleOnlyQqMatchDependsOnThePlayer(bool musicPlayer, bool accepted)
+    {
+        using var fixture = new Fixture(request => Response(
+            request.RequestUri!.Host == "u.y.qq.com" ? ModernJson
+            : request.RequestUri.AbsolutePath.Contains("fcg_query_lyric") ? LineJson : "{}"));
+        var search = new LyricsSearch(musicPlayer);
+        var result = await fixture.Provider.GetLyrics(new Track { Title = "Hello" }, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(accepted, result != null);
+        Assert.Equal(accepted ? 1 : 0, fixture.Provider.CachedCount());
+        Assert.Equal(3, search.BestScore);
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData(3.0, true)]
+    [InlineData(5.5, false)]
+    [InlineData(8.5, null)]
+    public async Task UnverifiedOrWeakCacheIsNeverShownInABrowser(double? score, bool? titleMatched)
+    {
+        int requests = 0, callbacks = 0;
+        using var fixture = new Fixture(_ => { requests++; return Response("{}"); });
+        var track = Track();
+        var file = fixture.Seed(track, score, titleMatched);
+        var original = File.ReadAllText(file);
+        var result = await fixture.Provider.GetLyrics(track, search: new LyricsSearch(false),
+            onCached: _ => callbacks++, ct: TestContext.Current.CancellationToken);
+        Assert.Null(result);
+        Assert.True(requests > 0);
+        Assert.Equal(0, callbacks);
+        Assert.Equal(original, File.ReadAllText(file));
+    }
+
+    [Fact]
+    public async Task ConfidentCacheSkipsNetworkAndReportsItsScore()
+    {
+        using var fixture = new Fixture(_ => throw new InvalidOperationException("Unexpected request"));
+        var track = Track();
+        fixture.Seed(track, 6, true);
+        var search = new LyricsSearch(false);
+        Assert.NotNull(await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken));
+        Assert.Equal(6, search.BestScore);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task PinnedLyricsBypassTheBrowserBar(bool cached)
+    {
+        int requests = 0;
+        using var fixture = new Fixture(_ => { requests++; return Response("""{"lrc":{"lyric":"[00:01.00]Chosen"}}"""); });
+        var track = Track();
+        if (cached) fixture.Seed(track);
+        var result = await fixture.Provider.GetLyrics(track, pinned: LyricsRef.Netease(7), search: new LyricsSearch(false),
+            ct: TestContext.Current.CancellationToken);
+        Assert.Equal(cached ? "Hello" : "Chosen", result?.Lines[0].Text);
+        Assert.Equal(cached ? 0 : 1, requests);
+    }
+
+    const string NeteaseSong = """{"result":{"songs":[{"id":7,"name":"Hello","ar":[{"name":"Singer"}],"dt":120000}]}}""";
+    const string NeteaseLyrics = """{"lrc":{"lyric":"[00:01.00]Hello"}}""";
+    const string LrclibSong = """{"id":9,"trackName":"Hello","artistName":"Singer","duration":120,"syncedLyrics":"[00:01.00]Hello"}""";
+
+    [Theory]
+    [InlineData("netease")]
+    [InlineData("qq")]
+    [InlineData("lrclib-exact")]
+    [InlineData("lrclib-search")]
+    public async Task ConfidentMusicVideoIsScoredCachedAndReused(string source)
+    {
+        int requests = 0;
+        using var fixture = new Fixture(request =>
+        {
+            requests++;
+            var uri = request.RequestUri!;
+            return Response(source switch
+            {
+                "netease" when uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") => NeteaseSong,
+                "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
+                "qq" when uri.Host == "u.y.qq.com" => ModernJson,
+                "qq" when uri.AbsolutePath.Contains("fcg_query_lyric") => LineJson,
+                "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
+                "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
+                _ => "{}",
+            });
+        });
+        var track = new Track { Title = "Singer - Hello (Official Video)", Artist = "Singer", Duration = 120 };
+        // Even an old, unscored entry is searched again and replaced with evidence.
+        var file = fixture.Seed(track);
+        var search = new LyricsSearch(false);
+        var result = await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Equal(8.5, search.BestScore);
+        var raw = JsonSerializer.Deserialize<RawLyrics>(File.ReadAllText(file))!;
+        Assert.Equal(8.5, raw.MatchScore);
+        Assert.True(raw.TitleMatched);
+        var count = requests;
+        Assert.NotNull(await fixture.Provider.GetLyrics(track, search: new LyricsSearch(false), ct: TestContext.Current.CancellationToken));
+        Assert.Equal(count, requests);
+    }
+
+    [Theory]
+    [InlineData("netease")]
+    [InlineData("lrclib-exact")]
+    [InlineData("lrclib-search")]
+    public async Task TitleOnlyMatchesAreNotCachedForBrowsers(string source)
+    {
+        using var fixture = new Fixture(request =>
+        {
+            var uri = request.RequestUri!;
+            return Response(source switch
+            {
+                "netease" when uri.AbsolutePath.Contains("cloudsearch") => NeteaseSong,
+                "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
+                "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
+                "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
+                _ => "{}",
+            });
+        });
+        var search = new LyricsSearch(false);
+        Assert.Null(await fixture.Provider.GetLyrics(new Track { Title = "Hello" }, search: search, ct: TestContext.Current.CancellationToken));
+        Assert.Equal(3, search.BestScore);
+        Assert.Equal(0, fixture.Provider.CachedCount());
+    }
+
+    [Fact]
+    public async Task BrowserWordUpgradeCannotUseAnUnscoredQqId()
+    {
+        var paths = new List<string>();
+        using var fixture = new Fixture(request => { paths.Add(request.RequestUri!.AbsolutePath); return Response(ModernJson); });
+        var track = Track() with { Title = "Other" };
+        var file = fixture.Seed(track, 8.5, true);
+        Fixture.Age(file, 2);
+        // The search reply has the wrong title, despite a tempting direct QQ id on the track.
+        var result = await fixture.Provider.GetLyrics(track, search: new LyricsSearch(false), ct: TestContext.Current.CancellationToken);
+        Assert.Equal("NetEase", result?.Source);
+        Assert.Equal(8.5, JsonSerializer.Deserialize<RawLyrics>(File.ReadAllText(file))!.MatchScore);
+        Assert.DoesNotContain(paths, p => p.Contains("lyric_download") || p.Contains("fcg_query_lyric"));
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public async Task NeteaseFallbackCannotDropBelowTheBrowserBar(bool musicPlayer, bool accepted)
+    {
+        const string songs = """{"result":{"songs":[{"id":7,"name":"Hello","ar":[{"name":"Singer"}]},{"id":8,"name":"Hello there","ar":[{"name":"Singer"}]}]}}""";
+        using var fixture = new Fixture(request =>
+        {
+            var uri = request.RequestUri!;
+            return Response(uri.AbsolutePath.Contains("cloudsearch") ? songs
+                : uri.AbsolutePath.Contains("lyric/v1") && uri.Query.Contains("id=8&") ? NeteaseLyrics : "{}");
+        });
+        var search = new LyricsSearch(musicPlayer);
+        var result = await fixture.Provider.GetLyrics(new Track { Title = "Hello", Artist = "Singer" }, search: search,
+            ct: TestContext.Current.CancellationToken);
+        Assert.Equal(accepted, result != null);
+        Assert.Equal(6, search.BestScore);
+        Assert.Equal(accepted ? 1 : 0, fixture.Provider.CachedCount());
+    }
+
+    [Fact]
+    public async Task BrowserDoesNotTrustAnArtistGuessFromAnEarlierMusicSearch()
+    {
+        const string artists = """{"result":{"artists":[{"name":"歌手"}]}}""";
+        using var fixture = new Fixture(_ => Response(artists));
+        var track = new Track { Artist = "Vlog channel" };
+        var guessed = await fixture.Provider.WithAliases(track, TestContext.Current.CancellationToken);
+        Assert.Contains("歌手", guessed.ArtistAliases);
+        var verified = await fixture.Provider.WithAliases(track, TestContext.Current.CancellationToken, allowGuess: false);
+        Assert.Empty(verified.ArtistAliases);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ArtistAndDurationWithoutTitleOnlyWorkForMusicPlayers(bool musicPlayer)
+    {
+        using var fixture = new Fixture(request => Response(request.RequestUri!.Host == "u.y.qq.com" ? ModernJson
+            : request.RequestUri.AbsolutePath.Contains("fcg_query_lyric") ? LineJson : "{}"));
+        var search = new LyricsSearch(musicPlayer);
+        var track = new Track { Title = "Unrelated", Artist = "Singer", Duration = 120 };
+        var result = await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.Equal(musicPlayer, result != null);
+        Assert.Equal(5.5, search.BestScore);
+        Assert.Equal(musicPlayer ? 1 : 0, fixture.Provider.CachedCount());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task WordUpgradeKeepsItsSevenPointBar(bool cached)
+    {
+        var paths = new List<string>();
+        using var fixture = new Fixture(request =>
+        {
+            var uri = request.RequestUri!;
+            paths.Add(uri.AbsolutePath);
+            return Response(uri.AbsolutePath.Contains("cloudsearch") ? NeteaseSong
+                : uri.AbsolutePath.Contains("lyric/v1") ? NeteaseLyrics
+                : uri.Host == "u.y.qq.com" ? ModernJson : "{}");
+        });
+        var track = new Track { Title = "Hello", Artist = "Singer" };
+        if (cached) Fixture.Age(fixture.Seed(track, 6, true), 2);
+        var result = await fixture.Provider.GetLyrics(track, search: new LyricsSearch(false), ct: TestContext.Current.CancellationToken);
+        Assert.Equal("NetEase", result?.Source);
+        Assert.DoesNotContain(paths, p => p.Contains("lyric_download") || p.Contains("fcg_query_lyric"));
+    }
+
+    [Fact]
+    public async Task DirectQqIdDoesNotBypassBrowserChecks()
+    {
+        using var fixture = new Fixture(request => Response(request.RequestUri!.AbsolutePath.Contains("fcg_query_lyric") ? LineJson : "{}"));
+        Assert.Null(await fixture.Provider.GetLyrics(Track(), search: new LyricsSearch(false), ct: TestContext.Current.CancellationToken));
+        Assert.Equal(0, fixture.Provider.CachedCount());
+    }
+
+    [Fact]
+    public async Task LrclibExactReplyWithoutMetadataIsUnverified()
+    {
+        using var fixture = new Fixture(request => Response(request.RequestUri!.Host == "lrclib.net"
+            ? """{"id":9,"syncedLyrics":"[00:01.00]Hello"}""" : "{}"));
+        var search = new LyricsSearch(false);
+        Assert.Null(await fixture.Provider.GetLyrics(Track(), search: search, ct: TestContext.Current.CancellationToken));
+        Assert.Null(search.BestScore);
+        Assert.Equal(0, fixture.Provider.CachedCount());
+    }
+
     static HttpResponseMessage Response(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body) };
 
@@ -177,12 +406,12 @@ public class LyricsProviderTests
             _handler = new StubHandler(respond);
             Provider = new LyricsProvider(_dir, "test", _handler);
         }
-        public string Seed(Track track)
+        public string Seed(Track track, double? score = null, bool? titleMatched = null)
         {
             var file = Path.Combine(_dir, LyricsProvider.CacheKey(track) + ".json");
             File.WriteAllText(file, JsonSerializer.Serialize(new RawLyrics
             {
-                Source = "NetEase", Lrc = "[00:01.00]Hello", Ref = LyricsRef.Netease(7),
+                Source = "NetEase", Lrc = "[00:01.00]Hello", Ref = LyricsRef.Netease(7), MatchScore = score, TitleMatched = titleMatched,
             }));
             return file;
         }

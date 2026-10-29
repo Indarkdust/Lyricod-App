@@ -18,7 +18,7 @@ public sealed class LyricsProvider
     readonly HttpClient _http;
     readonly string _cacheDir;
     /// <summary>An artist's other names, by the name a player shows (see <see cref="WithAliases"/>).</summary>
-    readonly ConcurrentDictionary<string, IReadOnlyList<string>> _aliasCache = new();
+    readonly ConcurrentDictionary<(string Artist, bool AllowGuess), IReadOnlyList<string>> _aliasCache = new();
     /// <summary>LRCLIB search results carry the lyrics too; kept so picking one needs no second request.</summary>
     readonly ConcurrentDictionary<string, RawLyrics> _lrclibSeen = new();
 
@@ -114,12 +114,12 @@ public sealed class LyricsProvider
     /// players often show an English name ("Crowd Lu") where lyric sites use the original
     /// (卢广仲), and the other way round.
     /// </summary>
-    public async Task<Track> WithAliases(Track track, CancellationToken ct = default)
+    public async Task<Track> WithAliases(Track track, CancellationToken ct = default, bool allowGuess = true)
     {
         // The first credited artist ("A & B", "A / B", "A, B").
         var primary = track.Artist.Split(['&', '/', ',', '、', ';'])[0].Trim();
         if (primary.Length == 0) return track;
-        if (_aliasCache.TryGetValue(primary, out var cached)) return track with { ArtistAliases = cached };
+        if (_aliasCache.TryGetValue((primary, allowGuess), out var cached)) return track with { ArtistAliases = cached };
         var names = new List<string>();
         var res = await GetJson(NeteaseRequest(HttpMethod.Post,
             "https://music.163.com/api/cloudsearch/pc?" + Query(("s", primary), ("type", "100"), ("limit", "3"))), ct);
@@ -131,11 +131,11 @@ public sealed class LyricsProvider
         // records ("Kenshi Yonezu" for 米津玄師) or listed under someone else too (優莉 lists "Yuuri";
         // 優里, the top hit, doesn't): NetEase's top hit counts as well when it has a Chinese,
         // Japanese or Korean name. A wrong guess still needs the title or the length to agree.
-        if (IsLatinName(primary) && artists.FirstOrDefault() is { } top && top.Any(HasCjk) && !found.Contains(top))
+        if (allowGuess && IsLatinName(primary) && artists.FirstOrDefault() is { } top && top.Any(HasCjk) && !found.Contains(top))
             found.Insert(0, top);
         names = found.SelectMany(all => all).Where(s => TrackMatcher.Normalize(s) != want).Distinct().ToList();
         // Remembered only when NetEase answered, so a failed lookup is tried again.
-        if (res != null) _aliasCache[primary] = names;
+        if (res != null) _aliasCache[(primary, allowGuess)] = names;
         return track with { ArtistAliases = names };
     }
 
@@ -181,19 +181,24 @@ public sealed class LyricsProvider
 
     // ---- Main lookup ----
 
+    /// <param name="search">The player's acceptance bar and this lookup's best score.</param>
     /// <param name="pinned">Lyrics the user chose for this track; skips searching.</param>
     /// <param name="onCached">Saved lyrics to show now while QQ Music is checked for a word-by-word
     /// copy; the result is then this same object unless the check found one.</param>
-    public async Task<Lyrics?> GetLyrics(Track track, bool ignoreCache = false, LyricsRef? pinned = null, CancellationToken ct = default, Action<Lyrics>? onCached = null)
+    public async Task<Lyrics?> GetLyrics(Track track, bool ignoreCache = false, LyricsRef? pinned = null, CancellationToken ct = default, Action<Lyrics>? onCached = null, LyricsSearch? search = null)
     {
+        search ??= new LyricsSearch(isMusicPlayer: true);
         var file = CacheFile(CacheKey(track));
+        track = search.Prepare(track);
         if (!ignoreCache && ReadCache(file) is { } cachedRaw && (pinned == null || cachedRaw.SongRef == pinned)
+            && (pinned != null || search.Accepts(cachedRaw.MatchScore, cachedRaw.TitleMatched))
             && cachedRaw.Parse() is { } cached) // cached junk (e.g. credits only) is fetched again
         {
+            search.Observe(cachedRaw.MatchScore);
             if (pinned != null || !NeedsWordCheck(cachedRaw, cached) || !WordCheckDue(file)) return cached;
             onCached?.Invoke(cached);
             ct.ThrowIfCancellationRequested();
-            var words = await WordTimed(await WithAliases(track, ct), cachedRaw, requireTitle: true, ct);
+            var words = await WordTimed(await WithAliases(track, ct, allowGuess: search.IsMusicPlayer), cachedRaw, requireTitle: true, ct, search);
             ct.ThrowIfCancellationRequested();
             if (words?.Parse() is not { } upgraded)
             {
@@ -204,7 +209,7 @@ public sealed class LyricsProvider
             WriteCache(file, words);
             return upgraded;
         }
-        if (pinned == null) track = await WithAliases(track, ct);
+        if (pinned == null) track = await WithAliases(track, ct, allowGuess: search.IsMusicPlayer);
         RawLyrics? raw;
         if (pinned != null) raw = await Fetch(pinned, ct);
         else
@@ -217,21 +222,27 @@ public sealed class LyricsProvider
             // A player can report the wrong length (QQ Music did), and the artist's other song of
             // that length then won from the first source searched.
             raw = null;
-            foreach (bool requireTitle in new[] { true, false })
+            foreach (bool requireTitle in search.IsMusicPlayer ? new[] { true, false } : new[] { true })
             {
                 RawLyrics? untimed = null;
-                foreach (var source in new Func<Track, bool, CancellationToken, Task<RawLyrics?>>[] { FromNetease, (t, r, c) => FromQq(t, r, c), FromLrclib })
+                foreach (var source in new Func<Track, bool, CancellationToken, Task<RawLyrics?>>[]
+                {
+                    (t, r, c) => FromNetease(t, r, c, search),
+                    (t, r, c) => FromQq(t, r, c, search: search),
+                    (t, r, c) => FromLrclib(t, r, c, search),
+                })
                 {
                     var found = await source(track, requireTitle, ct);
                     if (found?.Parse() is not { } candidate) continue;
                     if (candidate.IsSynced) { raw = found; break; }
                     untimed ??= found;
                 }
-                if (raw != null) { raw = await WordTimed(track, raw, requireTitle, ct) ?? raw; break; }
+                if (raw != null) { raw = await WordTimed(track, raw, requireTitle, ct, search) ?? raw; break; }
                 if (untimed != null) { raw = untimed; break; }
             }
         }
-        if (raw?.Parse() is not { } parsed) return null;
+        if (raw == null || pinned == null && !search.Accepts(raw.MatchScore, raw.TitleMatched)
+            || raw.Parse() is not { } parsed) return null;
         ct.ThrowIfCancellationRequested();
         WriteCache(file, raw);
         return parsed;
@@ -254,10 +265,10 @@ public sealed class LyricsProvider
     /// and length agree, or the exact song QQ Music is playing) and keeps any translation. Null
     /// when <paramref name="raw"/> should stay.
     /// </summary>
-    async Task<RawLyrics?> WordTimed(Track track, RawLyrics raw, bool requireTitle, CancellationToken ct)
+    async Task<RawLyrics?> WordTimed(Track track, RawLyrics raw, bool requireTitle, CancellationToken ct, LyricsSearch search)
     {
         if (raw.Parse() is not { } lines || !NeedsWordCheck(raw, lines)) return null;
-        if (await FromQq(track, requireTitle, ct, minScore: 7) is not { } qq || qq.Parse() is not { IsWordSynced: true } words) return null;
+        if (await FromQq(track, requireTitle, ct, minScore: 7, search: search) is not { } qq || qq.Parse() is not { IsWordSynced: true } words) return null;
         ct.ThrowIfCancellationRequested();
         static bool Translated(Lyrics l) => l.Lines.Any(x => x.Translation != null);
         return Translated(lines) && !Translated(words) ? null : qq;
@@ -293,7 +304,7 @@ public sealed class LyricsProvider
 
     // ---- NetEase ----
 
-    async Task<RawLyrics?> FromNetease(Track track, bool requireTitle, CancellationToken ct)
+    async Task<RawLyrics?> FromNetease(Track track, bool requireTitle, CancellationToken ct, LyricsSearch search)
     {
         // Player titles carry suffixes like "(Theme Song from …)" that bury the real match,
         // so also search the bare title, then keep the best across queries.
@@ -305,19 +316,19 @@ public sealed class LyricsProvider
         if (native != null) queries.AddRange([$"{bare} {native}", native]);
         queries = queries.Distinct().ToList();
 
-        (long Id, double Score)? best = null;
+        LyricsCandidate? best = null;
         foreach (var query in queries)
         {
-            foreach (var c in await NeteaseSearch(query, track, requireTitle, ct))
+            foreach (var c in await NeteaseSearch(query, track, requireTitle, ct, search))
                 if (c.Score > (best?.Score ?? 0)) best = c;
             if (best is { Score: >= 7 }) break; // title + artist + duration all agree
         }
-        if (best is not { Score: >= 3 } b) return null;
-        if (await FetchNetease(b.Id, ct) is { } raw && raw.Parse() != null) return raw;
+        if (best is not { Score: >= 3 } b || !search.Accepts(b.Score, b.TitleMatched)) return null;
+        if (await Fetch(b.Id, ct) is { } raw && raw.Parse() != null) return raw.Matched(b.Score, b.TitleMatched);
         // The best match had no usable lyrics: try the next few good candidates.
-        var others = (await NeteaseSearch(queries[0], track, requireTitle, ct)).Where(c => c.Id != b.Id && c.Score >= b.Score - 1.5).Take(3);
+        var others = (await NeteaseSearch(queries[0], track, requireTitle, ct, search)).Where(c => c.Id != b.Id && c.Score >= b.Score - 1.5 && search.Accepts(c.Score, c.TitleMatched)).Take(3);
         foreach (var c in others)
-            if (await FetchNetease(c.Id, ct) is { } r && r.Parse() != null) return r;
+            if (await Fetch(c.Id, ct) is { } r && r.Parse() != null) return r.Matched(c.Score, c.TitleMatched);
         return null;
     }
 
@@ -337,11 +348,9 @@ public sealed class LyricsProvider
         };
     }
 
-    async Task<List<(long Id, double Score)>> NeteaseSearch(string query, Track track, bool requireTitle, CancellationToken ct) =>
-        (await NeteaseCandidates(query, track, ct))
-            .Where(c => c.TitleMatched || !requireTitle)
-            .Select(c => long.TryParse(c.Id.Id, out var id) ? (id, c.Score) : ((long, double)?)null)
-            .Where(x => x != null).Select(x => x!.Value).ToList();
+    async Task<List<LyricsCandidate>> NeteaseSearch(string query, Track track, bool requireTitle, CancellationToken ct, LyricsSearch search) =>
+        search.Observe(await NeteaseCandidates(query, track, ct))
+            .Where(c => c.TitleMatched || !requireTitle).ToList();
 
     /// <summary>NetEase search results scored against <paramref name="track"/>, best first.</summary>
     public async Task<List<LyricsCandidate>> NeteaseCandidates(string query, Track track, CancellationToken ct = default)
@@ -492,10 +501,11 @@ public sealed class LyricsProvider
 
     /// <param name="minScore">How well the best search result must match: 3 takes a likely
     /// match, 7 needs title, artist and length to agree.</param>
-    async Task<RawLyrics?> FromQq(Track track, bool requireTitle, CancellationToken ct, double minScore = 3)
+    async Task<RawLyrics?> FromQq(Track track, bool requireTitle, CancellationToken ct, double minScore = 3, LyricsSearch? search = null)
     {
-        // The exact recording QQ Music is playing, when known; otherwise the best search match.
-        if (track.QqSongMid is { } mid) return await FetchQqSong(mid, track.QqSongId, ct);
+        search ??= new LyricsSearch(isMusicPlayer: true);
+        // Only a music player can identify a recording without a scored search.
+        if (search.IsMusicPlayer && track.QqSongMid is { } mid) return await FetchQqSong(mid, track.QqSongId, ct);
         var bare = TrackMatcher.BareTitle(track.Title);
         var native = track.ArtistAliases.FirstOrDefault(a => a.Any(c => c > '⺀'));
         var queries = new List<string> { $"{bare} {track.Artist}", bare };
@@ -503,12 +513,12 @@ public sealed class LyricsProvider
         LyricsCandidate? best = null;
         foreach (var query in queries)
         {
-            foreach (var c in await QqCandidates(query, track, ct))
+            foreach (var c in search.Observe(await QqCandidates(query, track, ct)))
                 if ((c.TitleMatched || !requireTitle) && c.Score > (best?.Score ?? 0)) best = c;
             if (best is { Score: >= 7 }) break;
         }
-        if (best == null || best.Score < minScore) return null;
-        return await FetchQqSong(best.Id.Id, best.Id.QqId, ct);
+        if (best == null || best.Score < minScore || !search.Accepts(best.Score, best.TitleMatched)) return null;
+        return (await FetchQqSong(best.Id.Id, best.Id.QqId, ct))?.Matched(best.Score, best.TitleMatched);
     }
 
     /// <summary>One QQ Music song's lyrics: word-by-word QRC when there is one, keeping the line LRC's translation if QRC has none.</summary>
@@ -571,19 +581,39 @@ public sealed class LyricsProvider
         Ref = Long(Field(r, "id")) is { } id ? new LyricsRef(LyricsSource.Lrclib, id.ToString(CultureInfo.InvariantCulture)) : null,
     };
 
-    async Task<RawLyrics?> FromLrclib(Track track, bool requireTitle, CancellationToken ct)
+    async Task<RawLyrics?> FromLrclib(Track track, bool requireTitle, CancellationToken ct, LyricsSearch search)
     {
         var url = "https://lrclib.net/api/get?" + Query(("track_name", track.Title), ("artist_name", track.Artist),
             ("album_name", track.Album), ("duration", ((long)Math.Round(track.Duration)).ToString(CultureInfo.InvariantCulture)));
         // The exact lookup goes by title, so it's only worth asking on the first pass.
-        if (requireTitle && LrclibRaw(await GetJson(new HttpRequestMessage(HttpMethod.Get, url), ct, require200: true)) is { } exact) return exact;
+        if (requireTitle)
+        {
+            var response = await GetJson(new HttpRequestMessage(HttpMethod.Get, url), ct, require200: true);
+            if (LrclibRaw(response) is { } exact)
+            {
+                var title = Str(Field(response, "trackName"));
+                if (title == null)
+                {
+                    if (search.IsMusicPlayer) return exact;
+                }
+                else
+                {
+                    var artist = Str(Field(response, "artistName")) ?? "";
+                    double score = TrackMatcher.Score([title], [artist], Num(Field(response, "duration")) ?? 0, track, Str(Field(response, "albumName")));
+                    bool titleMatched = TrackMatcher.TitleMatches([title], track);
+                    search.Observe(score);
+                    if (search.Accepts(score, titleMatched)) return exact.Matched(score, titleMatched);
+                }
+            }
+        }
         // The exact lookup needs the album too, which browsers often don't report: search, and
         // take the best match that has timed lyrics.
-        foreach (var c in await LrclibCandidates($"{track.Title} {track.Artist}", track, ct))
+        foreach (var c in search.Observe(await LrclibCandidates($"{track.Title} {track.Artist}", track, ct)))
         {
-            if (c.Score < 6) break;
+            if (c.Score < (search.IsMusicPlayer ? 6 : LyricsSearch.ConfidentScore)) break;
             if (requireTitle && !c.TitleMatched) continue;
-            if (_lrclibSeen.TryGetValue(c.Id.Id, out var seen) && !string.IsNullOrEmpty(seen.Lrc)) return seen;
+            if (!search.Accepts(c.Score, c.TitleMatched)) continue;
+            if (_lrclibSeen.TryGetValue(c.Id.Id, out var seen) && !string.IsNullOrEmpty(seen.Lrc)) return seen.Matched(c.Score, c.TitleMatched);
         }
         return null;
     }
