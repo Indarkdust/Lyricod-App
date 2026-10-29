@@ -277,4 +277,5 @@
   <data name="UpdateNotWritable" xml:space="preserve"><value>Lyricod can’t write to this folder. Download the update from the release page and move Lyricod to a folder you can write to.</value></data>
   <data name="UpdateApplyFailed" xml:space="preserve"><value>Couldn’t start the update. Please try again, or download it from the release page.</value></data>
   <data name="UpdateOpenPageFailed" xml:space="preserve"><value>Couldn’t open the release page. Please try again.</value></data>
+  <data name="NotASong" xml:space="preserve"><value>This doesn’t look like a song, so Lyricod isn’t showing lyrics.</value></data>
 </root>

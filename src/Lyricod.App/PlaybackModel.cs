@@ -16,7 +16,7 @@ namespace Lyricod;
 public sealed class PlaybackModel
 {
     [Flags]
-    public enum Change { None = 0, Track = 1, Lyrics = 2, Line = 4, Clock = 8, Artwork = 16 }
+    public enum Change { None = 0, Track = 1, Lyrics = 2, Line = 4, Clock = 8, Artwork = 16, Diagnostics = 32 }
 
     public event Action<Change>? Changed;
 
@@ -25,6 +25,11 @@ public sealed class PlaybackModel
     /// <summary>Lyrics as shown: credits and pronunciation filtered by the settings.</summary>
     public Lyrics? Lyrics { get; private set; }
     public bool IsSearching { get; private set; }
+    public bool IsMusicPlayer => MusicPlayers.IsMusicPlayer(NowPlaying?.AppId);
+    SongState Recognition => SongRecognition.Classify(IsMusicPlayer, LyricsPinned, IsSearching, _allLyrics != null);
+    public bool IsSong => Track != null && Recognition == SongState.Song;
+    public bool IsNotSong => Track != null && Recognition == SongState.NotSong;
+    public double? BestMatchScore { get; private set; }
     public int? CurrentIndex { get; private set; }
     public LyricLine? CurrentLine => CurrentIndex is int i && Lyrics is { } l ? l.Lines[i] : null;
     public bool IsPlaying => _playhead.IsPlaying;
@@ -86,11 +91,15 @@ public sealed class PlaybackModel
         _settings = settings;
         _lineTimer = ui.CreateTimer();
         _lineTimer.IsRepeating = false;
-        _lineTimer.Tick += (_, _) => Tick();
+        _lineTimer.Tick += (_, _) => { try { Tick(); } catch (Exception e) { LastError = "line: " + e.Message; } };
         // Players report changes as they happen; this only catches a missed report.
         _safetyPoll = ui.CreateTimer();
         _safetyPoll.Interval = TimeSpan.FromSeconds(2);
-        _safetyPoll.Tick += (_, _) => _ = Refresh();
+        _safetyPoll.Tick += async (_, _) =>
+        {
+            try { await Refresh(); }
+            catch (Exception e) { LastError = "refresh: " + e.Message; }
+        };
         _media.Changed += OnMediaChanged;
         _media.DetailsChanged += OnMediaDetailsChanged;
         _settings.PropertyChanged += OnSettingChanged;
@@ -121,10 +130,16 @@ public sealed class PlaybackModel
         _media.Dispose();
     }
 
-    void OnMediaChanged() => _ui.TryEnqueue(() => _ = Refresh());
+    void Post(Action action) => _ui.TryEnqueue(() =>
+    {
+        try { if (!_stopped) action(); }
+        catch (Exception e) { LastError = "display: " + e.Message; }
+    });
+
+    void OnMediaChanged() => Post(() => _ = Refresh());
 
     // A cover can arrive (or be corrected) well after the song starts: read it again each time.
-    void OnMediaDetailsChanged() => _ui.TryEnqueue(() => { if (NowPlaying is { } n) LoadArtwork(n.TrackId); });
+    void OnMediaDetailsChanged() => Post(() => { if (NowPlaying is { } n) LoadArtwork(n.TrackId); });
 
     /// <summary>The lyric position (offset applied) now, or at a given steady-clock instant.</summary>
     public double Position(double? at = null) => _playhead.Position(at ?? Now);
@@ -144,6 +159,7 @@ public sealed class PlaybackModel
                 Apply(await _media.ReadAsync());
             } while (_refreshAgain);
         }
+        catch (Exception e) { LastError = "refresh: " + e.Message; }
         finally { _refreshing = false; }
     }
 
@@ -158,6 +174,7 @@ public sealed class PlaybackModel
                 NowPlaying = null; Track = null; Lyrics = null; _allLyrics = null; CurrentIndex = null;
                 Artwork = null; ArtworkColor = null;
                 _loading?.Cancel();
+                BestMatchScore = null;
                 IsSearching = false; // the cancelled search won't say it's done
                 SongOffset = 0; _playhead.Offset = _settings.Offset;
                 _playhead.Anchor(0, Now, false);
@@ -228,18 +245,22 @@ public sealed class PlaybackModel
 
     async void LoadArtwork(string trackId)
     {
-        _artworkTries++;
-        var bytes = await _media.ReadArtworkAsync();
-        if (bytes == null || NowPlaying?.TrackId != trackId) return;
-        if (Artwork != null && bytes.AsSpan().SequenceEqual(Artwork)) return; // the same cover again
-        Windows.UI.Color? colour = null;
-        (int, int)? size = null;
-        try { (colour, size) = await Inspect(bytes); } catch (Exception) { /* not an image we can read */ }
-        if (NowPlaying?.TrackId != trackId) return;
-        Artwork = bytes;
-        ArtworkColor = colour;
-        ArtworkSize = size;
-        Changed?.Invoke(Change.Artwork);
+        try
+        {
+            _artworkTries++;
+            var bytes = await _media.ReadArtworkAsync();
+            if (bytes == null || NowPlaying?.TrackId != trackId) return;
+            if (Artwork != null && bytes.AsSpan().SequenceEqual(Artwork)) return; // the same cover again
+            Windows.UI.Color? colour = null;
+            (int, int)? size = null;
+            try { (colour, size) = await Inspect(bytes); } catch (Exception) { /* not an image we can read */ }
+            if (NowPlaying?.TrackId != trackId) return;
+            Artwork = bytes;
+            ArtworkColor = colour;
+            ArtworkSize = size;
+            Changed?.Invoke(Change.Artwork);
+        }
+        catch (Exception e) { LastError = "artwork: " + e.Message; }
     }
 
     /// <summary>The cover's main colour and its size in pixels.</summary>
@@ -315,6 +336,8 @@ public sealed class PlaybackModel
         Lyrics = null;
         CurrentIndex = null;
         IsSearching = true;
+        BestMatchScore = null;
+        var search = new LyricsSearch(IsMusicPlayer);
         var pinned = _overrides[track].Lyrics;
         Changed?.Invoke(Change.Lyrics | Change.Line);
         _ = Task.Run(async () =>
@@ -327,29 +350,42 @@ public sealed class PlaybackModel
                     early = cached;
                     try { _romanizer.Fill(cached); }
                     catch (Exception e) { LastError = "pronunciation: " + e.Message; }
-                    _ui.TryEnqueue(() =>
+                    var score = search.BestScore;
+                    Post(() =>
                     {
                         if (cts.IsCancellationRequested || Track?.TrackId != track.TrackId) return;
                         IsSearching = false;
+                        BestMatchScore = score;
                         _allLyrics = cached;
                         ApplyDisplayFilters();
                     });
-                });
+                }, search);
             }
             catch (OperationCanceledException) { return; }
             catch (Exception e) { LastError = "lyrics: " + e.Message; }
             // The saved copy is already showing, and the check found nothing better (or failed).
-            if (early != null && (found == null || ReferenceEquals(found, early))) return;
+            if (early != null && (found == null || ReferenceEquals(found, early)))
+            {
+                Post(() =>
+                {
+                    if (cts.IsCancellationRequested || Track?.TrackId != track.TrackId) return;
+                    if (BestMatchScore == search.BestScore) return;
+                    BestMatchScore = search.BestScore;
+                    Changed?.Invoke(Change.Diagnostics);
+                });
+                return;
+            }
             // Pronunciation is extra: if working it out fails, the lyrics still show.
             if (found != null)
             {
                 try { _romanizer.Fill(found); } // the analysers take a few ms a line
                 catch (Exception e) { LastError = "pronunciation: " + e.GetType().Name + ": " + e.Message; }
             }
-            _ui.TryEnqueue(() =>
+            Post(() =>
             {
                 if (cts.IsCancellationRequested || Track?.TrackId != track.TrackId) return;
                 IsSearching = false;
+                BestMatchScore = search.BestScore;
                 _allLyrics = found;
                 ApplyDisplayFilters();
             });
@@ -444,7 +480,7 @@ public sealed class PlaybackModel
         System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant(),
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,
         SongOffset, _settings.Offset, LastError, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind);
+        NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind, IsMusicPlayer, IsSong, BestMatchScore);
 
     void WriteDebugState(double position)
     {
@@ -459,6 +495,7 @@ public sealed class PlaybackModel
                 reportedPlaying = NowPlaying?.IsPlaying, playing = IsPlaying, position, lines = Lyrics?.Lines.Count,
                 synced = Lyrics?.IsSynced, firstLine = Lyrics?.Lines.FirstOrDefault()?.Start, index = CurrentIndex, line = CurrentLine?.Text, error = LastError,
                 meter = Platform.AudioMeter.LastStatus,
+                musicPlayer = IsMusicPlayer, song = IsSong, bestMatchScore = BestMatchScore,
             }));
         }
         catch (IOException) { }

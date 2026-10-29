@@ -67,7 +67,7 @@ public sealed partial class DesktopLyricsWindow : Window
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
-        _pieceTimer.Tick += (_, _) => ShowPiece();
+        _pieceTimer.Tick += (_, _) => { try { ShowPiece(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
 
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
@@ -153,7 +153,7 @@ public sealed partial class DesktopLyricsWindow : Window
 
     void UpdateVisibility()
     {
-        bool visible = _settings.ShowDesktopLyrics && _model.Track != null;
+        bool visible = _settings.ShowDesktopLyrics && _model.IsSong;
         if (visible == _shown) return;
         _shown = visible;
         if (visible)
@@ -272,7 +272,7 @@ public sealed partial class DesktopLyricsWindow : Window
             _piece = null;
             _pieceTimer.Stop();
             Dim.FontSize = Measurer.FontSize = Math.Round(_settings.DesktopFontSize * 0.8);
-            Dim.Text = _model.Track is { } t ? (_model.IsSearching ? L.Get("Searching") : $"{t.Title} — {t.Artist}") : "";
+            Dim.Text = _model.IsSong && _model.Track is { } t ? (_model.IsSearching ? L.Get("Searching") : $"{t.Title} — {t.Artist}") : "";
             Dim.FontFamily = Measurer.FontFamily = Fonts.For(Dim.Text, null);
             // A long title ends in "…" rather than running off the strip.
             Dim.MaxWidth = StripWidth - 2 * SidePadding;

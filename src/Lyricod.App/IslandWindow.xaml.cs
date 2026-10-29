@@ -211,7 +211,7 @@ public sealed partial class IslandWindow : Window
 
     void UpdateVisibility()
     {
-        bool visible = _settings.ShowIsland && _model.Track != null && !_pausedAway;
+        bool visible = _settings.ShowIsland && _model.IsSong && !_pausedAway;
         if (visible == _shown) return;
         _shown = visible;
         if (visible)
@@ -607,7 +607,7 @@ public sealed partial class IslandWindow : Window
             _pieces = [];
             _piece = null;
             _pieceTimer.Stop();
-            Lyric.Text = _model.Track is { } t ? $"{t.Title} · {t.Artist}" : "";
+            Lyric.Text = _model.IsSong && _model.Track is { } t ? $"{t.Title} · {t.Artist}" : "";
             Lyric.FontFamily = Fonts.For(Lyric.Text, null);
             Lyric.FontSize = 13 * LayoutScale;
             Lyric.FontWeight = Fonts.SemiboldWeight;

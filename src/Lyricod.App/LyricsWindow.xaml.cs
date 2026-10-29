@@ -315,13 +315,14 @@ public sealed partial class LyricsWindow : Window
         MessageButton.Visibility = MessageDetail.Visibility = Visibility.Collapsed;
         if (_model.Track == null || _model.IsSearching || lyrics == null)
         {
-            MessageText.Text = _model.Track == null ? L.Get("NothingPlaying") : _model.IsSearching ? L.Get("Searching") : L.Get("NoLyrics");
+            MessageText.Text = _model.Track == null ? L.Get("NothingPlaying") : _model.IsSearching ? L.Get("Searching") : _model.IsNotSong ? L.Get("NotASong") : L.Get("NoLyrics");
             if (_model.Track != null && !_model.IsSearching)
             {
                 // As on the Mac: search for them yourself and pick the right song.
                 MessageDetail.Text = L.Get("NoLyricsDetail");
                 MessageButton.Content = L.Get("ChooseLyricsTip");
-                MessageDetail.Visibility = MessageButton.Visibility = Visibility.Visible;
+                MessageDetail.Visibility = _model.IsNotSong ? Visibility.Collapsed : Visibility.Visible;
+                MessageButton.Visibility = Visibility.Visible;
             }
             Message.Visibility = Visibility.Visible;
             return;

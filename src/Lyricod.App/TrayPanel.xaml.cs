@@ -184,7 +184,12 @@ public sealed partial class TrayPanel : Window
 
             ThisSong.Opacity = track != null ? 1 : 0.5;
             LyricsRow.IsEnabled = EarlierButton.IsEnabled = LaterButton.IsEnabled = track != null;
-            LyricsStatus.Text = LyricsStatusText();
+            var status = LyricsStatusText();
+            bool statusChanged = LyricsStatus.Text != status;
+            LyricsStatus.Text = status;
+            LyricsStatus.TextWrapping = _model.IsNotSong ? TextWrapping.Wrap : TextWrapping.NoWrap;
+            LyricsStatus.TextTrimming = _model.IsNotSong ? TextTrimming.None : TextTrimming.CharacterEllipsis;
+            if (_shown && statusChanged) SizeToContent();
             LyricsIcon.Glyph = _model.LyricsPinned ? "\uE718" : "\uE8BD"; // pin, or a speech bubble
             double offset = _model.SongOffset;
             string amount = Math.Abs(offset).ToString("0.00", CultureInfo.CurrentCulture);
@@ -202,6 +207,7 @@ public sealed partial class TrayPanel : Window
     {
         if (_model.Track == null) return L.Get("NothingPlaying");
         if (_model.IsSearching) return L.Get("Searching");
+        if (_model.IsNotSong) return L.Get("NotASong");
         if (_model.Lyrics is not { } l) return L.Get("NoneFoundChoose");
         var kind = !l.IsSynced ? L.Get("KindPlain") : l.IsWordSynced ? L.Get("KindWords") : L.Get("KindLines");
         return _model.LyricsPinned ? $"{kind} · {l.Source} · {L.Get("ChooseLyricsPinned")}" : $"{kind} · {l.Source}";

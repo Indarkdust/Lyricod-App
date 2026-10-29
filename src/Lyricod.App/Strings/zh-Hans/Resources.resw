@@ -277,4 +277,5 @@
   <data name="UpdateNotWritable" xml:space="preserve"><value>无法写入 Lyricod 所在的文件夹。请前往发布页面下载更新，并将 Lyricod 移到有写入权限的文件夹中。</value></data>
   <data name="UpdateApplyFailed" xml:space="preserve"><value>无法启动更新。请重试，或前往发布页面下载。</value></data>
   <data name="UpdateOpenPageFailed" xml:space="preserve"><value>无法打开发布页面，请重试。</value></data>
+  <data name="NotASong" xml:space="preserve"><value>当前播放的内容可能不是歌曲，因此 Lyricod 不显示歌词。</value></data>
 </root>

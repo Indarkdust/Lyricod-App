@@ -67,7 +67,7 @@
             </ScrollView>
             <StackPanel x:Name="Message" Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center"
                         Spacing="12" Visibility="Collapsed">
-                <TextBlock x:Name="MessageText" FontSize="20" FontWeight="SemiBold" Opacity="0.7" HorizontalAlignment="Center" TextAlignment="Center" />
+                <TextBlock x:Name="MessageText" TextWrapping="Wrap" MaxWidth="320" FontSize="20" FontWeight="SemiBold" Opacity="0.7" HorizontalAlignment="Center" TextAlignment="Center" />
                 <TextBlock x:Name="MessageDetail" FontSize="13" Opacity="0.6" HorizontalAlignment="Center" TextAlignment="Center"
                            TextWrapping="Wrap" MaxWidth="320" Margin="0,-6,0,0" Visibility="Collapsed" />
                 <Button x:Name="MessageButton" HorizontalAlignment="Center" Click="OnChooseLyrics" Visibility="Collapsed" />
