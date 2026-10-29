@@ -60,6 +60,8 @@ Name: "{userdesktop}\Lyricod"; Filename: "{app}\Lyricod.exe"; WorkingDir: "{app}
 
 [Run]
 Filename: "{app}\Lyricod.exe"; Description: "Launch Lyricod"; Flags: nowait postinstall skipifsilent
+; Lyricod's own updater runs Setup silently with /relaunch=1 after quitting: open it again afterwards.
+Filename: "{app}\Lyricod.exe"; Flags: nowait; Check: RelaunchAfterUpdate
 
 [Registry]
 ; Startup.cs writes this value itself. Do not enable or disable it during upgrades.
@@ -77,3 +79,9 @@ Type: filesandordirs; Name: "{app}\app\Fonts"
 ; Uninstall can't remove a running Lyricod.exe: stop it first. (Setup closes it through
 ; CloseApplications above; that doesn't apply to uninstall.) Nothing happens if it isn't running.
 Filename: "{sys}\taskkill.exe"; Parameters: "/F /IM Lyricod.exe"; Flags: runhidden waituntilterminated; RunOnceId: "StopLyricod"
+
+[Code]
+function RelaunchAfterUpdate: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;
