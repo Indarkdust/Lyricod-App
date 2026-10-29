@@ -38,6 +38,7 @@ public sealed partial class UpdateChecker : IDisposable
             try
             {
                 _timer.Interval = TimeSpan.FromMinutes(1);
+                if (++_ticks == 2) await CleanUpAgainAsync();
                 if (_settings.CheckForUpdatesAutomatically && UpdateCheck.IsDue(_settings.LastUpdateCheck, DateTimeOffset.UtcNow))
                     await CheckAsync(manual: false);
             }

@@ -13,6 +13,7 @@ public sealed partial class UpdateChecker
     readonly Task _cleanup;
     readonly SemaphoreSlim _files = new(1, 1);
     CancellationTokenSource? _download;
+    int _ticks;
     string? _readyPath;
     bool _notWritable;
     static readonly Uri? TestFeed = Environment.GetEnvironmentVariable("LYRICOD_UPDATE_FEED") is { Length: > 0 } feed
@@ -39,6 +40,21 @@ public sealed partial class UpdateChecker
         Progress = null;
         Error = null;
         State = UpdateState.Idle;
+    }
+
+    /// <summary>Right after an installer update, Setup is still running when it opens the new Lyricod,
+    /// so the start-up cleanup can't remove the downloaded setup yet: try once more a minute later,
+    /// unless an update is being downloaded or is waiting (its staged files must stay).</summary>
+    async Task CleanUpAgainAsync()
+    {
+        if (State != UpdateState.Idle || _disposed || !await _files.WaitAsync(0)) return;
+        try
+        {
+            var running = UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0);
+            await Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, running));
+        }
+        catch (Exception) { }
+        finally { _files.Release(); }
     }
 
     public void Cancel()
