@@ -51,6 +51,9 @@
   <ItemGroup>
     <Content Include="Assets\Lyricod.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\Lyricod-256.png" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The licence and the notices for what Lyricod uses travel with every download. -->
+    <Content Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Lyricod.Core/Lyricod.Core.csproj" />
