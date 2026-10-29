@@ -29,7 +29,8 @@ public sealed partial class UpdateChecker : IDisposable
     {
         _settings = settings;
         _queue = queue;
-        bool keepOldCopies = Platform.UpdateHealth.Pending; // the launcher removes them once this one is up
+        // Started by an update: the old copy is the launcher's to remove once this one is up, or the next start's.
+        bool keepOldCopies = Platform.UpdateHealth.Pending;
         _cleanup = Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0), keepOldCopies));
         _timer = queue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(10);

@@ -72,8 +72,6 @@ public partial class App : Application
         _tray.ContextMenu += (_, e) => e.Flyout = BuildMenu();
         _tray.Selected += (_, _) => _panel.Toggle();
         _tray.IsVisible = true;
-        // After a portable update: the windows and tray icon are up, so the launcher can let the old copy go.
-        Platform.UpdateHealth.SignalStarted();
         _model.Changed += change =>
         {
             if (change.HasFlag(PlaybackModel.Change.Track) && _tray != null)
@@ -81,6 +79,9 @@ public partial class App : Application
         };
 
         await _model.StartAsync();
+        // After a portable update: windows, tray icon and media tracking are all up, so the launcher can
+        // let the old copy go. Anything above that throws ends here without this, and the launcher puts it back.
+        Platform.UpdateHealth.SignalStarted();
     }
 
     static string Trim(string s, int max) => s.Length <= max ? s : s[..(max - 1)] + "…";

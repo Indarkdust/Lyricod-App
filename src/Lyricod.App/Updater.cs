@@ -51,7 +51,9 @@ public sealed partial class UpdateChecker
         try
         {
             var running = UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0);
-            await Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, running));
+            // Started by an update: the old copy is the launcher's to remove (or the next start's).
+            bool keepOldCopies = Platform.UpdateHealth.Pending;
+            await Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, running, keepOldCopies));
         }
         catch (Exception) { }
         finally { _files.Release(); }

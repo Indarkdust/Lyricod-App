@@ -14,8 +14,8 @@
 // update, and never blocks one. If the swap fails, the old Lyricod is put back and started.
 //
 // The old copy stays until the new Lyricod says it has started properly (it sets the event named in
-// LYRICOD_UPDATE_SIGNAL once its windows and tray icon are up). If it exits or hangs instead, the
-// old copy is put back and started.
+// LYRICOD_UPDATE_SIGNAL once its windows, tray icon and media tracking are up). If it exits or hangs
+// instead, the old copy is put back and started. Nothing in that run of Lyricod deletes the old copy.
 
 static std::wstring SystemMessage(DWORD error)
 {
@@ -205,14 +205,28 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
 
     DeleteLeftovers(root);
 
+    // The new Lyricod says it has fully started by setting this event. Without it there'd be no telling
+    // whether it did, so the update doesn't go ahead (nothing has been touched yet).
+    const std::wstring signalName = L"Local\\Lyricod-UpdateStarted-" + std::to_wstring(GetCurrentProcessId()) + L"-" + stamp;
+    HANDLE started = CreateEventW(nullptr, TRUE, FALSE, signalName.c_str());
+    if (!started)
+    {
+        const DWORD error = GetLastError();
+        StartApp(root, L"");
+        ShowUpdateError(error);
+        return 1;
+    }
+
     if (DWORD error = Move(app, old))
     {
+        CloseHandle(started);
         StartApp(root, L"");
         ShowUpdateError(error);
         return 1;
     }
     if (DWORD error = Move(fresh, app))
     {
+        CloseHandle(started);
         Move(old, app);
         StartApp(root, L"");
         ShowUpdateError(error);
@@ -225,13 +239,11 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
     Move(root + L"README.txt.new", root + L"README.txt", MOVEFILE_REPLACE_EXISTING);
 
     // Start the new Lyricod and wait for it to say it's up; the old copy stays until then.
-    const std::wstring signalName = L"Local\\Lyricod-UpdateStarted-" + std::to_wstring(GetCurrentProcessId()) + L"-" + stamp;
-    HANDLE started = CreateEventW(nullptr, TRUE, FALSE, signalName.c_str());
-    if (started) SetEnvironmentVariableW(SignalVariable, signalName.c_str());
+    SetEnvironmentVariableW(SignalVariable, signalName.c_str());
     HANDLE process = nullptr;
-    DWORD error = StartApp(root, L"", started ? &process : nullptr);
-    if (started) SetEnvironmentVariableW(SignalVariable, nullptr);
-    if (error == ERROR_SUCCESS && started && process)
+    DWORD error = StartApp(root, L"", &process);
+    SetEnvironmentVariableW(SignalVariable, nullptr);
+    if (error == ERROR_SUCCESS)
     {
         HANDLE waits[] = { started, process };
         const DWORD waited = WaitForMultipleObjects(2, waits, FALSE, 90000);
@@ -244,7 +256,7 @@ static int ApplyUpdate(const std::wstring& root, const std::wstring& self, DWORD
         }
     }
     if (process) CloseHandle(process);
-    if (started) CloseHandle(started);
+    CloseHandle(started);
 
     if (error != ERROR_SUCCESS)
     {
