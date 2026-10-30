@@ -56,6 +56,7 @@
     <Content Include="Assets\Lyricod-256.png" CopyToOutputDirectory="PreserveNewest" />
     <!-- The licence and the notices for what Lyricod uses travel with every download. -->
     <Content Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\NOTICE" Link="NOTICE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\THIRD-PARTY-NOTICES.md" Link="THIRD-PARTY-NOTICES.md" CopyToOutputDirectory="PreserveNewest" />
     <!-- The full licence texts and notices of what the downloads include (see THIRD-PARTY-NOTICES.md). -->
     <Content Include="..\..\licenses\*" Link="licenses\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
