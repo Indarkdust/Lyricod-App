@@ -29,6 +29,7 @@
   <data name="BuiltWith" xml:space="preserve"><value>Built With</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>Tray icon and window helpers. MIT License.</value></data>
   <data name="ToolGoodDetail" xml:space="preserve"><value>Pinyin and Traditional–Simplified Chinese conversion. Apache License 2.0.</value></data>
+  <data name="Win2DDetail" xml:space="preserve"><value>Draws Lyricod Glass's liquid effect.</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
   <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent or Xiaomi.</value></data>
@@ -86,8 +87,16 @@
   <data name="GlassTintNeutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>Album colour</value></data>
   <data name="GlassShine" xml:space="preserve"><value>3D effect</value></data>
-  <data name="GlassBlur" xml:space="preserve"><value>Frosted blur (experimental)</value></data>
-  <data name="GlassBlurDetail" xml:space="preserve"><value>Blurs what's behind the island. Its corners may look slightly jagged.</value></data>
+  <data name="GlassEffect" xml:space="preserve"><value>Glass effect</value></data>
+  <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
+  <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted (experimental)</value></data>
+  <data name="GlassEffectLiquid" xml:space="preserve"><value>Liquid (experimental)</value></data>
+  <data name="GlassEffectClearDetail" xml:space="preserve"><value>What's behind the island shows through clearly.</value></data>
+  <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>Blurs what's behind with Windows' acrylic. Its corners may look slightly jagged.</value></data>
+  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>Redraws what's behind with a light blur and lens-like edges. While it's on, the island doesn't show in screenshots, recordings or screen sharing.</value></data>
+  <data name="GlassEffectUnsupported" xml:space="preserve"><value>This PC's Windows doesn't support it, so the glass stays clear.</value></data>
+  <data name="LiquidBlur" xml:space="preserve"><value>Blur</value></data>
+  <data name="LiquidRefraction" xml:space="preserve"><value>Edge refraction</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

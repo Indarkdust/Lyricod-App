@@ -15,6 +15,9 @@
         <Border x:Name="Pill" Background="Black" CornerRadius="0,0,12,12" HorizontalAlignment="Center"
                 VerticalAlignment="Top" Width="300" Height="34">
             <Grid>
+                <!-- Lyricod Glass's liquid effect: what's behind the island, redrawn in code. -->
+                <Grid x:Name="LiquidHost" IsHitTestVisible="False" />
+
                 <!-- Lyricod Glass: the light catching the top of the glass, behind the lyrics. -->
                 <Border x:Name="Sheen" IsHitTestVisible="False" />
 

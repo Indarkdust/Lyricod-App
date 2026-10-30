@@ -16,6 +16,10 @@ public enum IslandTheme { Classic, Glass }
 /// <summary>The colour of Lyricod Glass: a neutral dark, or the album cover's colour.</summary>
 public enum GlassTint { Neutral, Album }
 
+/// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it with Windows'
+/// acrylic, or redraws it lightly blurred and bent at the edges (both experimental).</summary>
+public enum GlassEffect { Clear, Frosted, Liquid }
+
 /// <summary>What the island does while the pointer is over it.</summary>
 public enum IslandHover { Expand, Hide, Nothing, ByDirection }
 
@@ -69,7 +73,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     int _glassTransparency = 40;
     GlassTint _glassTint = GlassTint.Neutral;
     bool _glassShine = true;
-    bool _glassBlur;
+    GlassEffect _glassEffect = GlassEffect.Clear;
+    int _liquidBlur = 30, _liquidRefraction = 50;
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
@@ -140,8 +145,11 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
     /// <summary>Lyricod Glass: a bright rim and a soft highlight at the top.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
-    /// <summary>Lyricod Glass: frost what's behind the island with Windows' acrylic (experimental, off by default).</summary>
-    public bool GlassBlur { get => _glassBlur; set => Set(ref _glassBlur, value); }
+    public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Clear); }
+    /// <summary>Liquid glass: how much what's behind is blurred, in percent.</summary>
+    public int LiquidBlur { get => _liquidBlur; set => Set(ref _liquidBlur, Math.Clamp(value, 0, 100)); }
+    /// <summary>Liquid glass: how strongly its edges bend what's behind, in percent.</summary>
+    public int LiquidRefraction { get => _liquidRefraction; set => Set(ref _liquidRefraction, Math.Clamp(value, 0, 100)); }
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }

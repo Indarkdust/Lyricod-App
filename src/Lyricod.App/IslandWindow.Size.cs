@@ -127,6 +127,7 @@ public sealed partial class IslandWindow
         Rim.BorderThickness = Floating ? new Thickness(1) : new Thickness(1, 0, 1, 1);
         UpdateShadow();
         if (_shaped) Shape();
+        UpdateLiquid();
     }
 
     /// <summary>A fast start and a soft settle, without overshooting.</summary>

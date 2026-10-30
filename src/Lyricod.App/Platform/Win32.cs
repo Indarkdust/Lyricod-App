@@ -119,6 +119,13 @@ static partial class Win32
     [LibraryImport("user32.dll")]
     public static partial int SetWindowRgn(nint hwnd, nint region, [MarshalAs(UnmanagedType.Bool)] bool redraw);
 
+    public const uint WDA_NONE = 0, WDA_EXCLUDEFROMCAPTURE = 0x11;
+
+    /// <summary>Hides the window from screen capture (screenshots, recording, sharing), or shows it again.</summary>
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWindowDisplayAffinity(nint hwnd, uint affinity);
+
     /// <summary>Window pixels per view pixel (1.0 at 100 % scaling).</summary>
     public static double Scale(nint hwnd) => Math.Max(GetDpiForWindow(hwnd), 96) / 96.0;
 }

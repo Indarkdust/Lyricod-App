@@ -29,6 +29,7 @@
   <data name="BuiltWith" xml:space="preserve"><value>使用的组件</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>托盘图标和窗口辅助功能。MIT 许可证。</value></data>
   <data name="ToolGoodDetail" xml:space="preserve"><value>拼音及繁简中文转换。Apache License 2.0。</value></data>
+  <data name="Win2DDetail" xml:space="preserve"><value>用于绘制 Lyricod Glass 的液态玻璃效果。</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>基于 Microsoft 的 .NET 和 Windows App SDK 构建。</value></data>
   <data name="Trademarks" xml:space="preserve"><value>商标</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯或小米没有关联，也未获得其认可或赞助。</value></data>
@@ -86,8 +87,16 @@
   <data name="GlassTintNeutral" xml:space="preserve"><value>中性</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>跟随专辑封面</value></data>
   <data name="GlassShine" xml:space="preserve"><value>立体效果</value></data>
-  <data name="GlassBlur" xml:space="preserve"><value>毛玻璃模糊（实验性）</value></data>
-  <data name="GlassBlurDetail" xml:space="preserve"><value>模糊歌词岛后面的内容。圆角边缘可能略有锯齿。</value></data>
+  <data name="GlassEffect" xml:space="preserve"><value>玻璃效果</value></data>
+  <data name="GlassEffectClear" xml:space="preserve"><value>通透</value></data>
+  <data name="GlassEffectFrosted" xml:space="preserve"><value>毛玻璃（实验性）</value></data>
+  <data name="GlassEffectLiquid" xml:space="preserve"><value>液态玻璃（实验性）</value></data>
+  <data name="GlassEffectClearDetail" xml:space="preserve"><value>可以清楚地看到歌词岛后面的内容。</value></data>
+  <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>使用 Windows 亚克力材质模糊后面的内容。圆角边缘可能略有锯齿。</value></data>
+  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>重新绘制歌词岛后面的内容，加上轻微模糊和透镜般的边缘。开启后，截图、录屏和屏幕共享中将看不到歌词岛。</value></data>
+  <data name="GlassEffectUnsupported" xml:space="preserve"><value>当前 Windows 版本不支持，玻璃将保持通透。</value></data>
+  <data name="LiquidBlur" xml:space="preserve"><value>模糊程度</value></data>
+  <data name="LiquidRefraction" xml:space="preserve"><value>边缘折射</value></data>
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>保持原样</value></data>

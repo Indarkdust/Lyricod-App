@@ -18,7 +18,7 @@ public sealed partial class IslandWindow
     /// <summary>The window is clipped to the pill.</summary>
     bool _shaped;
 
-    bool WantsFrost => Glass && _settings.GlassBlur && FrostedBackdrop.IsSupported && !Movable;
+    bool WantsFrost => Glass && _settings.GlassEffect == GlassEffect.Frosted && FrostedBackdrop.IsSupported && !Movable;
 
     /// <summary>Puts the acrylic on or off and the window's shape to match; returns whether it's on.</summary>
     bool ApplyFrost()

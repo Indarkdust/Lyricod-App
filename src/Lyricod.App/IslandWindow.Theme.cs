@@ -38,10 +38,12 @@ public sealed partial class IslandWindow
         Sheen.Background = lit ? Highlight() : null;
         UpdateShadow();
         bool frosted = ApplyFrost();
+        bool liquid = ApplyLiquid();
         if (Movable) { Pill.Background = new SolidColorBrush(MovingColour); return; }
         if (!Glass) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Black); return; }
-        // The album's colour is tuned to stand out on black; darkened, white lyrics stay readable on it.
-        var tint = _settings.GlassTint == GlassTint.Album && _model.ArtworkColor is { } c ? Darken(c, 0.45) : NeutralGlass;
+        // The liquid layer draws the glass, tint and all.
+        if (liquid) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent); return; }
+        var tint = GlassColour();
         double clear = _settings.GlassTransparency / 100.0;
         byte alpha = (byte)Math.Round(255 * (1 - clear));
         if (frosted)
@@ -52,6 +54,16 @@ public sealed partial class IslandWindow
             alpha = (byte)(alpha * 0.12);
         }
         Pill.Background = new SolidColorBrush(Color.FromArgb(alpha, tint.R, tint.G, tint.B));
+    }
+
+    /// <summary>The glass's colour: neutral, or the album's darkened (it's tuned to stand out on black) so white lyrics stay readable on it.</summary>
+    Color GlassColour() => _settings.GlassTint == GlassTint.Album && _model.ArtworkColor is { } c ? Darken(c, 0.45) : NeutralGlass;
+
+    /// <summary>The glass's colour at its opacity (the transparency setting).</summary>
+    Color GlassTintColour()
+    {
+        var tint = GlassColour();
+        return Color.FromArgb((byte)Math.Round(255 * (1 - _settings.GlassTransparency / 100.0)), tint.R, tint.G, tint.B);
     }
 
     /// <summary>Light falling on the top of the glass: brightest at the top centre, gone by the bottom.</summary>

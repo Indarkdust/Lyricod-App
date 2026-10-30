@@ -159,6 +159,7 @@ public sealed partial class IslandWindow : Window
             {
                 UpdateShadow();
                 if (_shaped) Shape();
+                UpdateLiquid();
             }
             catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
         };
@@ -179,6 +180,7 @@ public sealed partial class IslandWindow : Window
             _heightAnimation?.Stop();
             _lineAnimation?.Stop();
             _meter.Dispose();
+            StopLiquid();
         };
         ApplyMoveMode();
         ApplyLayout();
@@ -247,7 +249,7 @@ public sealed partial class IslandWindow : Window
                 ApplyMoveMode();
                 break;
             case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine)
-                or nameof(Settings.GlassBlur):
+                or nameof(Settings.GlassEffect) or nameof(Settings.LiquidBlur) or nameof(Settings.LiquidRefraction):
                 ApplyTheme();
                 break;
             case nameof(Settings.IslandY) when _settings.IslandX == null && _settings.IslandY == null:

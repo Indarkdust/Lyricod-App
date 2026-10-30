@@ -78,12 +78,27 @@ public class IslandSettingsTests
         Assert.Equal(40, settings.GlassTransparency);
         Assert.Equal(GlassTint.Neutral, settings.GlassTint);
         Assert.True(settings.GlassShine);
-        Assert.False(settings.GlassBlur); // experimental
+        Assert.Equal(GlassEffect.Clear, settings.GlassEffect); // frosted and liquid are experimental
+        Assert.Equal(30, settings.LiquidBlur);
+        Assert.Equal(50, settings.LiquidRefraction);
         settings.GlassTransparency = 0;
         Assert.Equal(10, settings.GlassTransparency);
         settings.GlassTransparency = 100;
         Assert.Equal(90, settings.GlassTransparency);
         Assert.Equal(90, JsonSerializer.Deserialize<Settings>("{\"GlassTransparency\":120}", Json)!.GlassTransparency);
+    }
+
+    [Theory]
+    [InlineData("\"Clear\"", GlassEffect.Clear, 0)]
+    [InlineData("\"Frosted\"", GlassEffect.Frosted, 1)]
+    [InlineData("\"Liquid\"", GlassEffect.Liquid, 2)]
+    public void GlassEffectsKeepTheirNamesAndNumbers(string json, GlassEffect expected, int number)
+    {
+        Assert.Equal(number, (int)expected);
+        Assert.Equal(expected, JsonSerializer.Deserialize<Settings>("{\"GlassEffect\":" + json + "}", Json)!.GlassEffect);
+        var settings = JsonSerializer.Deserialize<Settings>("{\"LiquidBlur\":150,\"LiquidRefraction\":-5}", Json)!;
+        Assert.Equal(100, settings.LiquidBlur);
+        Assert.Equal(0, settings.LiquidRefraction);
     }
 
     [Theory]

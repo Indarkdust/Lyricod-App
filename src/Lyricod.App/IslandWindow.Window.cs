@@ -17,6 +17,7 @@ public sealed partial class IslandWindow
             PlaceFloating(k);
             UpdateShadow(); // follows the pill's new alignment
             if (_shaped) Shape();
+            UpdateLiquid();
             return;
         }
         Pill.HorizontalAlignment = HorizontalAlignment.Center;
@@ -31,6 +32,7 @@ public sealed partial class IslandWindow
         if (AppWindow.Size.Width != size.Width || AppWindow.Size.Height != size.Height || AppWindow.Position.X != x || AppWindow.Position.Y != area.Y)
             AppWindow.MoveAndResize(new RectInt32(x, area.Y, size.Width, size.Height));
         if (_shaped) Shape();
+        UpdateLiquid();
     }
 
     bool PausedLongEnough => _settings.IslandHideWhenPaused && _model.Track != null && !_model.IsPlaying;

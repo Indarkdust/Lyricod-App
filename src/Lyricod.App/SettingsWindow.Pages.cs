@@ -133,9 +133,35 @@ public sealed partial class SettingsWindow
         Card(L.Get("GlassTint"), null, Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
             (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum"))));
         Card(L.Get("GlassShine"), null, Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v));
-        var blur = Toggle(nameof(Settings.GlassBlur), () => _settings.GlassBlur, v => _settings.GlassBlur = v);
-        blur.IsEnabled = FrostedBackdrop.IsSupported; // only where Windows draws acrylic
-        Card(L.Get("GlassBlur"), L.Get("GlassBlurDetail"), blur);
+        // Clear, or one of the experimental effects (each says what it costs, and where it can't run).
+        var effectDetail = Card(L.Get("GlassEffect"), "", Choice(nameof(Settings.GlassEffect), () => _settings.GlassEffect, v => _settings.GlassEffect = v,
+            (GlassEffect.Clear, L.Get("GlassEffectClear")), (GlassEffect.Frosted, L.Get("GlassEffectFrosted")), (GlassEffect.Liquid, L.Get("GlassEffectLiquid"))))!;
+        var liquidBlur = new ContentControl { Content = Percent(nameof(Settings.LiquidBlur), () => _settings.LiquidBlur, v => _settings.LiquidBlur = v, 0, 100) };
+        var refraction = new ContentControl
+        {
+            Content = Percent(nameof(Settings.LiquidRefraction), () => _settings.LiquidRefraction, v => _settings.LiquidRefraction = v, 0, 100),
+        };
+        void SyncEffect()
+        {
+            var effect = _settings.GlassEffect;
+            bool supported = effect switch
+            {
+                GlassEffect.Frosted => FrostedBackdrop.IsSupported,
+                GlassEffect.Liquid => LiquidGlass.IsSupported,
+                _ => true,
+            };
+            effectDetail.Text = effect switch
+            {
+                GlassEffect.Frosted => L.Get("GlassEffectFrostedDetail"),
+                GlassEffect.Liquid => L.Get("GlassEffectLiquidDetail"),
+                _ => L.Get("GlassEffectClearDetail"),
+            } + (supported ? "" : " " + L.Get("GlassEffectUnsupported"));
+            liquidBlur.IsEnabled = refraction.IsEnabled = effect == GlassEffect.Liquid && LiquidGlass.IsSupported;
+        }
+        Watch(nameof(Settings.GlassEffect), SyncEffect);
+        SyncEffect();
+        Card(L.Get("LiquidBlur"), null, liquidBlur);
+        Card(L.Get("LiquidRefraction"), null, refraction);
     }
 
     ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set) => Choice(property, get, set,
@@ -314,6 +340,7 @@ public sealed partial class SettingsWindow
         Heading(L.Get("BuiltWith"));
         Group(Entry("WinUIEx by Morten Nielsen", L.Get("WinUIExDetail"), "https://github.com/dotMorten/WinUIEx"),
               Entry("ToolGood.Words", L.Get("ToolGoodDetail"), "https://github.com/toolgood/ToolGood.Words"),
+              Entry("Win2D by Microsoft", L.Get("Win2DDetail"), "https://github.com/microsoft/Win2D"),
               new TextBlock { Text = L.Get("PlatformNote"), Style = Style("Detail") });
 
         Heading(L.Get("Trademarks"));

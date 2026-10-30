@@ -43,6 +43,9 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
     <!-- Tray icon, transparent backdrop and window-style helpers (MIT). -->
     <PackageReference Include="WinUIEx" Version="2.9.3" />
+    <!-- GPU drawing for Lyricod Glass's liquid effect (MIT): blur and lens bending of what's behind
+         the island. Depends only on Microsoft.WindowsAppSDK.WinUI, not the metapackage. -->
+    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
   </ItemGroup>
   <!-- CI marks its builds (run number and commit) so a shared test build isn't taken for a release. -->
   <ItemGroup Condition="'$(LyricodTestBuild)' != ''">
