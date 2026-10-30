@@ -82,7 +82,7 @@
   <data name="GlassTint" xml:space="preserve"><value>Glass tint</value></data>
   <data name="GlassTintNeutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>Album colour</value></data>
-  <data name="GlassShine" xml:space="preserve"><value>Edge shine</value></data>
+  <data name="GlassShine" xml:space="preserve"><value>3D effect</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

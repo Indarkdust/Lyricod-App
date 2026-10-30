@@ -82,7 +82,7 @@
   <data name="GlassTint" xml:space="preserve"><value>玻璃色调</value></data>
   <data name="GlassTintNeutral" xml:space="preserve"><value>中性</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>跟随专辑封面</value></data>
-  <data name="GlassShine" xml:space="preserve"><value>边缘高光</value></data>
+  <data name="GlassShine" xml:space="preserve"><value>立体效果</value></data>
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>保持原样</value></data>

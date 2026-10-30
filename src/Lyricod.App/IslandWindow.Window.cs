@@ -15,6 +15,7 @@ public sealed partial class IslandWindow
         if (Floating)
         {
             PlaceFloating(k);
+            UpdateShadow(); // follows the pill's new alignment
             return;
         }
         Pill.HorizontalAlignment = HorizontalAlignment.Center;

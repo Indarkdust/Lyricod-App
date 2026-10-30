@@ -153,6 +153,8 @@ public sealed partial class IslandWindow : Window
         _settings.PropertyChanged += OnSettingChanged;
         // Dragged while floating and unlocked.
         Pill.PointerPressed += OnPillPressed;
+        // Lyricod Glass's shadow keeps the pill's size as it grows and shrinks.
+        Pill.SizeChanged += (_, _) => { try { UpdateShadow(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
         // Nothing may touch the window once it's gone (the pointer check reads its position).
         Closed += (_, _) =>
         {
@@ -227,7 +229,7 @@ public sealed partial class IslandWindow : Window
                 break;
             case nameof(Settings.IslandHover):
                 SetHovered(false);
-                Pill.Opacity = 1;
+                Pill.Opacity = ShadowHost.Opacity = 1;
                 break;
             case nameof(Settings.IslandStyle):
                 ApplyMoveMode();

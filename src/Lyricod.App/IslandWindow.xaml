@@ -9,9 +9,15 @@
     Title="Lyricod Island">
 
     <Grid x:Name="Root" Background="Transparent" RequestedTheme="Dark">
+        <!-- Lyricod Glass: the soft shadow under a floating island, kept the island's size and shape in code. -->
+        <Grid x:Name="ShadowHost" IsHitTestVisible="False" HorizontalAlignment="Center" VerticalAlignment="Top" Visibility="Collapsed" />
+
         <Border x:Name="Pill" Background="Black" CornerRadius="0,0,12,12" HorizontalAlignment="Center"
                 VerticalAlignment="Top" Width="300" Height="34">
             <Grid>
+                <!-- Lyricod Glass: the light catching the top of the glass, behind the lyrics. -->
+                <Border x:Name="Sheen" IsHitTestVisible="False" />
+
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition x:Name="LyricRow" Height="34" />
