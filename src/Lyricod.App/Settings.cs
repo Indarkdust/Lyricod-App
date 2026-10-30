@@ -6,6 +6,10 @@ using Lyricod.Core;
 
 namespace Lyricod;
 
+/// <summary>Default hangs from the top centre of the main display, as it always has; Floating is
+/// fully rounded and can be dragged anywhere.</summary>
+public enum IslandStyle { Default, Floating }
+
 /// <summary>What the island does while the pointer is over it.</summary>
 public enum IslandHover { Expand, Hide, Nothing, ByDirection }
 
@@ -51,7 +55,10 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     int? _desktopX, _desktopY;
 
     // Lyricod Island
-    bool _showIsland;
+    bool _showIsland = true;
+    IslandStyle _islandStyle = IslandStyle.Default;
+    bool _islandLocked = true;
+    int? _islandX, _islandY;
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
@@ -107,8 +114,15 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public int? DesktopX { get => _desktopX; set => Set(ref _desktopX, value); }
     public int? DesktopY { get => _desktopY; set => Set(ref _desktopY, value); }
 
-    /// <summary>The pill at the top centre of the screen. Off by default, as on the Mac.</summary>
+    /// <summary>The pill at the top centre of the screen (or where it floats). On by default.</summary>
     public bool ShowIsland { get => _showIsland; set => Set(ref _showIsland, value); }
+    public IslandStyle IslandStyle { get => _islandStyle; set => Set(ref _islandStyle, Enum.IsDefined(value) ? value : IslandStyle.Default); }
+    /// <summary>Floating only. Locked: the island works as usual. Unlocked: it takes clicks and can be dragged.</summary>
+    public bool IslandLocked { get => _islandLocked; set => Set(ref _islandLocked, value); }
+    /// <summary>Where the floating island was dragged to (screen pixels, see <see cref="Core.IslandPlacement"/>),
+    /// or null for the top centre.</summary>
+    public int? IslandX { get => _islandX; set => Set(ref _islandX, value); }
+    public int? IslandY { get => _islandY; set => Set(ref _islandY, value); }
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }

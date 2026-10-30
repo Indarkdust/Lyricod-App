@@ -57,6 +57,29 @@ public class IslandSettingsTests
         Assert.Equal("#8CD9FF", saved.SungColor);
     }
 
+    [Fact]
+    public void IslandIsOnAndDockedByDefault()
+    {
+        var settings = new Settings();
+        Assert.True(settings.ShowIsland);
+        Assert.Equal(IslandStyle.Default, settings.IslandStyle);
+        Assert.True(settings.IslandLocked);
+        Assert.Null(settings.IslandX);
+        Assert.Null(settings.IslandY);
+        // A file saved with the island off keeps it off.
+        Assert.False(JsonSerializer.Deserialize<Settings>("{\"ShowIsland\":false}", Json)!.ShowIsland);
+    }
+
+    [Theory]
+    [InlineData("\"Default\"", IslandStyle.Default, 0)]
+    [InlineData("\"Floating\"", IslandStyle.Floating, 1)]
+    public void StyleValuesKeepTheirNamesAndNumbers(string json, IslandStyle expected, int number)
+    {
+        Assert.Equal(number, (int)expected);
+        Assert.Equal(expected, JsonSerializer.Deserialize<Settings>("{\"IslandStyle\":" + json + "}", Json)!.IslandStyle);
+        Assert.Equal(IslandStyle.Default, JsonSerializer.Deserialize<Settings>("{\"IslandStyle\":7}", Json)!.IslandStyle);
+    }
+
     [Theory]
     [InlineData("\"Expand\"", IslandHover.Expand, 0)]
     [InlineData("\"Hide\"", IslandHover.Hide, 1)]

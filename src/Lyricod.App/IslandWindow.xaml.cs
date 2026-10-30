@@ -20,7 +20,8 @@ namespace Lyricod;
 /// player's sound while music plays.
 /// The pill fits the current piece and its second row. While
 /// the pointer is over it, it takes clicks and (by default) grows into a mini player; otherwise
-/// it's click-through.
+/// it's click-through. The floating style (IslandWindow.Floating.cs) is rounded all round and sits
+/// wherever it was dragged.
 /// </summary>
 public sealed partial class IslandWindow : Window
 {
@@ -148,6 +149,8 @@ public sealed partial class IslandWindow : Window
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
         _settings.PropertyChanged += OnSettingChanged;
+        // Dragged while floating and unlocked.
+        Pill.PointerPressed += OnPillPressed;
         // Nothing may touch the window once it's gone (the pointer check reads its position).
         Closed += (_, _) =>
         {
@@ -166,6 +169,7 @@ public sealed partial class IslandWindow : Window
             _lineAnimation?.Stop();
             _meter.Dispose();
         };
+        ApplyMoveMode();
         ApplyLayout();
         Place();
         _ = ApplyArtwork();
@@ -222,6 +226,18 @@ public sealed partial class IslandWindow : Window
             case nameof(Settings.IslandHover):
                 SetHovered(false);
                 Pill.Opacity = 1;
+                break;
+            case nameof(Settings.IslandStyle):
+                ApplyMoveMode();
+                ApplyCorners();
+                Place();
+                break;
+            case nameof(Settings.IslandLocked):
+                ApplyMoveMode();
+                break;
+            case nameof(Settings.IslandY) when _settings.IslandX == null && _settings.IslandY == null:
+                // "Reset to top centre" in Settings.
+                Place();
                 break;
             case nameof(Settings.IslandSize) or nameof(Settings.IslandMaxTextWidth):
                 ApplyLayout();

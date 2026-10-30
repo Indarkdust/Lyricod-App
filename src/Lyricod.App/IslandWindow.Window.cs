@@ -8,10 +8,17 @@ namespace Lyricod;
 
 public sealed partial class IslandWindow
 {
-    /// <summary>Top centre of the main display.</summary>
+    /// <summary>Top centre of the main display, or (floating) where it was dragged.</summary>
     void Place()
     {
         double k = _overlay.Scale;
+        if (Floating)
+        {
+            PlaceFloating(k);
+            return;
+        }
+        Pill.HorizontalAlignment = HorizontalAlignment.Center;
+        Pill.VerticalAlignment = VerticalAlignment.Top;
         var area = DisplayArea.Primary.OuterBounds;
         _screenWidth = area.Width / k;
         // Keep room for an old, larger layout until its shrink animation finishes.
@@ -63,13 +70,14 @@ public sealed partial class IslandWindow
         UpdateBars();
     }
 
-    /// <summary>Comes and goes like the Mac's: a fade with a slight shrink toward the top edge.</summary>
+    /// <summary>Comes and goes like the Mac's: a fade with a slight shrink toward the top edge
+    /// (floating: toward its middle).</summary>
     void AnimateShown(bool show, Action? done = null)
     {
         double seconds = show ? 0.3 : 0.35;
         if (Pill.RenderTransform is not ScaleTransform scale) Pill.RenderTransform = scale = new ScaleTransform();
         scale.CenterX = Pill.ActualWidth > 0 ? Pill.ActualWidth / 2 : Pill.Width / 2;
-        scale.CenterY = 0;
+        scale.CenterY = Floating ? (Pill.ActualHeight > 0 ? Pill.ActualHeight : Pill.Height) / 2 : 0;
         if (show && Root.Opacity < 0.05) scale.ScaleX = scale.ScaleY = 0.9;
         var story = new Storyboard();
         foreach (var property in new[] { "ScaleX", "ScaleY" })

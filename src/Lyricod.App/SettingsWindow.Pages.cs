@@ -66,6 +66,17 @@ public sealed partial class SettingsWindow
     void Island()
     {
         Card(L.Get("ShowIsland"), L.Get("ShowIslandDetail"), Toggle(nameof(Settings.ShowIsland), () => _settings.ShowIsland, v => _settings.ShowIsland = v));
+        Card(L.Get("IslandStyle"), L.Get("IslandStyleDetail"), Choice(nameof(Settings.IslandStyle), () => _settings.IslandStyle, v => _settings.IslandStyle = v,
+            (IslandStyle.Default, L.Get("IslandStyleDefault")), (IslandStyle.Floating, L.Get("IslandStyleFloating"))));
+        // Only a floating island can be moved.
+        var lockIsland = Toggle(nameof(Settings.IslandLocked), () => _settings.IslandLocked, v => _settings.IslandLocked = v);
+        var resetIsland = new Button { Content = L.Get("ResetIslandPosition") };
+        resetIsland.Click += (_, _) => { _settings.IslandX = null; _settings.IslandY = null; };
+        void SyncFloating() => lockIsland.IsEnabled = resetIsland.IsEnabled = _settings.IslandStyle == IslandStyle.Floating;
+        Watch(nameof(Settings.IslandStyle), SyncFloating);
+        SyncFloating();
+        Card(L.Get("LockIsland"), L.Get("LockIslandDetail"), lockIsland);
+        Card(L.Get("PositionLabel"), null, resetIsland);
         Card(L.Get("OnHover"), null, Choice(nameof(Settings.IslandHover), () => _settings.IslandHover, v => _settings.IslandHover = v,
             (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing")),
             (IslandHover.ByDirection, L.Get("HoverByDirection"))));

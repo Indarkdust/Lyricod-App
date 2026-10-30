@@ -67,6 +67,13 @@
   <data name="LayoutNone" xml:space="preserve"><value>None (single line)</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>Show Lyricod Island</value></data>
   <data name="ShowIslandDetail" xml:space="preserve"><value>Shows the current lyric at the top of your screen. When collapsed, clicks pass through it.</value></data>
+  <data name="IslandStyle" xml:space="preserve"><value>Island style</value></data>
+  <data name="IslandStyleDetail" xml:space="preserve"><value>Choose Floating to move the island anywhere on the screen.</value></data>
+  <data name="IslandStyleDefault" xml:space="preserve"><value>Default</value></data>
+  <data name="IslandStyleFloating" xml:space="preserve"><value>Floating</value></data>
+  <data name="LockIsland" xml:space="preserve"><value>Lock island position</value></data>
+  <data name="LockIslandDetail" xml:space="preserve"><value>Unlock to drag the island. Lock it again to use the hover action.</value></data>
+  <data name="ResetIslandPosition" xml:space="preserve"><value>Reset to top centre</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

@@ -110,9 +110,18 @@ public sealed partial class IslandWindow
             };
             story.Begin();
         }
-        double radius = (_expanded ? 20 : PillRadius) * LayoutScale;
-        Pill.CornerRadius = new CornerRadius(0, 0, radius, radius);
+        ApplyCorners();
         if (!_waitingForWidth) RevealText();
+    }
+
+    /// <summary>
+    /// The default island is square where it meets the top edge; a floating one has the same corner
+    /// all round. Either way the cover's corners share their centre with the island's.
+    /// </summary>
+    void ApplyCorners()
+    {
+        double radius = (_expanded ? 20 : PillRadius) * LayoutScale;
+        Pill.CornerRadius = Floating ? new CornerRadius(radius) : new CornerRadius(0, 0, radius, radius);
     }
 
     /// <summary>A fast start and a soft settle, without overshooting.</summary>

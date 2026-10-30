@@ -158,6 +158,13 @@ public partial class App : Application
         var island = new ToggleMenuFlyoutItem { Text = L.Get("PaneIsland"), IsChecked = s.ShowIsland };
         island.Click += (_, _) => s.ShowIsland = !s.ShowIsland;
         menu.Items.Add(island);
+        // Only a floating island can be moved, so only it can be locked.
+        if (s.IslandStyle == IslandStyle.Floating)
+        {
+            var islandLocked = new ToggleMenuFlyoutItem { Text = L.Get("LockIsland"), IsChecked = s.IslandLocked, IsEnabled = s.ShowIsland };
+            islandLocked.Click += (_, _) => s.IslandLocked = !s.IslandLocked;
+            menu.Items.Add(islandLocked);
+        }
         menu.Items.Add(new MenuFlyoutSeparator());
 
         var lyrics = new MenuFlyoutItem { Text = L.Get("LyricsWindowMenu"), Icon = new FontIcon { Glyph = "\uE8FD" } };

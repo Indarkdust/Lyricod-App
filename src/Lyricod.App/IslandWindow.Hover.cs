@@ -10,12 +10,17 @@ public sealed partial class IslandWindow
     void CheckPointer()
     {
         if (!_shown || _closed || !Win32.GetCursorPos(out var p)) return;
-        double k = _overlay.Scale;
-        var pos = AppWindow.Position;
-        double width = Pill.ActualWidth * k, height = Pill.ActualHeight * k;
-        double left = pos.X + (AppWindow.Size.Width - width) / 2, top = pos.Y;
-        bool inside = p.X >= left - 2 && p.X <= left + width + 2 && p.Y >= top && p.Y <= top + height + 2;
-        bool near = p.Y <= top + height + 120 && p.X >= left - 160 && p.X <= left + width + 160;
+        if (Movable)
+        {
+            // Being moved: no hover action.
+            _pointerTimer.Interval = TimeSpan.FromMilliseconds(250);
+            return;
+        }
+        var (left, top, width, height) = PillBounds();
+        // The default island's top is the screen's edge; a floating one gets the same margin as its other sides.
+        double above = Floating ? 2 : 0;
+        bool inside = p.X >= left - 2 && p.X <= left + width + 2 && p.Y >= top - above && p.Y <= top + height + 2;
+        bool near = (!Floating || p.Y >= top - 120) && p.Y <= top + height + 120 && p.X >= left - 160 && p.X <= left + width + 160;
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(near || _hovered ? 33 : 250);
         double now = PlaybackModel.Now;
         if (inside)
@@ -24,7 +29,7 @@ public sealed partial class IslandWindow
             if (!_hovered)
             {
                 // Use the same two-pixel margin as the hover check.
-                bool fromBelow = IslandEntry.IsFromBelow(p.X, p.Y, left - 2, top, width + 4, height + 2, _lastOutside);
+                bool fromBelow = IslandEntry.IsFromBelow(p.X, p.Y, left - 2, top - above, width + 4, height + 2 + above, _lastOutside);
                 SetHovered(true, fromBelow);
             }
         }
