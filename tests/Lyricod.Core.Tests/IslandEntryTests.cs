@@ -37,6 +37,30 @@ public class IslandEntryTests
         Assert.Equal(below, IslandEntry.IsFromBelow(x, y, 100, 100, 100, 40, (150, 120)));
     }
 
+    [Theory]
+    [InlineData(150, 50, 150, 101, IslandEdge.Top)]
+    [InlineData(150, 180, 150, 139, IslandEdge.Bottom)]
+    [InlineData(50, 120, 101, 120, IslandEdge.Side)]
+    // Diagonal approaches from above a corner can cross either edge.
+    [InlineData(50, 60, 150, 101, IslandEdge.Top)]
+    [InlineData(50, 60, 101, 130, IslandEdge.Side)]
+    [InlineData(90, 90, 110, 110, IslandEdge.Side)] // exact corner tie
+    public void TellsTopFromBottomAndSides(double outsideX, double outsideY, double x, double y, IslandEdge edge)
+    {
+        Assert.Equal(edge, IslandEntry.Edge(x, y, 100, 100, 100, 40, (outsideX, outsideY)));
+    }
+
+    [Theory]
+    [InlineData(150, 101, IslandEdge.Top)]
+    [InlineData(150, 139, IslandEdge.Bottom)]
+    [InlineData(101, 120, IslandEdge.Side)]
+    [InlineData(101, 101, IslandEdge.Side)] // corner tie
+    [InlineData(150, 120, IslandEdge.Side)] // as far from the top as the bottom
+    public void NearestEdgeIncludesTheTop(double x, double y, IslandEdge edge)
+    {
+        Assert.Equal(edge, IslandEntry.Edge(x, y, 100, 100, 100, 40));
+    }
+
     [Fact]
     public void WorksWithScreenOffsetsAndScaling()
     {

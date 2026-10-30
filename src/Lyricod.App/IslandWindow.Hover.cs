@@ -29,8 +29,9 @@ public sealed partial class IslandWindow
             if (!_hovered)
             {
                 // Use the same two-pixel margin as the hover check.
-                bool fromBelow = IslandEntry.IsFromBelow(p.X, p.Y, left - 2, top - above, width + 4, height + 2 + above, _lastOutside);
-                SetHovered(true, fromBelow);
+                var edge = IslandEntry.Edge(p.X, p.Y, left - 2, top - above, width + 4, height + 2 + above, _lastOutside);
+                // "By direction" hides from below; a floating island, away from the screen's top edge, from above too.
+                SetHovered(true, edge == IslandEdge.Bottom || Floating && edge == IslandEdge.Top);
             }
         }
         else
@@ -40,13 +41,13 @@ public sealed partial class IslandWindow
         }
     }
 
-    void SetHovered(bool hovered, bool fromBelow = false)
+    void SetHovered(bool hovered, bool hideByDirection = false)
     {
         if (hovered == _hovered) return;
         _hovered = hovered;
         if (hovered)
             _hoverAction = _settings.IslandHover == IslandHover.ByDirection
-                ? (fromBelow ? IslandHover.Hide : IslandHover.Expand) : _settings.IslandHover;
+                ? (hideByDirection ? IslandHover.Hide : IslandHover.Expand) : _settings.IslandHover;
         bool expand = hovered && _hoverAction == IslandHover.Expand;
         // Takes clicks only while expanded; otherwise whatever is underneath stays usable.
         _overlay.SetClickThrough(!expand);
