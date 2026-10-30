@@ -5,8 +5,9 @@ public class IslandGestureTests
     // A default island at the top of the screen (x 100–300, y 0–34) and a floating one (x 100–300, y 100–140).
     static readonly (double, double, double, double) Docked = (100, 0, 200, 34), Floating = (100, 100, 200, 40);
 
+    // As the app asks: the default island opens only on a pull down.
     static bool Opens((double, double, double, double) island, params (double X, double Y)[] path) =>
-        IslandGesture.IsSweepThenPull(path, island);
+        IslandGesture.IsSweepThenPull(path, island, downOnly: island == Docked);
 
     [Fact]
     public void SweepingAlongTheTopThenPullingDownOutOfItOpens() =>
@@ -28,6 +29,15 @@ public class IslandGestureTests
     [Fact]
     public void SweepingAcrossThenPullingUpOverAFloatingIslandOpens() =>
         Assert.True(Opens(Floating, (60, 130), (140, 130), (200, 128), (204, 112), (205, 92)));
+
+    [Fact]
+    public void PullingUpOverTheDefaultIslandDoesNotOpen()
+    {
+        // Along under it, then up into it: a floating island would open.
+        (double, double)[] path = [(60, 60), (120, 60), (180, 58), (184, 40), (186, 20)];
+        Assert.False(Opens(Docked, path));
+        Assert.True(IslandGesture.IsSweepThenPull(path, Docked));
+    }
 
     [Fact]
     public void ASmallPullDoesNotOpen() =>

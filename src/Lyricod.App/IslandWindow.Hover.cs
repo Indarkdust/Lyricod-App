@@ -28,13 +28,14 @@ public sealed partial class IslandWindow
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(near || _hovered ? 33 : 250);
         double now = PlaybackModel.Now;
         // "By direction" hides the island however the pointer comes in; sweeping sideways and then
-        // pulling up or down over it (inside or carrying on out of it) opens the mini player instead.
+        // pulling down over it (floating: up or down; inside or carrying on out of it) opens the mini
+        // player instead.
         bool pulled = false;
         if (gesture)
         {
             var path = _trail.ConvertAll(s => (s.X, s.Y));
             path.Add((p.X, p.Y));
-            pulled = IslandGesture.IsSweepThenPull(path, (left - 2, top - above, width + 4, height + 2 + above), _overlay.Scale);
+            pulled = IslandGesture.IsSweepThenPull(path, (left - 2, top - above, width + 4, height + 2 + above), _overlay.Scale, downOnly: !Floating);
         }
         if (inside)
         {

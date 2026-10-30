@@ -29,7 +29,7 @@
   <data name="BuiltWith" xml:space="preserve"><value>Built With</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>Tray icon and window helpers. MIT License.</value></data>
   <data name="ToolGoodDetail" xml:space="preserve"><value>Pinyin and Traditional–Simplified Chinese conversion. Apache License 2.0.</value></data>
-  <data name="Win2DDetail" xml:space="preserve"><value>Draws Lyricod Glass's liquid effect.</value></data>
+  <data name="Win2DDetail" xml:space="preserve"><value>Used to render Lyricod Glass's liquid effect.</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
   <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent or Xiaomi.</value></data>
@@ -79,7 +79,7 @@
   <data name="FoldGlass" xml:space="preserve"><value>Lyricod Glass options</value></data>
   <data name="FoldText" xml:space="preserve"><value>Text and animation</value></data>
   <data name="IslandTheme" xml:space="preserve"><value>Theme</value></data>
-  <data name="IslandThemeDetail" xml:space="preserve"><value>Lyricod Glass is see-through, so what's behind the island shows through it.</value></data>
+  <data name="IslandThemeDetail" xml:space="preserve"><value>Lyricod Glass lets you see through the island to what's behind it.</value></data>
   <data name="IslandThemeClassic" xml:space="preserve"><value>Classic</value></data>
   <data name="IslandThemeGlass" xml:space="preserve"><value>Lyricod Glass</value></data>
   <data name="GlassTransparency" xml:space="preserve"><value>Transparency</value></data>
@@ -91,17 +91,18 @@
   <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted (experimental)</value></data>
   <data name="GlassEffectLiquid" xml:space="preserve"><value>Liquid (experimental)</value></data>
-  <data name="GlassEffectClearDetail" xml:space="preserve"><value>What's behind the island shows through clearly.</value></data>
-  <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>Blurs what's behind with Windows' acrylic. Its corners may look slightly jagged.</value></data>
-  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>Redraws what's behind with a light blur and lens-like edges. While it's on, the island doesn't show in screenshots, recordings or screen sharing.</value></data>
-  <data name="GlassEffectUnsupported" xml:space="preserve"><value>This PC's Windows doesn't support it, so the glass stays clear.</value></data>
+  <data name="GlassEffectClearDetail" xml:space="preserve"><value>Shows what's behind the island without blurring it.</value></data>
+  <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>Blurs the background using Windows acrylic. The corners may look slightly jagged.</value></data>
+  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>Adds a slight blur and refracted edges to the background. The island won't appear in screenshots, recordings or screen sharing while this is on.</value></data>
+  <data name="GlassEffectUnsupported" xml:space="preserve"><value>This Windows version doesn't support the selected effect. Clear will be used instead.</value></data>
   <data name="LiquidBlur" xml:space="preserve"><value>Blur</value></data>
   <data name="LiquidRefraction" xml:space="preserve"><value>Edge refraction</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>
   <data name="HoverByDirection" xml:space="preserve"><value>Hide or expand based on entry direction</value></data>
-  <data name="HoverByDirectionDetail" xml:space="preserve"><value>Hides when the pointer comes in from any side. To open the mini player, sweep sideways across the island, then pull down (or up).</value></data>
+  <data name="HoverByDirectionDetail" xml:space="preserve"><value>Moving onto the island hides it. To open the mini player, move sideways across the island, then down.</value></data>
+  <data name="HoverByDirectionFloatingDetail" xml:space="preserve"><value>Moving onto the island hides it. To open the mini player, move sideways across the island, then up or down.</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>Match lyric colour to album artwork</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>Turn off to use the colour selected below.</value></data>
   <data name="IslandColour" xml:space="preserve"><value>Lyric colour</value></data>
