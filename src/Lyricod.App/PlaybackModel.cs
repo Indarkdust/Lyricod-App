@@ -180,7 +180,7 @@ public sealed partial class PlaybackModel
             if (NowPlaying != null)
             {
                 NowPlaying = null; Track = null; Lyrics = null; _allLyrics = null; CurrentIndex = null;
-                Artwork = null; ArtworkColor = null;
+                Artwork = null; ArtworkColor = null; ArtworkSize = null;
                 _loading?.Cancel();
                 BestMatchScore = null;
                 IsSearching = false; // the cancelled search won't say it's done
@@ -222,7 +222,7 @@ public sealed partial class PlaybackModel
             change |= Change.Track;
             ApplyOffset();
             LoadLyrics(Track, ignoreCache: false);
-            Artwork = null; ArtworkColor = null; _artworkTries = 0;
+            Artwork = null; ArtworkColor = null; ArtworkSize = null; _artworkTries = 0;
             _artworkRetry.Stop();
             _artworkRetry.Start();
             _lengthCorrected = false;
