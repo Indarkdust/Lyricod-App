@@ -12,7 +12,7 @@ public class IslandGestureTests
 
     [Fact]
     public void SidewaysThenUpThroughTheBottomExpands() =>
-        Assert.True(Expands(IslandEdge.Bottom, (160, 138), (50, 160), (120, 160), (160, 158), (160, 150)));
+        Assert.True(Expands(IslandEdge.Bottom, (160, 138), (50, 170), (120, 170), (160, 168), (160, 155)));
 
     [Fact]
     public void ALongerDropAfterTheSidewaysLegStillCounts() =>
@@ -60,26 +60,13 @@ public class IslandGestureTests
         // Down and to the right at a low angle the whole way: no turn.
         Assert.False(Expands(IslandEdge.Top, (160, 101), (0, 30), (40, 40), (80, 50), (120, 70), (150, 92)));
 
-    // Over the hidden island (the default one, x 100–300, y 0–34): slide in along the top, then turn.
-    static bool TurnsOver((double X, double Y) now, params (double X, double Y)[] trail) => IslandGesture.IsSidewaysThenTurn(trail, now);
+    [Fact]
+    public void ATinyDropAfterSlidingHides() =>
+        // Sideways, then only a few pixels down into it: not enough of a turn.
+        Assert.False(Expands(IslandEdge.Top, (162, 101), (40, 90), (120, 90), (160, 92)));
 
     [Fact]
-    public void SlidingInAlongTheTopThenDownExpands() =>
-        Assert.True(TurnsOver((180, 26), (40, 4), (90, 4), (140, 5), (175, 6), (178, 14)));
-
-    [Fact]
-    public void SidewaysThenUpOverTheIslandExpands() =>
-        Assert.True(TurnsOver((180, 8), (40, 30), (120, 29), (178, 28), (180, 18)));
-
-    [Fact]
-    public void ASmallDipDoesNotExpand() =>
-        Assert.False(TurnsOver((180, 14), (40, 4), (120, 4), (178, 6)));
-
-    [Fact]
-    public void JustSlidingAcrossDoesNotExpand() =>
-        Assert.False(TurnsOver((220, 6), (40, 4), (120, 5), (180, 5)));
-
-    [Fact]
-    public void GoingStraightDownOverItDoesNotExpand() =>
-        Assert.False(TurnsOver((180, 30), (180, 2), (180, 10), (181, 20)));
+    public void TheTurnHasToBeOutsideTheIsland() =>
+        // Sideways along just above it, then straight in: the drop is only the last few pixels.
+        Assert.False(Expands(IslandEdge.Top, (200, 104), (40, 96), (120, 97), (199, 98)));
 }

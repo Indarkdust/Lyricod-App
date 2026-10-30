@@ -36,25 +36,19 @@ public sealed partial class IslandWindow
                 // Use the same two-pixel margin as the hover check.
                 var edge = IslandEntry.Edge(p.X, p.Y, left - 2, top - above, width + 4, height + 2 + above, _lastOutside);
                 // "By direction" hides however the pointer comes in, unless it moved sideways and then
-                // turned in through the top or bottom: that opens the mini player.
+                // turned up or down into it, outside the island: that opens the mini player.
                 SetHovered(true, gesture && !IslandGesture.IsSidewaysThenIn(path, (p.X, p.Y), edge, _overlay.Scale));
-            }
-            else if (gesture && _hoverAction == IslandHover.Hide && IslandGesture.IsSidewaysThenTurn(path, (p.X, p.Y), _overlay.Scale))
-            {
-                // Hidden, then the turn made over it (in along the top of the screen, then down): open it after all.
-                SetHovered(false);
-                SetHovered(true);
                 _trail.Clear();
             }
         }
         else
         {
             _lastOutside = (p.X, p.Y);
+            // The last moment and a half of movement outside the island, for the gesture.
+            _trail.Add((p.X, p.Y, now));
+            _trail.RemoveAll(s => now - s.T > 1.5);
             if (_hovered && now - _lastInside > 0.3) SetHovered(false); // a moment's grace when brushing past
         }
-        // The last moment and a half of movement, inside and out, for the gesture.
-        _trail.Add((p.X, p.Y, now));
-        _trail.RemoveAll(s => now - s.T > 1.5);
     }
 
     void SetHovered(bool hovered, bool hideByDirection = false)
