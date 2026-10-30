@@ -24,7 +24,7 @@ public enum NeteaseResult { Done, Cancelled, CouldntDownload, Failed }
 public static class NeteaseSetup
 {
     public const string ExeName = "cloudmusic.exe";
-    const string LoaderName = "msimg32.dll", PluginName = "InfLink-rs.plugin";
+    const string LoaderName = "msimg32.dll";
 
     /// <summary>The installed NetEase Cloud Music, or null when there's none Lyricod can find.</summary>
     public static NeteaseInstall? Find()
@@ -40,7 +40,7 @@ public static class NeteaseSetup
             var version = new Version(info.FileMajorPart, info.FileMinorPart, info.FileBuildPart);
             bool is64Bit;
             using (var file = File.OpenRead(exe)) is64Bit = NeteaseSync.Machine(file) == NeteaseSync.X64;
-            bool installed = File.Exists(Path.Combine(folder, LoaderName)) && File.Exists(Path.Combine(DataFolder(), "plugins", PluginName));
+            bool installed = File.Exists(Path.Combine(folder, LoaderName)) && NeteaseSync.HasInfLink(DataFolder());
             return new NeteaseInstall(folder, version, is64Bit, installed);
         }
         catch (Exception) { return null; }
@@ -69,9 +69,13 @@ public static class NeteaseSetup
         return null;
     }
 
-    /// <summary>BetterNCM's data folder: BETTERNCM_PROFILE (the user's, then the machine's), else C:\betterncm.</summary>
+    /// <summary>
+    /// BetterNCM's data folder: BETTERNCM_PROFILE, as NetEase Cloud Music would see it (Lyricod's own
+    /// environment, then the user's and the machine's settings, which may be newer), else C:\betterncm.
+    /// </summary>
     public static string DataFolder()
     {
+        if (Environment.GetEnvironmentVariable("BETTERNCM_PROFILE") is { Length: > 0 } inherited) return inherited;
         try
         {
             if (Registry.CurrentUser.OpenSubKey("Environment") is { } user)

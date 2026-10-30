@@ -86,6 +86,49 @@ public class NeteaseSyncTests
         Assert.False(NeteaseSync.ReadResult("{\"ok\":true}", 1).Ok);
     }
 
+    static string DataFolder() => Directory.CreateTempSubdirectory("lyricod-betterncm-").FullName;
+
+    static void Packed(string data, string file, string? manifest)
+    {
+        Directory.CreateDirectory(Path.Combine(data, "plugins"));
+        using var zip = System.IO.Compression.ZipFile.Open(Path.Combine(data, "plugins", file), System.IO.Compression.ZipArchiveMode.Create);
+        if (manifest != null)
+            using (var writer = new StreamWriter(zip.CreateEntry("manifest.json").Open())) writer.Write(manifest);
+    }
+
+    [Theory]
+    [InlineData("InfLink-rs.plugin")]      // as the helper installs it
+    [InlineData("InfLinkrs-3.4.0.plugin")] // as BetterNCM's plugin store does
+    public void FindsInfLinkWhateverItsFileIsCalled(string file)
+    {
+        string data = DataFolder();
+        Packed(data, "PluginMarket.plugin", "{\"name\":\"PluginMarket\"}");
+        Assert.False(NeteaseSync.HasInfLink(data));
+        Packed(data, file, "{\"name\":\"InfLink-rs\",\"version\":\"3.4.0\"}");
+        Assert.True(NeteaseSync.HasInfLink(data));
+    }
+
+    [Fact]
+    public void FindsAnUnpackedInfLink()
+    {
+        string data = DataFolder();
+        Directory.CreateDirectory(Path.Combine(data, "plugins_dev", "inflink"));
+        File.WriteAllText(Path.Combine(data, "plugins_dev", "inflink", "manifest.json"), "{\"name\":\"InfLink-rs\"}");
+        Assert.True(NeteaseSync.HasInfLink(data));
+    }
+
+    [Fact]
+    public void OtherPluginsAreNotInfLink()
+    {
+        string data = DataFolder();
+        Packed(data, "InfLink-1.1.1.plugin", "{\"name\":\"InfLink\"}"); // the older plugin
+        Packed(data, "nameless.plugin", null);
+        File.WriteAllText(Path.Combine(data, "plugins", "broken.plugin"), "not a zip");
+        Directory.CreateDirectory(Path.Combine(data, "plugins_dev", "empty"));
+        Assert.False(NeteaseSync.HasInfLink(data));
+        Assert.False(NeteaseSync.HasInfLink(Path.Combine(data, "missing")));
+    }
+
     static MemoryStream Exe(ushort machine)
     {
         var bytes = new byte[0x86];

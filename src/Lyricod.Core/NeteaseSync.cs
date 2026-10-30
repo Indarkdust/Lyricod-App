@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text.Json;
 
 namespace Lyricod.Core;
@@ -95,6 +96,62 @@ public static class NeteaseSync
             catch (JsonException) { /* fall back to the exit code */ }
         }
         return new(false, $"The helper stopped (code {exitCode}).");
+    }
+
+    /// <summary>The name in InfLink-rs's manifest, which is how it's told apart whatever its file is called.</summary>
+    public const string PluginTitle = "InfLink-rs";
+
+    /// <summary>
+    /// Whether InfLink-rs is in BetterNCM's data folder, however it got there: packed in <c>plugins</c>
+    /// (as the helper names it, InfLink-rs.plugin, or as BetterNCM's plugin store does,
+    /// InfLinkrs-&lt;version&gt;.plugin), or unpacked in <c>plugins_dev</c>.
+    /// </summary>
+    public static bool HasInfLink(string dataFolder)
+    {
+        try
+        {
+            string packed = Path.Combine(dataFolder, "plugins");
+            if (Directory.Exists(packed) && Directory.EnumerateFiles(packed, "*.plugin").Any(file => PackedName(file) == PluginTitle)) return true;
+            string unpacked = Path.Combine(dataFolder, "plugins_dev");
+            return Directory.Exists(unpacked) && Directory.EnumerateDirectories(unpacked).Any(folder => UnpackedName(folder) == PluginTitle);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
+    }
+
+    /// <summary>The name in a packed plugin's (a zip's) manifest.json, or null when it isn't one.</summary>
+    static string? PackedName(string path)
+    {
+        try
+        {
+            using var zip = ZipFile.OpenRead(path);
+            if (zip.GetEntry("manifest.json") is not { } entry) return null;
+            using var manifest = entry.Open();
+            return ManifestName(manifest);
+        }
+        catch (Exception e) when (e is InvalidDataException or IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    static string? UnpackedName(string folder)
+    {
+        try
+        {
+            string path = Path.Combine(folder, "manifest.json");
+            if (!File.Exists(path)) return null;
+            using var manifest = File.OpenRead(path);
+            return ManifestName(manifest);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    static string? ManifestName(Stream manifest)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(manifest);
+            return document.RootElement.ValueKind == JsonValueKind.Object && document.RootElement.TryGetProperty("name", out var name)
+                && name.ValueKind == JsonValueKind.String ? name.GetString() : null;
+        }
+        catch (JsonException) { return null; }
     }
 
     /// <summary>Which processor an exe is built for, from its header (0x8664: x64), or 0 when it isn't one.</summary>
