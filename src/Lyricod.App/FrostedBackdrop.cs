@@ -41,7 +41,8 @@ sealed class FrostedBackdrop : SystemBackdrop
     protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop connectedTarget, XamlRoot xamlRoot)
     {
         base.OnTargetConnected(connectedTarget, xamlRoot);
-        _controller = new DesktopAcrylicController();
+        // Thin: Windows' lighter, more see-through acrylic.
+        _controller = new DesktopAcrylicController { Kind = DesktopAcrylicKind.Thin };
         Apply();
         _controller.AddSystemBackdropTarget(connectedTarget);
         _controller.SetSystemBackdropConfiguration(_configuration);

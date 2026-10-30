@@ -46,9 +46,10 @@ public sealed partial class IslandWindow
         byte alpha = (byte)Math.Round(255 * (1 - clear));
         if (frosted)
         {
-            // The blur carries most of the tint; the pill adds a little on top.
-            _frost!.SetTint(tint, (float)((1 - clear) * 0.6), (float)(0.15 + (1 - clear) * 0.6));
-            alpha = (byte)(alpha * 0.3);
+            // As see-through as acrylic goes: its tint and brightness layers fade with transparency, down
+            // to almost only the blur; the pill adds just a touch of tint on top.
+            _frost!.SetTint(tint, (float)((1 - clear) * 0.35), (float)((1 - clear) * 0.45));
+            alpha = (byte)(alpha * 0.12);
         }
         Pill.Background = new SolidColorBrush(Color.FromArgb(alpha, tint.R, tint.G, tint.B));
     }
