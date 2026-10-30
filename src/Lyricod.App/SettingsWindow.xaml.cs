@@ -34,6 +34,9 @@ public sealed partial class SettingsWindow : Window
     /// <summary>Starts Lyricod again (a new language applies then).</summary>
     public Action? Restart { get; set; }
 
+    /// <summary>Lets screenshots see the liquid glass island for a few seconds.</summary>
+    public Action? ShowIslandInScreenshots { get; set; }
+
     static readonly string[] PresetColours = ["#8CD9FF", "#FFD36E", "#FF8FB1", "#9BF59B", "#FFFFFF"];
 
     public SettingsWindow(Settings settings, PlaybackModel model, Action openLyricsWindow, Action openChooseLyrics, GlobalShortcuts shortcuts, UpdateChecker updates, SettingsPane pane = SettingsPane.General)

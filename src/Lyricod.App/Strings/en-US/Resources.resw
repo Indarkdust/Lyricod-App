@@ -97,6 +97,10 @@
   <data name="GlassEffectUnsupported" xml:space="preserve"><value>This Windows version doesn't support the selected effect. Clear will be used instead.</value></data>
   <data name="LiquidBlur" xml:space="preserve"><value>Blur</value></data>
   <data name="LiquidRefraction" xml:space="preserve"><value>Edge refraction</value></data>
+  <data name="LiquidScreenshot" xml:space="preserve"><value>Screenshots</value></data>
+  <data name="LiquidScreenshotDetail" xml:space="preserve"><value>While the liquid effect is on, the island doesn't appear in screenshots. Click the button, then take your screenshot within 10 seconds.</value></data>
+  <data name="LiquidScreenshotButton" xml:space="preserve"><value>Show in screenshots</value></data>
+  <data name="LiquidScreenshotCountdown" xml:space="preserve"><value>Take your screenshot ({0})</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

@@ -53,12 +53,29 @@ sealed class LiquidGlass : IDisposable
     (int Width, int Height, float Radius, bool SquareTop, float Rim) _lightFor;
     Look? _look;
     int _pending;
+    /// <summary>Until when (<see cref="Environment.TickCount64"/>) new frames are left unused after a freeze.</summary>
+    long _skipUntil;
 
     /// <summary>Capturing or drawing failed (the graphics card reset, the screen went away): the island falls back.</summary>
     public bool Failed { get; private set; }
 
     /// <summary>The island's background: put it behind the lyrics, sized to the island.</summary>
     public SpriteVisual Visual { get; }
+
+    /// <summary>
+    /// Keeps showing what was behind the island instead of capturing it afresh. While the island shows
+    /// in screenshots, it would capture itself otherwise; the glass still follows the island's size.
+    /// </summary>
+    public bool Frozen
+    {
+        get;
+        set
+        {
+            // Frames from the next moment may still show the island, until Windows hides it from capture again.
+            if (field && !value) _skipUntil = Environment.TickCount64 + 250;
+            field = value;
+        }
+    }
 
     /// <param name="failed">Called (on the UI thread) when capturing or drawing fails.</param>
     public LiquidGlass(Compositor compositor, DispatcherQueue ui, Action failed)
@@ -142,6 +159,11 @@ sealed class LiquidGlass : IDisposable
                 // The screen's resolution changed.
                 _poolSize = newest.ContentSize;
                 _pool.Recreate(_device, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, 3, _poolSize);
+            }
+            if (Frozen || Environment.TickCount64 < _skipUntil)
+            {
+                newest.Dispose();
+                return;
             }
             _screen?.Dispose();
             _frame?.Dispose();

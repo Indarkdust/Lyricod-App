@@ -1,5 +1,6 @@
 using System.Numerics;
 using Lyricod.Platform;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Hosting;
 using Windows.Graphics;
@@ -9,11 +10,15 @@ namespace Lyricod;
 /// <summary>
 /// Lyricod Glass's liquid effect (see <see cref="LiquidGlass"/>). It runs only while
 /// it's the chosen glass effect and the island shows (not while the pointer hides it or it's being
-/// moved); only then is the island hidden from screen capture.
+/// moved); only then is the island hidden from screen capture, unless asked to show in screenshots.
 /// </summary>
 public sealed partial class IslandWindow
 {
+    /// <summary>How long the island shows in screenshots when asked (see <see cref="ShowInScreenshots"/>).</summary>
+    public const int ScreenshotSeconds = 10;
+
     LiquidGlass? _liquid;
+    DispatcherQueueTimer? _screenshotTimer;
 
     bool WantsLiquid => Glass && _settings.GlassEffect == GlassEffect.Liquid && LiquidGlass.IsSupported && !Movable;
 
@@ -41,8 +46,39 @@ public sealed partial class IslandWindow
         return false;
     }
 
+    /// <summary>
+    /// Lets screenshots, recordings and screen sharing see the liquid glass island for a few seconds.
+    /// Meanwhile the glass stops capturing and keeps showing what was behind it, so it can't capture
+    /// itself; the lyrics carry on.
+    /// </summary>
+    public void ShowInScreenshots()
+    {
+        if (_liquid == null) return;
+        _liquid.Frozen = true;
+        Win32.SetWindowDisplayAffinity(_overlay.Handle, Win32.WDA_NONE);
+        if (_screenshotTimer == null)
+        {
+            _screenshotTimer = DispatcherQueue.CreateTimer();
+            _screenshotTimer.Interval = TimeSpan.FromSeconds(ScreenshotSeconds);
+            _screenshotTimer.IsRepeating = false;
+            _screenshotTimer.Tick += (_, _) => EndScreenshot();
+        }
+        _screenshotTimer.Stop();
+        _screenshotTimer.Start();
+    }
+
+    /// <summary>Hides the island from capture again, then lets the glass follow what's behind it.</summary>
+    void EndScreenshot()
+    {
+        _screenshotTimer?.Stop();
+        if (_liquid == null) return;
+        Win32.SetWindowDisplayAffinity(_overlay.Handle, Win32.WDA_EXCLUDEFROMCAPTURE);
+        _liquid.Frozen = false;
+    }
+
     void StopLiquid()
     {
+        _screenshotTimer?.Stop();
         if (_liquid == null) return;
         ElementCompositionPreview.SetElementChildVisual(LiquidHost, null);
         _liquid.Dispose();

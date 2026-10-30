@@ -148,6 +148,7 @@ public sealed partial class SettingsWindow
         };
         // The 3D effect is the liquid glass's: it lights the edge its lens bends.
         var shine = new ContentControl { Content = Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v) };
+        var screenshot = new ContentControl { Content = ScreenshotButton() };
         void SyncEffect()
         {
             var effect = _settings.GlassEffect;
@@ -163,13 +164,40 @@ public sealed partial class SettingsWindow
                 GlassEffect.Liquid => L.Get("GlassEffectLiquidDetail"),
                 _ => L.Get("GlassEffectClearDetail"),
             } + (supported ? "" : " " + L.Get("GlassEffectUnsupported"));
-            liquidBlur.IsEnabled = refraction.IsEnabled = shine.IsEnabled = effect == GlassEffect.Liquid && LiquidGlass.IsSupported;
+            liquidBlur.IsEnabled = refraction.IsEnabled = shine.IsEnabled = screenshot.IsEnabled = effect == GlassEffect.Liquid && LiquidGlass.IsSupported;
         }
         Watch(nameof(Settings.GlassEffect), SyncEffect);
         SyncEffect();
         Card(L.Get("LiquidBlur"), null, liquidBlur);
         Card(L.Get("LiquidRefraction"), null, refraction);
         Card(L.Get("GlassShine"), null, shine);
+        Card(L.Get("LiquidScreenshot"), L.Get("LiquidScreenshotDetail"), screenshot);
+    }
+
+    /// <summary>Shows the island in screenshots for a few seconds, counting them down.</summary>
+    Button ScreenshotButton()
+    {
+        var button = new Button { Content = L.Get("LiquidScreenshotButton") };
+        var timer = DispatcherQueue.CreateTimer();
+        timer.Interval = TimeSpan.FromSeconds(1);
+        int left = 0;
+        void Show() => button.Content = left > 0 ? L.Format("LiquidScreenshotCountdown", left) : L.Get("LiquidScreenshotButton");
+        timer.Tick += (_, _) =>
+        {
+            left--;
+            if (left <= 0) timer.Stop();
+            Show();
+        };
+        button.Click += (_, _) =>
+        {
+            ShowIslandInScreenshots?.Invoke();
+            left = IslandWindow.ScreenshotSeconds;
+            timer.Stop();
+            timer.Start();
+            Show();
+        };
+        button.Unloaded += (_, _) => timer.Stop();
+        return button;
     }
 
     ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set) => Choice(property, get, set,

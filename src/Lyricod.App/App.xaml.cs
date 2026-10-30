@@ -132,6 +132,7 @@ public partial class App : Application
             _settingsWindow = new SettingsWindow(_settings!, _model!, OpenLyricsWindow, OpenChooseLyrics, _shortcuts!, _updates!, pane ?? SettingsPane.General)
             {
                 Restart = Restart,
+                ShowIslandInScreenshots = () => _island?.ShowInScreenshots(),
             };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         }
