@@ -96,7 +96,7 @@ Automatic update checks contact GitHub once a day and can be disabled in Setting
 
 ## Credits
 
-Inspired by [Lyricify](https://github.com/WXRIW/Lyricify-App). Lyricod Island takes inspiration from WXRIW's Dynamic Lyrics Island design (CC BY-SA 4.0). QQ Music word-by-word lyric decryption code was ported from [Lyricify Lyrics Helper](https://github.com/WXRIW/Lyricify-Lyrics-Helper) (Apache License 2.0). Pinyin support uses [ToolGood.Words](https://github.com/toolgood/ToolGood.Words) (Apache License 2.0), and tray and window helpers use [WinUIEx](https://github.com/dotMorten/WinUIEx) (MIT).
+Inspired by [Lyricify](https://github.com/WXRIW/Lyricify-App). Lyricod Island takes inspiration from WXRIW's Dynamic Lyrics Island design (CC BY-SA 4.0). QQ Music word-by-word lyric decryption code was ported from [Lyricify Lyrics Helper](https://github.com/WXRIW/Lyricify-Lyrics-Helper) (Apache License 2.0). Pinyin support uses [ToolGood.Words](https://github.com/toolgood/ToolGood.Words) (Apache License 2.0), and tray and window helpers use [WinUIEx](https://github.com/dotMorten/WinUIEx) (MIT). Lyricod Glass's liquid effect is drawn with [Win2D](https://github.com/microsoft/Win2D) by Microsoft.
 
 Lyrics belong to their respective copyright holders. Lyricod is not affiliated with Microsoft, NetEase, or Tencent.
 
