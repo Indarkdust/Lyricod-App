@@ -3,7 +3,6 @@ using Lyricod.Platform;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 
 namespace Lyricod;
@@ -70,15 +69,14 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Unlocked (floating only): the island takes clicks and turns dark grey, so it's clear it can
-    /// be dragged. Locked: click-through until the pointer is over it.
+    /// Unlocked (floating only): the island takes clicks and turns dark grey (see <see cref="ApplyTheme"/>),
+    /// so it's clear it can be dragged. Locked: click-through until the pointer is over it.
     /// </summary>
     void ApplyMoveMode()
     {
         SetHovered(false);
-        bool movable = Movable;
-        _overlay.SetClickThrough(!movable);
-        Pill.Background = new SolidColorBrush(movable ? Windows.UI.Color.FromArgb(255, 0x26, 0x26, 0x2A) : Microsoft.UI.Colors.Black);
+        _overlay.SetClickThrough(!Movable);
+        ApplyTheme();
     }
 
     void OnPillPressed(object sender, PointerRoutedEventArgs e)

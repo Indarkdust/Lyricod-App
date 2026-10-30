@@ -74,6 +74,15 @@
   <data name="LockIsland" xml:space="preserve"><value>锁定歌词岛位置</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛，锁定后恢复鼠标悬停操作。</value></data>
   <data name="ResetIslandPosition" xml:space="preserve"><value>恢复顶部居中</value></data>
+  <data name="IslandTheme" xml:space="preserve"><value>主题</value></data>
+  <data name="IslandThemeDetail" xml:space="preserve"><value>Lyricod Glass 是半透明的，可以透过歌词岛看到后面的内容。</value></data>
+  <data name="IslandThemeClassic" xml:space="preserve"><value>经典</value></data>
+  <data name="IslandThemeGlass" xml:space="preserve"><value>Lyricod Glass</value></data>
+  <data name="GlassTransparency" xml:space="preserve"><value>透明度</value></data>
+  <data name="GlassTint" xml:space="preserve"><value>玻璃色调</value></data>
+  <data name="GlassTintNeutral" xml:space="preserve"><value>中性</value></data>
+  <data name="GlassTintAlbum" xml:space="preserve"><value>跟随专辑封面</value></data>
+  <data name="GlassShine" xml:space="preserve"><value>边缘高光</value></data>
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>保持原样</value></data>

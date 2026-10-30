@@ -10,6 +10,12 @@ namespace Lyricod;
 /// fully rounded and can be dragged anywhere.</summary>
 public enum IslandStyle { Default, Floating }
 
+/// <summary>How the island looks: Classic black, or Lyricod Glass (see-through, with a shine along its edge).</summary>
+public enum IslandTheme { Classic, Glass }
+
+/// <summary>The colour of Lyricod Glass: a neutral dark, or the album cover's colour.</summary>
+public enum GlassTint { Neutral, Album }
+
 /// <summary>What the island does while the pointer is over it.</summary>
 public enum IslandHover { Expand, Hide, Nothing, ByDirection }
 
@@ -59,6 +65,10 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     IslandStyle _islandStyle = IslandStyle.Default;
     bool _islandLocked = true;
     int? _islandX, _islandY;
+    IslandTheme _islandTheme = IslandTheme.Classic;
+    int _glassTransparency = 40;
+    GlassTint _glassTint = GlassTint.Neutral;
+    bool _glassShine = true;
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
@@ -123,6 +133,12 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// or null for the top centre.</summary>
     public int? IslandX { get => _islandX; set => Set(ref _islandX, value); }
     public int? IslandY { get => _islandY; set => Set(ref _islandY, value); }
+    public IslandTheme IslandTheme { get => _islandTheme; set => Set(ref _islandTheme, Enum.IsDefined(value) ? value : IslandTheme.Classic); }
+    /// <summary>Lyricod Glass: how see-through it is, in percent (10 to 90).</summary>
+    public int GlassTransparency { get => _glassTransparency; set => Set(ref _glassTransparency, Math.Clamp(value, 10, 90)); }
+    public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
+    /// <summary>Lyricod Glass: a bright rim and a soft highlight at the top.</summary>
+    public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }

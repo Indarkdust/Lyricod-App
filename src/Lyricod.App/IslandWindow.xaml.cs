@@ -237,6 +237,9 @@ public sealed partial class IslandWindow : Window
             case nameof(Settings.IslandLocked):
                 ApplyMoveMode();
                 break;
+            case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine):
+                ApplyTheme();
+                break;
             case nameof(Settings.IslandY) when _settings.IslandX == null && _settings.IslandY == null:
                 // "Reset to top centre" in Settings.
                 Place();
@@ -295,5 +298,6 @@ public sealed partial class IslandWindow : Window
         var brush = new SolidColorBrush(colour);
         foreach (var bar in _bars) bar.Fill = brush;
         _progress.BarBrush = brush;
+        ApplyTheme(); // glass tinted with the album's colour follows the cover
     }
 }

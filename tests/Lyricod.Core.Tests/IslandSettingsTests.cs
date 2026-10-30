@@ -70,6 +70,33 @@ public class IslandSettingsTests
         Assert.False(JsonSerializer.Deserialize<Settings>("{\"ShowIsland\":false}", Json)!.ShowIsland);
     }
 
+    [Fact]
+    public void GlassIsOffByDefaultAndItsTransparencyStaysInRange()
+    {
+        var settings = new Settings();
+        Assert.Equal(IslandTheme.Classic, settings.IslandTheme);
+        Assert.Equal(40, settings.GlassTransparency);
+        Assert.Equal(GlassTint.Neutral, settings.GlassTint);
+        Assert.True(settings.GlassShine);
+        settings.GlassTransparency = 0;
+        Assert.Equal(10, settings.GlassTransparency);
+        settings.GlassTransparency = 100;
+        Assert.Equal(90, settings.GlassTransparency);
+        Assert.Equal(90, JsonSerializer.Deserialize<Settings>("{\"GlassTransparency\":120}", Json)!.GlassTransparency);
+    }
+
+    [Theory]
+    [InlineData("{\"IslandTheme\":\"Classic\"}", IslandTheme.Classic, GlassTint.Neutral)]
+    [InlineData("{\"IslandTheme\":\"Glass\",\"GlassTint\":\"Album\"}", IslandTheme.Glass, GlassTint.Album)]
+    [InlineData("{\"IslandTheme\":1,\"GlassTint\":1}", IslandTheme.Glass, GlassTint.Album)]
+    [InlineData("{\"IslandTheme\":9,\"GlassTint\":9}", IslandTheme.Classic, GlassTint.Neutral)]
+    public void ThemeValuesKeepTheirNamesAndNumbers(string json, IslandTheme theme, GlassTint tint)
+    {
+        var settings = JsonSerializer.Deserialize<Settings>(json, Json)!;
+        Assert.Equal(theme, settings.IslandTheme);
+        Assert.Equal(tint, settings.GlassTint);
+    }
+
     [Theory]
     [InlineData("\"Default\"", IslandStyle.Default, 0)]
     [InlineData("\"Floating\"", IslandStyle.Floating, 1)]

@@ -116,6 +116,22 @@ public sealed partial class SettingsWindow
     ComboBox Layout(string property, Func<SecondLine> get, Action<SecondLine> set) =>
         Choice(property, get, set, [.. Enum.GetValues<SecondLine>().Select(mode => (mode, L.Get("Layout" + mode)))]);
 
+    /// <summary>A slider for a whole percentage, with its value beside it.</summary>
+    FrameworkElement Percent(string property, Func<int> get, Action<int> set, int min, int max)
+    {
+        var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Style = Style("Detail"), MinWidth = 44, TextAlignment = TextAlignment.Right };
+        var slider = new Slider { Minimum = min, Maximum = max, StepFrequency = 5, Width = 220, Value = get(), VerticalAlignment = VerticalAlignment.Center };
+        void Sync()
+        {
+            label.Text = $"{get()}%";
+            if (Math.Abs(slider.Value - get()) > 0.5) slider.Value = get();
+        }
+        slider.ValueChanged += (_, e) => set((int)Math.Round(e.NewValue));
+        Watch(property, Sync);
+        Sync();
+        return Row(slider, label);
+    }
+
     FrameworkElement TextSize()
     {
         var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Style = Style("Detail"), MinWidth = 44, TextAlignment = TextAlignment.Right };

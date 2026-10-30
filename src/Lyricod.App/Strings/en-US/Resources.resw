@@ -74,6 +74,15 @@
   <data name="LockIsland" xml:space="preserve"><value>Lock island position</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>Unlock to move the island. Lock it to use hover actions again.</value></data>
   <data name="ResetIslandPosition" xml:space="preserve"><value>Reset to top center</value></data>
+  <data name="IslandTheme" xml:space="preserve"><value>Theme</value></data>
+  <data name="IslandThemeDetail" xml:space="preserve"><value>Lyricod Glass is see-through, so what's behind the island shows through it.</value></data>
+  <data name="IslandThemeClassic" xml:space="preserve"><value>Classic</value></data>
+  <data name="IslandThemeGlass" xml:space="preserve"><value>Lyricod Glass</value></data>
+  <data name="GlassTransparency" xml:space="preserve"><value>Transparency</value></data>
+  <data name="GlassTint" xml:space="preserve"><value>Glass tint</value></data>
+  <data name="GlassTintNeutral" xml:space="preserve"><value>Neutral</value></data>
+  <data name="GlassTintAlbum" xml:space="preserve"><value>Album colour</value></data>
+  <data name="GlassShine" xml:space="preserve"><value>Edge shine</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

@@ -99,6 +99,22 @@ public sealed partial class SettingsWindow
         Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v));
 
         Heading(L.Get("StyleHeading"));
+        Card(L.Get("IslandTheme"), L.Get("IslandThemeDetail"), Choice(nameof(Settings.IslandTheme), () => _settings.IslandTheme, v => _settings.IslandTheme = v,
+            (IslandTheme.Classic, L.Get("IslandThemeClassic")), (IslandTheme.Glass, L.Get("IslandThemeGlass"))));
+        // Lyricod Glass's own settings, usable while it's the theme.
+        var transparency = new ContentControl
+        {
+            Content = Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90),
+        };
+        var tint = Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
+            (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum")));
+        var shine = Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v);
+        void SyncGlass() => transparency.IsEnabled = tint.IsEnabled = shine.IsEnabled = _settings.IslandTheme == IslandTheme.Glass;
+        Watch(nameof(Settings.IslandTheme), SyncGlass);
+        SyncGlass();
+        Card(L.Get("GlassTransparency"), null, transparency);
+        Card(L.Get("GlassTint"), null, tint);
+        Card(L.Get("GlassShine"), null, shine);
         Card(L.Get("IslandSize"), null, Choice(nameof(Settings.IslandSize), () => _settings.IslandSize, v => _settings.IslandSize = v,
             (IslandSize.Small, L.Get("SizeSmall")), (IslandSize.Medium, L.Get("SizeMedium")),
             (IslandSize.Large, L.Get("SizeLarge")), (IslandSize.ExtraLarge, L.Get("SizeExtraLarge"))));
