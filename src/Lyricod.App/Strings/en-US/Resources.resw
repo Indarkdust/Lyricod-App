@@ -77,7 +77,9 @@
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>
-  <data name="HoverByDirection" xml:space="preserve"><value>Hide from below, expand from the sides</value></data>
+  <data name="HoverByDirection" xml:space="preserve"><value>Hide or expand based on entry direction</value></data>
+  <data name="HoverByDirectionDefaultDetail" xml:space="preserve"><value>Entering from below hides it; entering from the left or right expands it.</value></data>
+  <data name="HoverByDirectionFloatingDetail" xml:space="preserve"><value>Entering from above or below hides it; entering from the left or right expands it.</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>Match lyric colour to album artwork</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>Turn off to use the colour selected below.</value></data>
   <data name="IslandColour" xml:space="preserve"><value>Lyric colour</value></data>

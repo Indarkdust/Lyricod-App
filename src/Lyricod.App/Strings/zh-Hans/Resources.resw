@@ -77,7 +77,9 @@
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>保持原样</value></data>
-  <data name="HoverByDirection" xml:space="preserve"><value>从下方移入时隐藏，从两侧移入时展开</value></data>
+  <data name="HoverByDirection" xml:space="preserve"><value>按移入方向隐藏或展开</value></data>
+  <data name="HoverByDirectionDefaultDetail" xml:space="preserve"><value>从下方移入时隐藏，从左右两侧移入时展开。</value></data>
+  <data name="HoverByDirectionFloatingDetail" xml:space="preserve"><value>从上方或下方移入时隐藏，从左右两侧移入时展开。</value></data>
   <data name="AlbumColour" xml:space="preserve"><value>歌词颜色跟随专辑封面</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>关闭后使用下面设置的颜色。</value></data>
   <data name="IslandColour" xml:space="preserve"><value>歌词颜色</value></data>

@@ -38,14 +38,16 @@ public sealed partial class SettingsWindow
     }
 
     /// <summary>A setting: its name (and a line about it) on the left, its control on the right.</summary>
-    void Card(string title, string? detail, FrameworkElement? control)
+    /// <returns>The line about it, for a page that changes it later; null without one.</returns>
+    TextBlock? Card(string title, string? detail, FrameworkElement? control)
     {
         var grid = new Grid { ColumnSpacing = 24 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var text = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Spacing = 1 };
         text.Children.Add(new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap });
-        if (detail != null) text.Children.Add(new TextBlock { Text = detail, Style = Style("Detail") });
+        var line = detail == null ? null : new TextBlock { Text = detail, Style = Style("Detail") };
+        if (line != null) text.Children.Add(line);
         grid.Children.Add(text);
         if (control != null)
         {
@@ -54,6 +56,7 @@ public sealed partial class SettingsWindow
             grid.Children.Add(control);
         }
         Page.Children.Add(new Border { Style = Style("Card"), Child = grid });
+        return line;
     }
 
     /// <summary>Several rows in one card (About).</summary>
