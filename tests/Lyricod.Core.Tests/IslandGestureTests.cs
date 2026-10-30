@@ -2,71 +2,67 @@ namespace Lyricod.Core.Tests;
 
 public class IslandGestureTests
 {
-    // The island: x 100–300, y 100–140.
-    static bool Expands(IslandEdge edge, (double X, double Y) entry, params (double X, double Y)[] trail) =>
-        IslandGesture.IsSidewaysThenIn(trail, entry, edge);
+    // A default island at the top of the screen (x 100–300, y 0–34) and a floating one (x 100–300, y 100–140).
+    static readonly (double, double, double, double) Docked = (100, 0, 200, 34), Floating = (100, 100, 200, 40);
+
+    static bool Opens((double, double, double, double) island, params (double X, double Y)[] path) =>
+        IslandGesture.IsSweepThenPull(path, island);
 
     [Fact]
-    public void SidewaysThenDownThroughTheTopExpands() =>
-        Assert.True(Expands(IslandEdge.Top, (160, 105), (50, 80), (100, 80), (150, 80), (160, 85), (160, 95)));
+    public void SweepingAlongTheTopThenPullingDownOutOfItOpens() =>
+        Assert.True(Opens(Docked, (60, 10), (110, 10), (160, 12), (200, 12), (205, 25), (206, 40), (207, 50)));
 
     [Fact]
-    public void SidewaysThenUpThroughTheBottomExpands() =>
-        Assert.True(Expands(IslandEdge.Bottom, (160, 138), (50, 170), (120, 170), (160, 168), (160, 155)));
+    public void SweepingBelowItThenPullingDownOpens() =>
+        // Under the lyric, along the second row, then down: the pull starts over the island.
+        Assert.True(Opens(Docked, (60, 28), (120, 28), (180, 30), (186, 45), (188, 64)));
 
     [Fact]
-    public void ALongerDropAfterTheSidewaysLegStillCounts() =>
-        Assert.True(Expands(IslandEdge.Top, (150, 105), (0, 0), (100, 0), (150, 0), (150, 30), (150, 60), (150, 95)));
+    public void ACurvedPullCounts() =>
+        Assert.True(Opens(Docked, (40, 8), (90, 8), (140, 10), (170, 16), (184, 28), (190, 44), (192, 58)));
 
     [Fact]
-    public void OnlyTheLastTwoLegsMatter() =>
-        Assert.True(Expands(IslandEdge.Bottom, (170, 138), (60, 250), (60, 170), (120, 170), (170, 168), (170, 150)));
+    public void ComingInFromTheSideThenUpOpens() =>
+        Assert.True(Opens(Floating, (40, 175), (90, 175), (150, 172), (156, 150), (158, 132)));
 
     [Fact]
-    public void StraightInHides() =>
-        Assert.False(Expands(IslandEdge.Top, (160, 105), (160, 20), (160, 50), (160, 80), (160, 95)));
+    public void SweepingAcrossThenPullingUpOverAFloatingIslandOpens() =>
+        Assert.True(Opens(Floating, (60, 130), (140, 130), (200, 128), (204, 112), (205, 92)));
 
     [Fact]
-    public void DiagonalHides() =>
-        Assert.False(Expands(IslandEdge.Top, (145, 105), (60, 20), (90, 50), (120, 80), (135, 95)));
+    public void ASmallPullDoesNotOpen() =>
+        Assert.False(Opens(Docked, (60, 10), (110, 10), (160, 12), (200, 12), (203, 20), (204, 26)));
 
     [Fact]
-    public void ThroughASideHides() =>
-        Assert.False(Expands(IslandEdge.Side, (102, 120), (20, 120), (60, 120), (95, 120)));
+    public void JustSweepingAcrossDoesNotOpen() =>
+        Assert.False(Opens(Docked, (60, 10), (120, 11), (180, 12), (240, 12), (280, 13)));
 
     [Fact]
-    public void ATooShortSidewaysLegHides() =>
-        Assert.False(Expands(IslandEdge.Top, (160, 105), (140, 80), (160, 80), (160, 95)));
+    public void StraightDownDoesNotOpen() =>
+        Assert.False(Opens(Docked, (200, 2), (200, 15), (201, 30), (201, 50)));
+
+    [Fact]
+    public void DiagonalDoesNotOpen() =>
+        Assert.False(Opens(Docked, (120, 0), (140, 20), (160, 40), (180, 60)));
+
+    [Fact]
+    public void AShortSweepDoesNotOpen() =>
+        Assert.False(Opens(Docked, (180, 10), (200, 10), (204, 30), (205, 50)));
+
+    [Fact]
+    public void ThePullHasToBeOverTheIsland() =>
+        // Sweep and pull well to the side of it.
+        Assert.False(Opens(Docked, (400, 10), (460, 10), (520, 12), (522, 40), (523, 60)));
 
     [Fact]
     public void DistancesGrowWithTheDisplayScale()
     {
-        (double, double)[] trail = [(115, 80), (160, 80), (160, 95)]; // 45 pixels sideways
-        Assert.True(IslandGesture.IsSidewaysThenIn(trail, (160, 105), IslandEdge.Top, scale: 1));
-        Assert.False(IslandGesture.IsSidewaysThenIn(trail, (160, 105), IslandEdge.Top, scale: 2));
+        (double, double)[] path = [(150, 10), (200, 10), (204, 30), (205, 46)]; // 50 sideways, 36 down
+        Assert.True(IslandGesture.IsSweepThenPull(path, Docked, scale: 1));
+        Assert.False(IslandGesture.IsSweepThenPull(path, Docked, scale: 2));
     }
 
     [Fact]
-    public void NoTrailHides() =>
-        Assert.False(IslandGesture.IsSidewaysThenIn([], (160, 105), IslandEdge.Top));
-
-    [Fact]
-    public void ACurvedTurnStillCounts() =>
-        // Right, bending smoothly into a drop: the hand never stops to make a corner.
-        Assert.True(Expands(IslandEdge.Top, (152, 104), (0, 40), (40, 40), (80, 42), (110, 50), (130, 62), (142, 76), (148, 90)));
-
-    [Fact]
-    public void AShallowSlideAcrossTheTopHides() =>
-        // Down and to the right at a low angle the whole way: no turn.
-        Assert.False(Expands(IslandEdge.Top, (160, 101), (0, 30), (40, 40), (80, 50), (120, 70), (150, 92)));
-
-    [Fact]
-    public void ATinyDropAfterSlidingHides() =>
-        // Sideways, then only a few pixels down into it: not enough of a turn.
-        Assert.False(Expands(IslandEdge.Top, (162, 101), (40, 90), (120, 90), (160, 92)));
-
-    [Fact]
-    public void TheTurnHasToBeOutsideTheIsland() =>
-        // Sideways along just above it, then straight in: the drop is only the last few pixels.
-        Assert.False(Expands(IslandEdge.Top, (200, 104), (40, 96), (120, 97), (199, 98)));
+    public void TooShortAPathDoesNotOpen() =>
+        Assert.False(IslandGesture.IsSweepThenPull([(200, 10), (200, 50)], Docked));
 }

@@ -68,7 +68,6 @@ public sealed partial class IslandWindow
             _pointerTimer.Stop();
             _progressTimer.Stop();
             SetHovered(false);
-            _lastOutside = null;
             _trail.Clear();
             AnimateShown(false, () => { if (!_shown && !_closed) AppWindow.Hide(); });
         }

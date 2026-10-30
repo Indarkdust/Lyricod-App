@@ -27,28 +27,40 @@ public sealed partial class IslandWindow
             && p.X >= left - 160 * reach && p.X <= left + width + 160 * reach;
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(near || _hovered ? 33 : 250);
         double now = PlaybackModel.Now;
-        var path = _trail.ConvertAll(s => (s.X, s.Y));
+        // "By direction" hides the island however the pointer comes in; sweeping sideways and then
+        // pulling up or down over it (inside or carrying on out of it) opens the mini player instead.
+        bool pulled = false;
+        if (gesture)
+        {
+            var path = _trail.ConvertAll(s => (s.X, s.Y));
+            path.Add((p.X, p.Y));
+            pulled = IslandGesture.IsSweepThenPull(path, (left - 2, top - above, width + 4, height + 2 + above), _overlay.Scale);
+        }
         if (inside)
         {
             _lastInside = now;
-            if (!_hovered)
-            {
-                // Use the same two-pixel margin as the hover check.
-                var edge = IslandEntry.Edge(p.X, p.Y, left - 2, top - above, width + 4, height + 2 + above, _lastOutside);
-                // "By direction" hides however the pointer comes in, unless it moved sideways and then
-                // turned up or down into it, outside the island: that opens the mini player.
-                SetHovered(true, gesture && !IslandGesture.IsSidewaysThenIn(path, (p.X, p.Y), edge, _overlay.Scale));
-                _trail.Clear();
-            }
+            if (!_hovered) SetHovered(true, gesture && !pulled);
+            else if (pulled && _hoverAction == IslandHover.Hide) OpenFromHidden(now);
         }
         else
         {
-            _lastOutside = (p.X, p.Y);
-            // The last moment and a half of movement outside the island, for the gesture.
-            _trail.Add((p.X, p.Y, now));
-            _trail.RemoveAll(s => now - s.T > 1.5);
-            if (_hovered && now - _lastInside > 0.3) SetHovered(false); // a moment's grace when brushing past
+            // Pulled out past its edge: open it; the mini player grows out under the pointer.
+            if (pulled && _hovered && _hoverAction == IslandHover.Hide) OpenFromHidden(now + 0.3);
+            else if (_hovered && now - _lastInside > 0.3) SetHovered(false); // a moment's grace when brushing past
         }
+        // The last moment and a half of movement, for the gesture.
+        _trail.Add((p.X, p.Y, now));
+        _trail.RemoveAll(s => now - s.T > 1.5);
+    }
+
+    /// <summary>The island hid as the pointer came in, then the gesture asked for the mini player.</summary>
+    void OpenFromHidden(double insideUntil)
+    {
+        SetHovered(false);
+        SetHovered(true);
+        // Time for the player to grow out under a pointer that pulled past the edge.
+        _lastInside = insideUntil;
+        _trail.Clear();
     }
 
     void SetHovered(bool hovered, bool hideByDirection = false)

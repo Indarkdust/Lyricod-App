@@ -1,41 +1,42 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// The deliberate move that expands an island set to hide on hover, made outside it on the way in:
-/// the pointer travels sideways, then turns and moves up or down into the island through its top or
-/// bottom edge. Any other way in hides it, so brushing past never opens the mini player.
+/// The deliberate move that expands an island set to hide on hover, like pulling down a shade: the
+/// pointer sweeps sideways (across the island, along it, or on its way to it), then pulls up or down
+/// over the island. The pull may start inside and carry on out past its edge. Anything else hides
+/// the island, so brushing past never opens the mini player.
 /// </summary>
 public static class IslandGesture
 {
-    /// <summary>How far the sideways leg has to go, in view pixels.</summary>
-    public const double MinSideways = 30;
+    /// <summary>How far the sweep has to go sideways, in view pixels.</summary>
+    public const double MinSweep = 30;
 
-    /// <summary>How far the turn has to go up or down before coming in, in view pixels.</summary>
-    public const double MinVertical = 24;
+    /// <summary>How far the pull has to go up or down, in view pixels.</summary>
+    public const double MinPull = 30;
 
-    /// <summary>
-    /// Whether the pointer came in by moving sideways, then up or down into the island. The turn
-    /// can curve, as hands do: the last leg just has to end up more vertical than sideways.
-    /// </summary>
-    /// <param name="trail">Where the pointer was outside the island, oldest first, from about the last second and a half (screen pixels).</param>
-    /// <param name="entry">Where it is now, just inside the island.</param>
-    /// <param name="edge">The edge it came in through (see <see cref="IslandEntry.Edge"/>).</param>
+    /// <param name="path">Where the pointer has been lately, oldest first, ending where it is now (screen pixels).</param>
+    /// <param name="island">The island's bounds on screen.</param>
     /// <param name="scale">The display's scale: pixel distances grow with it.</param>
-    public static bool IsSidewaysThenIn(IReadOnlyList<(double X, double Y)> trail, (double X, double Y) entry, IslandEdge edge, double scale = 1)
+    public static bool IsSweepThenPull(IReadOnlyList<(double X, double Y)> path, (double Left, double Top, double Width, double Height) island, double scale = 1)
     {
-        if (edge == IslandEdge.Side || trail.Count < 2) return false;
-        double sideways = MinSideways * scale, vertical = MinVertical * scale, slack = 6 * scale;
-        for (int corner = trail.Count - 1; corner >= 1; corner--)
+        if (path.Count < 3) return false;
+        double sweep = MinSweep * scale, pull = MinPull * scale, slack = 6 * scale;
+        var end = path[^1];
+        for (int corner = path.Count - 2; corner >= 1; corner--)
         {
-            var c = trail[corner];
-            double inX = Math.Abs(entry.X - c.X), inY = entry.Y - c.Y;
-            // Down through the top edge, or up through the bottom one, far enough and mostly vertical.
-            if ((edge == IslandEdge.Top ? inY : -inY) < vertical || inX > Math.Max(slack, Math.Abs(inY))) continue;
-            // Before that, sideways far enough while staying roughly level.
+            var c = path[corner];
+            // The pull: far enough, and more up or down than sideways (hands curve)...
+            double pullX = Math.Abs(end.X - c.X), pullY = Math.Abs(end.Y - c.Y);
+            if (pullY < pull || pullX > Math.Max(slack, pullY)) continue;
+            // ...over the island: it passes through the island's height within its width.
+            bool over = Math.Max(c.X, end.X) >= island.Left && Math.Min(c.X, end.X) <= island.Left + island.Width
+                && Math.Max(c.Y, end.Y) >= island.Top && Math.Min(c.Y, end.Y) <= island.Top + island.Height;
+            if (!over) continue;
+            // Before it, the sweep: far enough sideways while staying roughly level.
             for (int start = corner - 1; start >= 0; start--)
             {
-                double acrossX = Math.Abs(c.X - trail[start].X), acrossY = Math.Abs(c.Y - trail[start].Y);
-                if (acrossX >= sideways && acrossY <= Math.Max(slack, acrossX * 0.5)) return true;
+                double sweepX = Math.Abs(c.X - path[start].X), sweepY = Math.Abs(c.Y - path[start].Y);
+                if (sweepX >= sweep && sweepY <= Math.Max(slack, sweepX * 0.5)) return true;
             }
         }
         return false;
