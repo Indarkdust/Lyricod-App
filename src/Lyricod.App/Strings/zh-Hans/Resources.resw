@@ -74,6 +74,9 @@
   <data name="LockIsland" xml:space="preserve"><value>锁定歌词岛位置</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛，锁定后恢复鼠标悬停操作。</value></data>
   <data name="ResetIslandPosition" xml:space="preserve"><value>恢复顶部居中</value></data>
+  <data name="FoldFloating" xml:space="preserve"><value>悬浮设置</value></data>
+  <data name="FoldGlass" xml:space="preserve"><value>Lyricod Glass 设置</value></data>
+  <data name="FoldText" xml:space="preserve"><value>文字与动画</value></data>
   <data name="IslandTheme" xml:space="preserve"><value>主题</value></data>
   <data name="IslandThemeDetail" xml:space="preserve"><value>Lyricod Glass 是半透明的，可以透过歌词岛看到后面的内容。</value></data>
   <data name="IslandThemeClassic" xml:space="preserve"><value>经典</value></data>

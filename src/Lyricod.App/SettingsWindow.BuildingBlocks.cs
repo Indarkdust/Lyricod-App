@@ -55,8 +55,41 @@ public sealed partial class SettingsWindow
             Grid.SetColumn(control, 1);
             grid.Children.Add(control);
         }
-        Page.Children.Add(new Border { Style = Style("Card"), Child = grid });
+        var card = new Border { Style = Style("Card"), Child = grid };
+        if (_folding != null)
+        {
+            // In a fold, plain rows: the fold is the card.
+            card.Background = new SolidColorBrush(Colors.Transparent);
+            card.BorderThickness = new Thickness(0);
+        }
+        (_folding ?? Page).Children.Add(card);
         return line;
+    }
+
+    /// <summary>The fold being filled, while <see cref="Fold"/> runs.</summary>
+    Panel? _folding;
+
+    /// <summary>
+    /// Settings folded under one line, out of the way until it's opened. The cards
+    /// <paramref name="fill"/> adds go inside. Returns the fold, for a page to hide when it doesn't apply.
+    /// </summary>
+    Expander Fold(string title, string? detail, Action fill)
+    {
+        var header = new StackPanel { Spacing = 1, Padding = new Thickness(0, 10, 0, 10) };
+        header.Children.Add(new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap });
+        if (detail != null) header.Children.Add(new TextBlock { Text = detail, Style = Style("Detail") });
+        var inside = new StackPanel();
+        var fold = new Expander
+        {
+            Header = header, Content = inside, Margin = new Thickness(0, 0, 0, 4),
+            HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
+        };
+        Page.Children.Add(fold);
+        var outer = _folding;
+        _folding = inside;
+        try { fill(); }
+        finally { _folding = outer; }
+        return fold;
     }
 
     /// <summary>Several rows in one card (About).</summary>

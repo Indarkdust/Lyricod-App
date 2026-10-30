@@ -74,6 +74,9 @@
   <data name="LockIsland" xml:space="preserve"><value>Lock island position</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>Unlock to move the island. Lock it to use hover actions again.</value></data>
   <data name="ResetIslandPosition" xml:space="preserve"><value>Reset to top center</value></data>
+  <data name="FoldFloating" xml:space="preserve"><value>Floating options</value></data>
+  <data name="FoldGlass" xml:space="preserve"><value>Lyricod Glass options</value></data>
+  <data name="FoldText" xml:space="preserve"><value>Text and animation</value></data>
   <data name="IslandTheme" xml:space="preserve"><value>Theme</value></data>
   <data name="IslandThemeDetail" xml:space="preserve"><value>Lyricod Glass is see-through, so what's behind the island shows through it.</value></data>
   <data name="IslandThemeClassic" xml:space="preserve"><value>Classic</value></data>

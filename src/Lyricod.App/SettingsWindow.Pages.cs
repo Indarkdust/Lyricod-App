@@ -68,15 +68,17 @@ public sealed partial class SettingsWindow
         Card(L.Get("ShowIsland"), L.Get("ShowIslandDetail"), Toggle(nameof(Settings.ShowIsland), () => _settings.ShowIsland, v => _settings.ShowIsland = v));
         Card(L.Get("IslandStyle"), L.Get("IslandStyleDetail"), Choice(nameof(Settings.IslandStyle), () => _settings.IslandStyle, v => _settings.IslandStyle = v,
             (IslandStyle.Default, L.Get("IslandStyleDefault")), (IslandStyle.Floating, L.Get("IslandStyleFloating"))));
-        // Only a floating island can be moved.
-        var lockIsland = Toggle(nameof(Settings.IslandLocked), () => _settings.IslandLocked, v => _settings.IslandLocked = v);
-        var resetIsland = new Button { Content = L.Get("ResetIslandPosition") };
-        resetIsland.Click += (_, _) => { _settings.IslandX = null; _settings.IslandY = null; };
-        void SyncFloating() => lockIsland.IsEnabled = resetIsland.IsEnabled = _settings.IslandStyle == IslandStyle.Floating;
+        // Only a floating island can be moved, so only it has these.
+        var floating = Fold(L.Get("FoldFloating"), null, () =>
+        {
+            var resetIsland = new Button { Content = L.Get("ResetIslandPosition") };
+            resetIsland.Click += (_, _) => { _settings.IslandX = null; _settings.IslandY = null; };
+            Card(L.Get("LockIsland"), L.Get("LockIslandDetail"), Toggle(nameof(Settings.IslandLocked), () => _settings.IslandLocked, v => _settings.IslandLocked = v));
+            Card(L.Get("PositionLabel"), null, resetIsland);
+        });
+        void SyncFloating() => floating.Visibility = _settings.IslandStyle == IslandStyle.Floating ? Visibility.Visible : Visibility.Collapsed;
         Watch(nameof(Settings.IslandStyle), SyncFloating);
         SyncFloating();
-        Card(L.Get("LockIsland"), L.Get("LockIslandDetail"), lockIsland);
-        Card(L.Get("PositionLabel"), null, resetIsland);
         var hoverDetail = Card(L.Get("OnHover"), L.Get("HoverByDirectionDetail"), Choice(nameof(Settings.IslandHover), () => _settings.IslandHover, v => _settings.IslandHover = v,
             (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing")),
             (IslandHover.ByDirection, L.Get("HoverByDirection"))))!;
@@ -101,39 +103,39 @@ public sealed partial class SettingsWindow
         Heading(L.Get("StyleHeading"));
         Card(L.Get("IslandTheme"), L.Get("IslandThemeDetail"), Choice(nameof(Settings.IslandTheme), () => _settings.IslandTheme, v => _settings.IslandTheme = v,
             (IslandTheme.Classic, L.Get("IslandThemeClassic")), (IslandTheme.Glass, L.Get("IslandThemeGlass"))));
-        // Lyricod Glass's own settings, usable while it's the theme.
-        var transparency = new ContentControl
-        {
-            Content = Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90),
-        };
-        var tint = Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
-            (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum")));
-        var shine = Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v);
-        var blur = Toggle(nameof(Settings.GlassBlur), () => _settings.GlassBlur, v => _settings.GlassBlur = v);
-        void SyncGlass()
-        {
-            transparency.IsEnabled = tint.IsEnabled = shine.IsEnabled = _settings.IslandTheme == IslandTheme.Glass;
-            // Only where Windows draws acrylic.
-            blur.IsEnabled = _settings.IslandTheme == IslandTheme.Glass && FrostedBackdrop.IsSupported;
-        }
+        // Lyricod Glass's own settings, there while it's the theme.
+        var glass = Fold(L.Get("FoldGlass"), null, GlassSettings);
+        void SyncGlass() => glass.Visibility = _settings.IslandTheme == IslandTheme.Glass ? Visibility.Visible : Visibility.Collapsed;
         Watch(nameof(Settings.IslandTheme), SyncGlass);
         SyncGlass();
-        Card(L.Get("GlassTransparency"), null, transparency);
-        Card(L.Get("GlassTint"), null, tint);
-        Card(L.Get("GlassShine"), null, shine);
-        Card(L.Get("GlassBlur"), L.Get("GlassBlurDetail"), blur);
         Card(L.Get("IslandSize"), null, Choice(nameof(Settings.IslandSize), () => _settings.IslandSize, v => _settings.IslandSize = v,
             (IslandSize.Small, L.Get("SizeSmall")), (IslandSize.Medium, L.Get("SizeMedium")),
             (IslandSize.Large, L.Get("SizeLarge")), (IslandSize.ExtraLarge, L.Get("SizeExtraLarge"))));
-        Card(L.Get("IslandMaxWidth"), L.Get("IslandMaxWidthDetail"), Choice(nameof(Settings.IslandMaxTextWidth),
-            () => _settings.IslandMaxTextWidth, v => _settings.IslandMaxTextWidth = v,
-            (320, L.Get("IslandWidthNarrow")), (460, L.Get("IslandWidthStandard")), (600, L.Get("IslandWidthWide"))));
-        Card(L.Get("FontWeight"), null, Choice(nameof(Settings.IslandWeight), () => _settings.IslandWeight, v => _settings.IslandWeight = v,
-            (IslandWeight.Regular, L.Get("WeightRegular")), (IslandWeight.Medium, L.Get("WeightMedium")), (IslandWeight.Semibold, L.Get("WeightSemibold")),
-            (IslandWeight.Bold, L.Get("WeightBold")), (IslandWeight.Heavy, L.Get("WeightHeavy"))));
-        Card(L.Get("SungLyrics"), null, Effect(nameof(Settings.IslandEffect), () => _settings.IslandEffect, v => _settings.IslandEffect = v));
-        Card(L.Get("NextLine"), null, Choice(nameof(Settings.IslandTransition), () => _settings.IslandTransition, v => _settings.IslandTransition = v,
-            (LineTransition.Instant, L.Get("TransitionInstant")), (LineTransition.Slide, L.Get("TransitionSlide")), (LineTransition.Fade, L.Get("TransitionFade"))));
+        Fold(L.Get("FoldText"), null, () =>
+        {
+            Card(L.Get("IslandMaxWidth"), L.Get("IslandMaxWidthDetail"), Choice(nameof(Settings.IslandMaxTextWidth),
+                () => _settings.IslandMaxTextWidth, v => _settings.IslandMaxTextWidth = v,
+                (320, L.Get("IslandWidthNarrow")), (460, L.Get("IslandWidthStandard")), (600, L.Get("IslandWidthWide"))));
+            Card(L.Get("FontWeight"), null, Choice(nameof(Settings.IslandWeight), () => _settings.IslandWeight, v => _settings.IslandWeight = v,
+                (IslandWeight.Regular, L.Get("WeightRegular")), (IslandWeight.Medium, L.Get("WeightMedium")), (IslandWeight.Semibold, L.Get("WeightSemibold")),
+                (IslandWeight.Bold, L.Get("WeightBold")), (IslandWeight.Heavy, L.Get("WeightHeavy"))));
+            Card(L.Get("SungLyrics"), null, Effect(nameof(Settings.IslandEffect), () => _settings.IslandEffect, v => _settings.IslandEffect = v));
+            Card(L.Get("NextLine"), null, Choice(nameof(Settings.IslandTransition), () => _settings.IslandTransition, v => _settings.IslandTransition = v,
+                (LineTransition.Instant, L.Get("TransitionInstant")), (LineTransition.Slide, L.Get("TransitionSlide")), (LineTransition.Fade, L.Get("TransitionFade"))));
+        });
+    }
+
+    /// <summary>Lyricod Glass's settings, in their fold on the island page.</summary>
+    void GlassSettings()
+    {
+        Card(L.Get("GlassTransparency"), null,
+            Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90));
+        Card(L.Get("GlassTint"), null, Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
+            (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum"))));
+        Card(L.Get("GlassShine"), null, Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v));
+        var blur = Toggle(nameof(Settings.GlassBlur), () => _settings.GlassBlur, v => _settings.GlassBlur = v);
+        blur.IsEnabled = FrostedBackdrop.IsSupported; // only where Windows draws acrylic
+        Card(L.Get("GlassBlur"), L.Get("GlassBlurDetail"), blur);
     }
 
     ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set) => Choice(property, get, set,
