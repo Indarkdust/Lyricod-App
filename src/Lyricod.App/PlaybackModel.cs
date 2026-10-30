@@ -67,6 +67,7 @@ public sealed partial class PlaybackModel
     readonly Playhead _playhead = new();
     readonly DispatcherQueueTimer _lineTimer;
     readonly DispatcherQueueTimer _safetyPoll;
+    readonly DispatcherQueueTimer _artworkRetry;
     /// <summary>Everything the source returned, with pronunciation worked out.</summary>
     Lyrics? _allLyrics;
     CancellationTokenSource? _loading;
@@ -100,6 +101,12 @@ public sealed partial class PlaybackModel
             try { await Refresh(); }
             catch (Exception e) { LastError = "refresh: " + e.Message; }
         };
+        // Some players hand over the cover long after the song starts, when the first tries are spent:
+        // ask once more a while in, if there's still none.
+        _artworkRetry = ui.CreateTimer();
+        _artworkRetry.Interval = TimeSpan.FromSeconds(20);
+        _artworkRetry.IsRepeating = false;
+        _artworkRetry.Tick += (_, _) => { if (Artwork == null && NowPlaying is { } n) LoadArtwork(n.TrackId); };
         _media.Changed += OnMediaChanged;
         _media.DetailsChanged += OnMediaDetailsChanged;
         _settings.PropertyChanged += OnSettingChanged;
@@ -114,7 +121,7 @@ public sealed partial class PlaybackModel
     }
 
     /// <summary>
-    /// For quitting: stops following the player and both timers, and raises <see cref="Changed"/>
+    /// For quitting: stops following the player and its timers, and raises <see cref="Changed"/>
     /// no more, so nothing runs against windows that have closed.
     /// </summary>
     public void Stop()
@@ -123,6 +130,7 @@ public sealed partial class PlaybackModel
         Changed = null;
         _lineTimer.Stop();
         _safetyPoll.Stop();
+        _artworkRetry.Stop();
         _loading?.Cancel();
         _settings.PropertyChanged -= OnSettingChanged;
         _media.Changed -= OnMediaChanged;
@@ -181,6 +189,7 @@ public sealed partial class PlaybackModel
                 change = Change.Track | Change.Lyrics | Change.Line | Change.Clock | Change.Artwork;
             }
             _safetyPoll.Stop();
+            _artworkRetry.Stop();
             Finish(change);
             return;
         }
@@ -214,6 +223,8 @@ public sealed partial class PlaybackModel
             ApplyOffset();
             LoadLyrics(Track, ignoreCache: false);
             Artwork = null; ArtworkColor = null; _artworkTries = 0;
+            _artworkRetry.Stop();
+            _artworkRetry.Start();
             _lengthCorrected = false;
             change |= Change.Artwork;
         }
