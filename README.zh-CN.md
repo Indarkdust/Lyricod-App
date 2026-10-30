@@ -71,15 +71,15 @@ Lyricod 每天检查一次是否有新版本，可在「设置 > 关于」中关
 
 如需更准确的同步，可以使用 **InfLink-rs** 插件。它需要通过 **BetterNCM** 加载。这两个项目由第三方开发者维护，会修改网易云音乐的运行环境，请自行决定是否安装。
 
-最简单的方法是在 Lyricod 中设置：「设置 > 通用 > 网易云音乐同步」。Lyricod 会下载一个[小工具](https://github.com/darkdust-c/Lyricod-CM-Helper)来安装这两个插件，并在安装前校验所有下载的文件。目前支持 64 位网易云音乐 3.x。如需手动安装：
+最方便的方法是直接打开 Lyricod 的「设置 > 通用 > 网易云音乐歌词同步」。Lyricod 会下载一个[辅助工具](https://github.com/darkdust-c/Lyricod-CM-Helper)，安装 BetterNCM 和 InfLink-rs，并在安装前校验下载的文件。目前仅支持 64 位网易云音乐 3.x。如果想手动安装，也可以按照下面的步骤操作：
 
 1. 退出网易云音乐，从 [BetterNCM Installer 发布页](https://github.com/std-microblock/BetterNCM-Installer/releases/latest)下载并运行 `betterncm_installer.exe`。
 2. 打开网易云音乐，在 BetterNCM 插件商店中安装 **InfLink-rs**；也可以从 [InfLink-rs 发布页](https://github.com/apoint123/inflink-rs/releases/latest)下载 `InfLink-rs.plugin`，放进 `C:\betterncm\plugins`。
-3. 重启网易云音乐。InfLink-rs 默认开启 **SMTC**；如果 Lyricod 没有识别到，可以在它的设置中检查。
+3. 重启网易云音乐。InfLink-rs 默认会开启 **SMTC**。如果 Lyricod 仍无法获取播放进度，请检查 InfLink-rs 的设置。
 
 设置完成后，Lyricod 会自动识别播放器提供的进度信息。可以在「设置 > 关于 > 诊断信息」中查看。
 
-InfLink-rs 已在网易云音乐 3.1.20 至 3.1.41 和 2.10.13 版本上测试过。播放器更新后如有问题，可以先检查插件更新；需要移除 BetterNCM 时，可以删除网易云音乐安装目录中的 `msimg32.dll`；如果是通过 Lyricod 安装的，也可以在设置中点击「移除」。不要同时安装旧版 InfLink 和 InfLink-rs。
+InfLink-rs 已在网易云音乐 3.1.20 至 3.1.41 和 2.10.13 版本上测试过。播放器更新后如有问题，可以先检查插件更新；需要移除 BetterNCM 时，可以删除网易云音乐安装目录中的 `msimg32.dll`；如果是通过 Lyricod 安装的，也可以在「设置 > 通用 > 网易云音乐歌词同步」中点击「移除」。不要同时安装旧版 InfLink 和 InfLink-rs。
 
 ## 自定义
 
