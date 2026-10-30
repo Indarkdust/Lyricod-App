@@ -67,13 +67,13 @@
   <data name="LayoutNone" xml:space="preserve"><value>不显示（单行）</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>显示歌词岛</value></data>
   <data name="ShowIslandDetail" xml:space="preserve"><value>在屏幕顶部显示当前歌词。收起时不会挡住鼠标操作。</value></data>
-  <data name="IslandStyle" xml:space="preserve"><value>歌词岛样式</value></data>
-  <data name="IslandStyleDetail" xml:space="preserve"><value>选择「悬浮」后，可以把歌词岛移动到屏幕上的任意位置。</value></data>
+  <data name="IslandStyle" xml:space="preserve"><value>歌词岛模式</value></data>
+  <data name="IslandStyleDetail" xml:space="preserve"><value>选择「悬浮」后，解锁即可拖动歌词岛。</value></data>
   <data name="IslandStyleDefault" xml:space="preserve"><value>默认</value></data>
   <data name="IslandStyleFloating" xml:space="preserve"><value>悬浮</value></data>
   <data name="LockIsland" xml:space="preserve"><value>锁定歌词岛位置</value></data>
-  <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛；锁定后恢复鼠标移入时的操作。</value></data>
-  <data name="ResetIslandPosition" xml:space="preserve"><value>恢复到顶部居中</value></data>
+  <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛，锁定后恢复鼠标悬停操作。</value></data>
+  <data name="ResetIslandPosition" xml:space="preserve"><value>恢复顶部居中</value></data>
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>保持原样</value></data>
