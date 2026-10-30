@@ -64,6 +64,7 @@
   <data name="NeteaseSyncStatus" xml:space="preserve"><value>Status</value></data>
   <data name="NeteaseSyncInstalled" xml:space="preserve"><value>Installed</value></data>
   <data name="NeteaseSyncNotInstalled" xml:space="preserve"><value>Not installed</value></data>
+  <data name="NeteaseSyncWorking" xml:space="preserve"><value>Working: NetEase Cloud Music is sharing its playback position.</value></data>
   <data name="NeteaseSyncInstall" xml:space="preserve"><value>Install</value></data>
   <data name="NeteaseSyncUpdate" xml:space="preserve"><value>Update</value></data>
   <data name="NeteaseSyncRemove" xml:space="preserve"><value>Remove</value></data>

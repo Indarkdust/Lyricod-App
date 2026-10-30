@@ -73,12 +73,20 @@ public sealed partial class SettingsWindow
         if (_openNeteaseSync) OpenNeteaseFold(fold);
         if (status is not { } line) return;
 
-        void Show(string? message = null)
+        // The last setup's outcome, shown until NetEase Cloud Music shows sync working.
+        string? result = null;
+
+        void Show()
         {
+            // NetEase Cloud Music playing and saying where it is: sync works, however it was set up.
+            bool working = _model.NowPlaying is { HasTimeline: true } now && MusicPlayers.IsNetease(now.AppId);
             install.Content = L.Get(netease.SyncInstalled ? "NeteaseSyncUpdate" : "NeteaseSyncInstall");
+            install.Visibility = working ? Visibility.Collapsed : Visibility.Visible;
             remove.Visibility = netease.SyncInstalled ? Visibility.Visible : Visibility.Collapsed;
             install.IsEnabled = remove.IsEnabled = !_neteaseBusy;
-            line.Text = message ?? L.Get(netease.SyncInstalled ? "NeteaseSyncInstalled" : "NeteaseSyncNotInstalled");
+            if (_neteaseBusy) return; // the progress shows meanwhile
+            line.Text = working ? L.Get("NeteaseSyncWorking")
+                : result ?? L.Get(netease.SyncInstalled ? "NeteaseSyncInstalled" : "NeteaseSyncNotInstalled");
         }
 
         async void Run(bool removing)
@@ -98,19 +106,21 @@ public sealed partial class SettingsWindow
             try
             {
                 netease = NeteaseSetup.Find() ?? netease;
-                Show(outcome.Result switch
+                result = outcome.Result switch
                 {
                     NeteaseResult.Done => L.Get(removing ? "NeteaseSyncRemoved" : "NeteaseSyncDone"),
                     NeteaseResult.Cancelled => L.Get("NeteaseSyncCancelled"),
                     NeteaseResult.CouldntDownload => L.Get("NeteaseSyncCouldntDownload"),
                     _ => L.Format("NeteaseSyncFailed", outcome.Error ?? ""),
-                });
+                };
+                Show();
             }
             catch (Exception) { /* the window closed meanwhile */ }
         }
 
         install.Click += (_, _) => Run(removing: false);
         remove.Click += (_, _) => Run(removing: true);
+        _songWatchers.Add(Show); // follows NetEase Cloud Music starting or stopping
         Show();
     }
 }

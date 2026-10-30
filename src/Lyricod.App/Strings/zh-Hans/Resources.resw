@@ -64,6 +64,7 @@
   <data name="NeteaseSyncStatus" xml:space="preserve"><value>状态</value></data>
   <data name="NeteaseSyncInstalled" xml:space="preserve"><value>已安装</value></data>
   <data name="NeteaseSyncNotInstalled" xml:space="preserve"><value>未安装</value></data>
+  <data name="NeteaseSyncWorking" xml:space="preserve"><value>已生效：网易云音乐正在提供播放进度。</value></data>
   <data name="NeteaseSyncInstall" xml:space="preserve"><value>安装</value></data>
   <data name="NeteaseSyncUpdate" xml:space="preserve"><value>更新</value></data>
   <data name="NeteaseSyncRemove" xml:space="preserve"><value>移除</value></data>
