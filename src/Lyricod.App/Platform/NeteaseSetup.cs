@@ -70,12 +70,13 @@ public static class NeteaseSetup
     }
 
     /// <summary>
-    /// BetterNCM's data folder: BETTERNCM_PROFILE, as NetEase Cloud Music would see it (Lyricod's own
-    /// environment, then the user's and the machine's settings, which may be newer), else C:\betterncm.
+    /// BetterNCM's data folder, found as BetterNCM finds it: the BETTERNCM_PROFILE environment variable
+    /// (which BetterNCM's installer sets when you change the folder), else C:\betterncm. Read from
+    /// Windows' saved settings first, the user's over the machine's as NetEase Cloud Music sees them:
+    /// they're current even if the folder changed after Lyricod started, unlike Lyricod's own copy.
     /// </summary>
     public static string DataFolder()
     {
-        if (Environment.GetEnvironmentVariable("BETTERNCM_PROFILE") is { Length: > 0 } inherited) return inherited;
         try
         {
             if (Registry.CurrentUser.OpenSubKey("Environment") is { } user)
@@ -83,8 +84,8 @@ public static class NeteaseSetup
             using var machine = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Environment");
             if (machine?.GetValue("BETTERNCM_PROFILE") is string shared && shared.Length > 0) return Environment.ExpandEnvironmentVariables(shared);
         }
-        catch (Exception) { /* the default, then */ }
-        return @"C:\betterncm";
+        catch (Exception) { /* Lyricod's own copy, then */ }
+        return Environment.GetEnvironmentVariable("BETTERNCM_PROFILE") is { Length: > 0 } inherited ? inherited : @"C:\betterncm";
     }
 
     /// <summary>Installs (or removes) BetterNCM and InfLink-rs through the helper. Returns the result and, when it failed, why.</summary>
