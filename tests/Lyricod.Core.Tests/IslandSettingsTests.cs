@@ -78,7 +78,8 @@ public class IslandSettingsTests
         Assert.Equal(40, settings.GlassTransparency);
         Assert.Equal(GlassTint.Neutral, settings.GlassTint);
         Assert.True(settings.GlassShine);
-        Assert.Equal(GlassEffect.Clear, settings.GlassEffect); // frosted and liquid are experimental
+        Assert.Equal(GlassEffect.Liquid, settings.GlassEffect); // what makes it Lyricod Glass
+        Assert.Equal(GlassEffect.Liquid, JsonSerializer.Deserialize<Settings>("{\"GlassEffect\":9}", Json)!.GlassEffect);
         Assert.Equal(30, settings.LiquidBlur);
         Assert.Equal(50, settings.LiquidRefraction);
         settings.GlassTransparency = 0;

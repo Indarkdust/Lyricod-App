@@ -73,7 +73,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     int _glassTransparency = 40;
     GlassTint _glassTint = GlassTint.Neutral;
     bool _glassShine = true;
-    GlassEffect _glassEffect = GlassEffect.Clear;
+    GlassEffect _glassEffect = GlassEffect.Liquid;
     int _liquidBlur = 30, _liquidRefraction = 50;
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
@@ -145,7 +145,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
     /// <summary>Lyricod Glass's liquid effect: light along the glass's edge, and a shadow under a floating island.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
-    public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Clear); }
+    /// <summary>Lyricod Glass's effect: liquid unless chosen otherwise (it stays clear where Windows can't run it).</summary>
+    public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Liquid); }
     /// <summary>Liquid glass: how much what's behind is blurred, in percent.</summary>
     public int LiquidBlur { get => _liquidBlur; set => Set(ref _liquidBlur, Math.Clamp(value, 0, 100)); }
     /// <summary>Liquid glass: how strongly its edges bend what's behind, in percent.</summary>
