@@ -11,6 +11,7 @@ Lyricod for Windows is licensed under the Apache License 2.0 (see `LICENSE`). It
 - **Win2D** by Microsoft (drawing Lyricod Glass's liquid effect): the downloads include Microsoft's pre-built Win2D package (`Microsoft.Graphics.Canvas.dll`, `Microsoft.Graphics.Canvas.Interop.dll`), redistributed under Microsoft's licence terms for it. Win2D's source is available under the MIT License, © Microsoft Corporation (`licenses/Win2D-LICENSE.txt`).
 - **Lyricify Lyrics Helper** by WXRIW: `src/Lyricod.Core/Lyrics/QrcDecrypter.cs` is ported to Lyricod from its QRC decrypter, with changes. Apache License 2.0, © 2023 WXRIW (`licenses/Lyricify-Lyrics-Helper-LICENSE.txt`).
 - **Lyricify's Dynamic Lyrics Island**, a design by WXRIW licensed under CC BY-SA 4.0, inspired Lyricod Island, which is designed and written independently.
+- **BetterNCM** and **InfLink-rs** are not included. If you set up NetEase Cloud Music sync in Settings › General, Lyricod downloads Lyricod CM Helper ([darkdust-c/Lyricod-CM-Helper](https://github.com/darkdust-c/Lyricod-CM-Helper), Apache License 2.0), which installs them into NetEase Cloud Music from their own releases. Both are licensed under the GNU GPL v3.
 - **MiSans** by Xiaomi is not included. If you choose it in Settings › Lyrics, Lyricod downloads it from Xiaomi ([hyperos.mi.com/font](https://hyperos.mi.com/font/)) to your PC, where it's used under Xiaomi's MiSans font licence, saved next to it.
 - The installers are built with **Inno Setup** by Jordan Russell and Martijn Laan.
 
