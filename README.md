@@ -14,7 +14,7 @@ It works with Spotify, QQ Music, NetEase Cloud Music, Apple Music, and supported
 
 The island sits at the top of the screen by default and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line. Lyric colours can follow the album artwork or use a colour you choose.
 
-Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. You can also combine both actions: the island hides when the pointer moves onto it. To expand the mini player, move across the island horizontally, then up or down. The island can fade out after playback pauses.
+Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. You can also combine both actions: the island hides when the pointer moves onto it. To expand the mini player, move across the island horizontally, then down (or up, for a floating island). The island can fade out after playback pauses.
 
 To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides and can be dragged anywhere once unlocked. Near screen edges, it expands inward to keep the lyrics and mini player on screen.
 
