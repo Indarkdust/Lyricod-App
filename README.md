@@ -2,79 +2,104 @@
 
 English | [简体中文](README.zh-CN.md)
 
-Synced, word-by-word lyrics for Windows: in a pill at the top of your screen, floating over your desktop, or in their own window. A native app for x64 and ARM64 PCs, in English and 简体中文.
+Lyricod displays synced lyrics on Windows, with word-by-word highlighting, desktop lyrics, a lyric island at the top of the screen, and a separate lyrics window.
 
-## What it shows
+It works with Spotify, QQ Music, NetEase Cloud Music, Apple Music, and supported browser music players. Translations, pronunciation, timing, and appearance can be customized.
 
-- **Lyricod Island**: a black pill at the top of the screen with the cover, the line being sung sweeping word by word in the album's colour, and six bars that move with the music. It fits each line, can show the translation, pronunciation or next line underneath, and splits long lines into timed pieces. Hover to expand it into a mini player, to hide it so what's underneath is usable, or to do nothing; or let the direction decide: coming in from below hides it, from the sides expands it. It goes away a moment after the music stops and comes back when it plays.
-- **Desktop lyrics**: a click-through strip over every app, one or two lines. Unlock it in Settings to move it.
-- **Lyrics window**: the whole song scrolling over the album art. Click a line to jump to it. In a wide window or full screen (F11) the cover and controls sit beside the lyrics, and the text grows with the window; the controls fade while the pointer rests.
-- **Tray panel**: click Lyricod's icon in the notification area for the song with its controls, switches for the island and desktop lyrics, and this song's lyrics and timing.
-- **Pronunciation**: romaji, romanised Korean or pinyin under each line. Japanese uses the lyrics source's own romaji, or Windows' Japanese reader when the Japanese input method is installed.
-- **Global shortcuts**: play/pause, skip, show or hide each view, and nudge the current song's timing, from any app. None are set until you record them in Settings › Shortcuts.
+[Download Lyricod](https://github.com/Indarkdust/Lyricod-App/releases)
 
-## Players
+## Ways to view lyrics
 
-Lyricod follows any player that shows up in Windows' media controls (the media panel above the volume slider): Spotify, QQ Music, NetEase Cloud Music, Apple Music, browsers and more. It follows the one that's playing, or the one you choose in Settings › General. A video in a browser is left alone unless it's clearly a song, such as an official music video.
+### Lyricod Island
 
-Most players tell Windows where they are in the song, so the lyrics stay in step even when you skip around. For one that doesn't, Lyricod times the song from when it starts. NetEase Cloud Music is one of those: see below.
+The island sits at the top of your screen and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line. Lyric colours can follow the album artwork or use a colour you choose.
 
-## NetEase Cloud Music
+Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. There is also an option to choose the action based on which direction the pointer enters from. The island can fade out after playback pauses.
 
-NetEase Cloud Music tells Windows what's playing but not where it is in the song, so Lyricod times the song itself, and the lyrics can drift when you skip around or pause; the tray panel then shows a link to this section. The free **InfLink-rs** plugin makes NetEase share its exact position, and its full-size cover too. It runs inside **BetterNCM**, a plugin loader for NetEase Cloud Music. Both are made by other people, not by Lyricod, and they change how NetEase Cloud Music runs, so install them only if you're happy to.
+### Desktop lyrics
 
-1. Quit NetEase Cloud Music. Download `betterncm_installer.exe` from [BetterNCM Installer's releases](https://github.com/std-microblock/BetterNCM-Installer/releases/latest), run it and install BetterNCM.
-2. Open NetEase Cloud Music, find **InfLink-rs** in BetterNCM's plugin store and install it. Or download `InfLink-rs.plugin` from [its releases](https://github.com/apoint123/inflink-rs/releases/latest) and copy it into `C:\betterncm\plugins`.
-3. Restart NetEase Cloud Music and turn on InfLink-rs's SMTC option in its settings.
+Display one or two lines above other windows. When locked, clicks pass through the lyrics. Unlock them to drag the lyrics to a different position.
 
-Lyricod picks it up by itself: the tray panel's link goes away, and Settings › About › Diagnostics shows that the player reports its position. InfLink-rs is tested with NetEase Cloud Music 3.1.20 to 3.1.41 (and 2.10.13). If NetEase misbehaves after one of its updates, update the plugin, or remove BetterNCM by deleting `msimg32.dll` from NetEase Cloud Music's folder. Don't install the older InfLink alongside InfLink-rs.
+### Lyrics window
 
-## Lyrics
+View the whole song in a separate window, with optional album artwork in the background. Lyrics scroll with playback, and clicking a line seeks to that point in the song. Press F11 for full screen.
 
-From **NetEase Cloud Music**, **QQ Music** (including its word-by-word lyrics and both sources' translations and romaji) and **[LRCLIB](https://lrclib.net)**. Results are saved on your PC.
+Lyricod also runs in the system tray. Open its tray panel to control playback, toggle lyric views, choose lyrics, or adjust the current song's timing. Global shortcuts are available for common actions.
 
-When a song gets the wrong lyrics, open **Choose Lyrics** (tray panel, lyrics window or Settings): it searches all three sources and lets you preview and pick a result. Lyricod remembers your choice and any timing adjustment for that song, even after you clear the saved lyrics.
+## Supported players
 
-## Settings
+Lyricod reads playback information through Windows media controls. If a player appears there, Lyricod can usually follow it. This includes Spotify, QQ Music, NetEase Cloud Music, Apple Music, and some browser music players.
 
-- **General**: open at login, animation frame rate, language, which player to follow
-- **Desktop lyrics**: show and lock the strip, its position, text size, sung colour, what goes under the line
-- **Lyricod Island**: show it, what hover does, album-colour lyrics or a colour of your own, hide when paused, bars that follow the music, what goes under the line; style (size, maximum width, font weight, how sung lyrics and the next line appear)
-- **Lyrics window**: background, text size, translations, pronunciation, centred lines, blur, sung-lyrics effect, auto-hiding controls
-- **Lyrics**: the lyrics font, whether to look up lyrics for browsers and other apps, timing for all songs and the current one, pronunciation and its languages, songwriter credits, the current song's source, saved lyrics
-- **Shortcuts**: global keys for playback, the three views and timing
-- **About**: version, updates, diagnostics to copy into a problem report, credits
+When multiple players are open, Lyricod follows the one currently playing by default. You can also select a player in Settings > General.
+
+Some players do not report an accurate playback position. In that case, Lyricod keeps time itself, which may cause lyrics to drift after pausing or seeking. See the NetEase Cloud Music section below for details.
+
+For videos in browsers, Lyricod only displays lyrics when it can match the content to a song. You can disable lyric searches for browsers and other apps in Settings > Lyrics.
+
+## Lyrics sources
+
+Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net). Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. Lyrics are cached on your PC for later playback.
+
+If Lyricod finds the wrong song, open Choose Lyrics to compare search results and preview the lyrics before selecting one. Your choice and any timing adjustment are saved for that song, even if you clear the lyrics cache.
+
+You can adjust lyric timing from the tray panel or Settings > Lyrics.
+
+## Download and install
+
+Download the version for your PC from [Releases](https://github.com/Indarkdust/Lyricod-App/releases):
+
+- **x64**: for most Windows PCs with Intel or AMD processors.
+- **ARM64**: for Windows PCs with Arm processors.
+- **Installer (setup.exe)**: installs for the current user without administrator access.
+- **Portable (zip)**: extract the archive and run `Lyricod.exe`. Keep the `app` folder next to it.
+
+Lyricod runs in the Windows system tray after launch. If no window appears, look for its icon in the notification area.
+
+The app is currently unsigned, so Windows may display a warning the first time it runs. Check where you downloaded the file before deciding whether to proceed.
+
+Lyricod checks for updates once a day. You can disable this in Settings > About. Both installed and portable versions support in-app updates, or you can download a new version manually.
+
+Settings and cached lyrics are stored in `%LOCALAPPDATA%\Lyricod` and are kept during updates. Uninstalling the app does not remove this folder; delete it manually if you want to remove the data as well.
+
+## NetEase Cloud Music lyrics out of sync?
+
+NetEase Cloud Music generally reports which song is playing but does not provide Windows with its playback position. Lyricod therefore tracks time itself, so lyrics may drift after you pause or seek.
+
+For more accurate synchronization, you can use **InfLink-rs**, a third-party plugin that runs through **BetterNCM**. Both are maintained by other developers and change how NetEase Cloud Music runs. Install them only if you are comfortable with that.
+
+1. Quit NetEase Cloud Music. Download and run `betterncm_installer.exe` from [BetterNCM Installer releases](https://github.com/std-microblock/BetterNCM-Installer/releases/latest).
+2. Open NetEase Cloud Music and install **InfLink-rs** from the BetterNCM plugin store. Alternatively, download `InfLink-rs.plugin` from [InfLink-rs releases](https://github.com/apoint123/inflink-rs/releases/latest) and copy it to `C:\betterncm\plugins`.
+3. Restart NetEase Cloud Music and enable **SMTC** in the InfLink-rs settings.
+
+Lyricod will detect the additional playback information automatically. You can check this in Settings > About > Diagnostics.
+
+InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.41 and 2.10.13. If a player update causes problems, check for an updated plugin. BetterNCM can be removed by deleting `msimg32.dll` from the NetEase Cloud Music installation folder. Do not install the older InfLink alongside InfLink-rs.
+
+## Customization
+
+You can change lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island animations and sizing, hover behaviour, and global shortcuts. The island, desktop lyrics, and lyrics window have separate display settings.
+
+Lyrics use Microsoft YaHei by default. You can choose another installed font or download **MiSans** by Xiaomi from Settings. MiSans is not bundled with Lyricod and is subject to Xiaomi's licence.
 
 ## Privacy
 
-- **Bars that follow the music** listen only to the player Lyricod is following, through Windows' audio APIs. Nothing is recorded, stored or sent. Turn it off in Settings › Lyricod Island.
-- To find lyrics, Lyricod sends the song's title, artist and length to NetEase, QQ Music and LRCLIB. That includes what plays in a browser or another app that isn't a music player (a video's title and channel, say), since that's how Lyricod tells whether it's a song. To look up lyrics only for music players, turn off Settings › Lyrics › Look up lyrics for browsers and other apps. Nothing else about what you watch or browse is sent.
-- Once a day it asks GitHub whether there's a newer version. Turn that off in Settings › About.
+To find lyrics, Lyricod sends the song title, artist, and duration to NetEase Cloud Music, QQ Music, and LRCLIB. If lyric lookups for browsers and other apps are enabled, the title and artist or channel of content playing there may also be used in searches. You can turn this off in Settings > Lyrics. No additional information about your browsing or viewing is sent.
+
+The island's audio bars use Windows audio APIs to read audio information from the current player. Lyricod does not record, save, or upload audio. You can disable music-reactive bars in Settings > Lyricod Island.
+
+Automatic update checks contact GitHub once a day and can be disabled in Settings > About.
 
 ## Requirements
 
-- Windows 10 (version 1809) or later, x64 or ARM64
-- Bars that follow the music need Windows 11 (they move on their own on Windows 10)
-
-## Install
-
-Download from this repository's Releases:
-
-- **Lyricod-X.Y.Z-windows-x64-setup.exe** for most PCs (Intel and AMD), or **…-arm64-setup.exe** for Arm PCs (Snapdragon, Copilot+ PCs). It installs for you alone, with no administrator prompt, and adds Lyricod to the Start menu.
-- **Lyricod-X.Y.Z-windows-x64.zip** / **…-arm64.zip** to run it without installing: unzip it anywhere and run `Lyricod.exe` in the Lyricod folder, keeping the `app` folder next to it.
-
-Lyricod isn't signed yet, so Windows may warn the first time: choose **More info › Run anyway**. Lyricod lives in the notification area.
-
-Lyricod looks for a new version once a day (you can turn this off in Settings › About). When one is out, choose **Download and Install** in Settings › About, or the update link in the tray panel: Lyricod downloads it, checks it and restarts into it, whether you installed it or use the zip. You can also update by hand: run the new installer, or quit Lyricod and replace the whole Lyricod folder. Your settings and saved lyrics, in `%LOCALAPPDATA%\Lyricod`, are kept either way. Uninstall from Settings › Apps; that folder stays, so delete it too if you want everything gone.
-
-## Font
-
-Lyrics use Microsoft YaHei by default. In Settings › Lyrics you can choose any font installed on your PC, or MiSans by Xiaomi, which is recommended: one design for Latin, Chinese and Japanese, so a line and its translation match. Lyricod doesn't include MiSans; choosing it downloads it from Xiaomi (about 15 MB) under Xiaomi's licence.
+- Windows 10 version 1809 or newer, x64 or ARM64.
+- Music-reactive audio bars require Windows 11. On Windows 10, they use a preset animation.
 
 ## Credits
 
-Inspired by [Lyricify](https://github.com/WXRIW/Lyricify-App); Lyricod Island is inspired by its Dynamic Lyrics Island, a design by WXRIW licensed under CC BY-SA 4.0. QQ Music's word-by-word lyrics are decrypted with code ported from [Lyricify Lyrics Helper](https://github.com/WXRIW/Lyricify-Lyrics-Helper) (Apache License 2.0). Pinyin comes from [ToolGood.Words](https://github.com/toolgood/ToolGood.Words) (Apache License 2.0); the tray icon and window helpers from [WinUIEx](https://github.com/dotMorten/WinUIEx) (MIT). Lyrics belong to their copyright holders. Lyricod is not affiliated with Microsoft, NetEase or Tencent.
+Inspired by [Lyricify](https://github.com/WXRIW/Lyricify-App). Lyricod Island takes inspiration from WXRIW's Dynamic Lyrics Island design (CC BY-SA 4.0). QQ Music word-by-word lyric decryption code was ported from [Lyricify Lyrics Helper](https://github.com/WXRIW/Lyricify-Lyrics-Helper) (Apache License 2.0). Pinyin support uses [ToolGood.Words](https://github.com/toolgood/ToolGood.Words) (Apache License 2.0), and tray and window helpers use [WinUIEx](https://github.com/dotMorten/WinUIEx) (MIT).
 
-## Licence
+Lyrics belong to their respective copyright holders. Lyricod is not affiliated with Microsoft, NetEase, or Tencent.
 
-Lyricod for Windows is licensed under the [Apache License 2.0](LICENSE). The code and assets it uses from others, and their licences, are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+## License
+
+Lyricod for Windows is licensed under the [Apache License 2.0](LICENSE). Third-party code, assets, and licences are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
