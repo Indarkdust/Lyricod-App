@@ -30,7 +30,9 @@ public sealed partial class IslandWindow
         {
             // It would capture itself otherwise; visible to screenshots again as soon as it stops.
             Win32.SetWindowDisplayAffinity(_overlay.Handle, Win32.WDA_EXCLUDEFROMCAPTURE);
-            _liquid = new LiquidGlass(ElementCompositionPreview.GetElementVisual(LiquidHost).Compositor, DispatcherQueue);
+            // If it fails later (the graphics card reset, the screen went away), fall back to clear glass.
+            _liquid = new LiquidGlass(ElementCompositionPreview.GetElementVisual(LiquidHost).Compositor, DispatcherQueue,
+                () => DispatcherQueue.TryEnqueue(() => { if (_liquid?.Failed == true) ApplyTheme(); }));
             ElementCompositionPreview.SetElementChildVisual(LiquidHost, _liquid.Visual);
         }
         UpdateLiquid();

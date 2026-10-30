@@ -29,6 +29,7 @@ sealed class LiquidGlass : IDisposable
     sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine);
 
     readonly DispatcherQueue _ui;
+    readonly Action _failed;
     readonly CanvasDevice _device = CanvasDevice.GetSharedDevice();
     readonly CompositionGraphicsDevice _graphics;
     readonly CompositionDrawingSurface _surface;
@@ -59,9 +60,11 @@ sealed class LiquidGlass : IDisposable
     /// <summary>The island's background: put it behind the lyrics, sized to the island.</summary>
     public SpriteVisual Visual { get; }
 
-    public LiquidGlass(Compositor compositor, DispatcherQueue ui)
+    /// <param name="failed">Called (on the UI thread) when capturing or drawing fails.</param>
+    public LiquidGlass(Compositor compositor, DispatcherQueue ui, Action failed)
     {
         _ui = ui;
+        _failed = failed;
         _graphics = CanvasComposition.CreateCompositionGraphicsDevice(compositor, _device);
         _surface = _graphics.CreateDrawingSurface(new Windows.Foundation.Size(1, 1),
             Microsoft.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, Microsoft.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
@@ -207,6 +210,7 @@ sealed class LiquidGlass : IDisposable
         if (e != null) System.Diagnostics.Debug.WriteLine("liquid glass: " + e);
         Failed = true;
         Stop();
+        _failed();
     }
 
     void Stop()

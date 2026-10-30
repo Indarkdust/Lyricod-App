@@ -143,7 +143,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// <summary>Lyricod Glass: how see-through it is, in percent (10 to 90).</summary>
     public int GlassTransparency { get => _glassTransparency; set => Set(ref _glassTransparency, Math.Clamp(value, 10, 90)); }
     public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
-    /// <summary>Lyricod Glass: a bright rim and a soft highlight at the top.</summary>
+    /// <summary>Lyricod Glass's liquid effect: light along the glass's edge, and a shadow under a floating island.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
     public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Clear); }
     /// <summary>Liquid glass: how much what's behind is blurred, in percent.</summary>

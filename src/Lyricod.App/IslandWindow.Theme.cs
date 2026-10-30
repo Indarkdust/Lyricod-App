@@ -3,16 +3,15 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
-using Windows.Foundation;
 using Windows.UI;
 
 namespace Lyricod;
 
 /// <summary>
 /// The island's theme (Settings › Lyricod Island › Theme): Classic black, or Lyricod Glass, a
-/// see-through tint. Glass's 3D effect lights it gently, as glass catches light: a faint shine along
-/// the top edge (no outline), a soft highlight behind the lyrics, and (floating) a shadow underneath.
-/// The liquid effect lights its own edge instead, following the curve of its lens.
+/// see-through tint. With the liquid effect, glass's 3D effect lights it as glass catches light: the
+/// liquid glass draws the light along its edge itself, following the curve of its lens, and a
+/// floating island gets a shadow underneath.
 /// </summary>
 public sealed partial class IslandWindow
 {
@@ -26,19 +25,14 @@ public sealed partial class IslandWindow
 
     bool Glass => _settings.IslandTheme == IslandTheme.Glass;
 
-    /// <summary>Glass with its 3D effect on, and not being moved (a floating island being moved is plain dark grey).</summary>
-    bool GlassLit => Glass && _settings.GlassShine && !Movable;
+    /// <summary>The liquid glass is showing, with its 3D effect on (it doesn't run while a floating island is being moved).</summary>
+    bool GlassLit => _liquid != null && _settings.GlassShine;
 
-    /// <summary>The pill's fill, highlight, bevel and shadow.</summary>
+    /// <summary>The pill's fill and shadow, and the glass effect behind it.</summary>
     void ApplyTheme()
     {
         bool frosted = ApplyFrost();
         bool liquid = ApplyLiquid();
-        bool lit = GlassLit && !liquid;
-        Rim.Visibility = lit ? Visibility.Visible : Visibility.Collapsed;
-        // Light catching the top edge only, gone a third of the way down: no outline round the island.
-        Rim.BorderBrush ??= Vertical((Microsoft.UI.Colors.White, 80, 0), (Microsoft.UI.Colors.White, 0, 0.35));
-        Sheen.Background = lit ? Highlight() : null;
         UpdateShadow();
         if (Movable) { Pill.Background = new SolidColorBrush(MovingColour); return; }
         if (!Glass) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Black); return; }
@@ -67,18 +61,8 @@ public sealed partial class IslandWindow
         return Color.FromArgb((byte)Math.Round(255 * (1 - _settings.GlassTransparency / 100.0)), tint.R, tint.G, tint.B);
     }
 
-    /// <summary>Light falling on the top of the glass: brightest at the top centre, gone by the bottom.</summary>
-    static RadialGradientBrush Highlight()
-    {
-        var brush = new RadialGradientBrush { Center = new Point(0.5, -0.1), GradientOrigin = new Point(0.5, -0.1), RadiusX = 0.8, RadiusY = 1.0 };
-        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(38, 255, 255, 255), Offset = 0 });
-        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(10, 255, 255, 255), Offset = 0.6 });
-        brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(0, 255, 255, 255), Offset = 1 });
-        return brush;
-    }
-
     /// <summary>
-    /// The shadow under a floating glass island, shaped like the pill and kept its size as it grows
+    /// The shadow under a floating liquid glass island, shaped like the pill and kept its size as it grows
     /// and shrinks. It's drawn from a rounded-rectangle mask, so nothing but the shadow shows.
     /// </summary>
     void UpdateShadow()
@@ -117,15 +101,6 @@ public sealed partial class IslandWindow
         _shadowCaster!.Size = size;
         _shadowSurface!.SourceSize = size;
         _shadow.Size = size;
-    }
-
-    /// <summary>A top-to-bottom gradient through (colour, opacity, offset) stops.</summary>
-    static LinearGradientBrush Vertical(params (Color Colour, byte Alpha, double Offset)[] stops)
-    {
-        var brush = new LinearGradientBrush { StartPoint = new Point(0, 0), EndPoint = new Point(0, 1) };
-        foreach (var (colour, alpha, offset) in stops)
-            brush.GradientStops.Add(new GradientStop { Color = Color.FromArgb(alpha, colour.R, colour.G, colour.B), Offset = offset });
-        return brush;
     }
 
     static Color Darken(Color c, double k) => Color.FromArgb(255, (byte)(c.R * k), (byte)(c.G * k), (byte)(c.B * k));

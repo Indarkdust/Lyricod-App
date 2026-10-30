@@ -122,9 +122,6 @@ public sealed partial class IslandWindow
     {
         double radius = (_expanded ? 20 : PillRadius) * LayoutScale;
         Pill.CornerRadius = Floating ? new CornerRadius(radius) : new CornerRadius(0, 0, radius, radius);
-        // Lyricod Glass's rim follows the corners; the default island has none along the screen's edge.
-        Rim.CornerRadius = Sheen.CornerRadius = Pill.CornerRadius;
-        Rim.BorderThickness = Floating ? new Thickness(1) : new Thickness(1, 0, 1, 1);
         UpdateShadow();
         if (_shaped) Shape();
         UpdateLiquid();

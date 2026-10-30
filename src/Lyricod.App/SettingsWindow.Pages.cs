@@ -138,7 +138,6 @@ public sealed partial class SettingsWindow
             Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90));
         Card(L.Get("GlassTint"), null, Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
             (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum"))));
-        Card(L.Get("GlassShine"), null, Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v));
         // Clear, or one of the experimental effects (each says what it costs, and where it can't run).
         var effectDetail = Card(L.Get("GlassEffect"), "", Choice(nameof(Settings.GlassEffect), () => _settings.GlassEffect, v => _settings.GlassEffect = v,
             (GlassEffect.Clear, L.Get("GlassEffectClear")), (GlassEffect.Frosted, L.Get("GlassEffectFrosted")), (GlassEffect.Liquid, L.Get("GlassEffectLiquid"))))!;
@@ -147,6 +146,8 @@ public sealed partial class SettingsWindow
         {
             Content = Percent(nameof(Settings.LiquidRefraction), () => _settings.LiquidRefraction, v => _settings.LiquidRefraction = v, 0, 100),
         };
+        // The 3D effect is the liquid glass's: it lights the edge its lens bends.
+        var shine = new ContentControl { Content = Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v) };
         void SyncEffect()
         {
             var effect = _settings.GlassEffect;
@@ -162,12 +163,13 @@ public sealed partial class SettingsWindow
                 GlassEffect.Liquid => L.Get("GlassEffectLiquidDetail"),
                 _ => L.Get("GlassEffectClearDetail"),
             } + (supported ? "" : " " + L.Get("GlassEffectUnsupported"));
-            liquidBlur.IsEnabled = refraction.IsEnabled = effect == GlassEffect.Liquid && LiquidGlass.IsSupported;
+            liquidBlur.IsEnabled = refraction.IsEnabled = shine.IsEnabled = effect == GlassEffect.Liquid && LiquidGlass.IsSupported;
         }
         Watch(nameof(Settings.GlassEffect), SyncEffect);
         SyncEffect();
         Card(L.Get("LiquidBlur"), null, liquidBlur);
         Card(L.Get("LiquidRefraction"), null, refraction);
+        Card(L.Get("GlassShine"), null, shine);
     }
 
     ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set) => Choice(property, get, set,
