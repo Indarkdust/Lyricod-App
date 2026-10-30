@@ -70,11 +70,11 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     bool _islandLocked = true;
     int? _islandX, _islandY;
     IslandTheme _islandTheme = IslandTheme.Classic;
-    int _glassTransparency = 40;
+    int _glassTransparency = 90;
     GlassTint _glassTint = GlassTint.Neutral;
     bool _glassShine = true;
     GlassEffect _glassEffect = GlassEffect.Liquid;
-    int _liquidBlur = 30, _liquidRefraction = 50;
+    int _liquidBlur = 10, _liquidRefraction = 50;
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
