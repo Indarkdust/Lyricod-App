@@ -21,8 +21,8 @@ public static class NeteaseSync
     public const string HelperName = "Lyricod-CM-Helper.exe";
     public const string HelperPage = "https://github.com/" + HelperRepository;
 
-    /// <summary>The NetEase Cloud Music versions InfLink-rs has been tested with (3.x).</summary>
-    public static readonly Version TestedFrom = new(3, 1, 20), TestedTo = new(3, 1, 41);
+    /// <summary>The NetEase Cloud Music versions sync has been tested with (3.x).</summary>
+    public static readonly Version TestedFrom = new(3, 1, 20), TestedTo = new(3, 1, 42);
 
     public static bool IsTested(Version version)
     {

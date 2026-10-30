@@ -68,7 +68,10 @@ public partial class App : Application
 
         _tray = new TrayIcon(1, Path.Combine(AppContext.BaseDirectory, "Assets", "Lyricod.ico"), "Lyricod");
         // A click opens the panel (as the Mac's menu-bar icon does); right-click, Windows' usual short menu.
-        _panel = new TrayPanel(_model, _settings, OpenLyricsWindow, () => OpenSettings(), OpenChooseLyrics, Quit, _updates);
+        _panel = new TrayPanel(_model, _settings, OpenLyricsWindow, () => OpenSettings(), OpenChooseLyrics, Quit, _updates)
+        {
+            OpenNeteaseSync = OpenNeteaseSync,
+        };
         _tray.ContextMenu += (_, e) => e.Flyout = BuildMenu();
         _tray.Selected += (_, _) => _panel.Toggle();
         _tray.IsVisible = true;
@@ -138,6 +141,19 @@ public partial class App : Application
         }
         else if (pane is { } p) _settingsWindow.Show(p);
         _settingsWindow.Activate();
+    }
+
+    /// <summary>The tray's NetEase tip: Settings › General › NetEase Cloud Music sync where it can be set up, else the guide.</summary>
+    void OpenNeteaseSync()
+    {
+        if (Platform.NeteaseSetup.Find() is { Is64Bit: true })
+        {
+            OpenSettings(SettingsPane.General);
+            _settingsWindow?.ShowNeteaseSync();
+            return;
+        }
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(L.Get("NeteaseGuideUrl")) { UseShellExecute = true })?.Dispose(); }
+        catch (Exception) { }
     }
 
     MenuFlyout BuildMenu()

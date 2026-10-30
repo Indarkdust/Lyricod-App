@@ -27,6 +27,9 @@ public sealed partial class TrayPanel : Window
     readonly PlaybackModel _model;
     readonly Settings _settings;
     readonly Action _openLyricsWindow, _openSettings, _chooseLyrics, _quit;
+
+    /// <summary>What the NetEase tip opens: NetEase Cloud Music sync's settings; without it, the guide in the README.</summary>
+    public Action? OpenNeteaseSync { get; set; }
     readonly TransportButtons _transport;
     readonly ProgressLine _progress;
     readonly DispatcherQueueTimer _progressTimer;
@@ -49,6 +52,16 @@ public sealed partial class TrayPanel : Window
         _openLyricsWindow = openLyricsWindow;
         _openSettings = openSettings;
         _chooseLyrics = chooseLyrics;
+        NeteaseTip.Click += (_, _) =>
+        {
+            Hide();
+            if (OpenNeteaseSync is { } open) open();
+            else
+            {
+                try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(L.Get("NeteaseGuideUrl")) { UseShellExecute = true })?.Dispose(); }
+                catch (Exception) { }
+            }
+        };
         _quit = quit;
 
         // A popup: a thin border and Windows 11's rounded corners, but no title bar, and out of
@@ -196,7 +209,6 @@ public sealed partial class TrayPanel : Window
             if (NeteaseTip.Visibility != tip)
             {
                 NeteaseTip.Content = L.Get("NeteaseTip");
-                NeteaseTip.NavigateUri = new Uri(L.Get("NeteaseGuideUrl"));
                 NeteaseTip.Visibility = tip;
                 statusChanged = true;
             }

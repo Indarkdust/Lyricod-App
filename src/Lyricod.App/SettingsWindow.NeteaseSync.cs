@@ -14,9 +14,41 @@ public sealed partial class SettingsWindow
 {
     /// <summary>A setup is running; one at a time, whichever page started it.</summary>
     static bool _neteaseBusy;
+    /// <summary>The section on the page that's up, and whether to open it when the page is built.</summary>
+    Expander? _neteaseFold;
+    bool _openNeteaseSync;
+
+    /// <summary>Shows General with NetEase Cloud Music sync open (the tray's NetEase tip).</summary>
+    public void ShowNeteaseSync()
+    {
+        _openNeteaseSync = true;
+        Show(SettingsPane.General); // builds the page if another was up, and the section opens itself
+        // General was already up: open the section on it (a section from an earlier page has no parent).
+        if (_openNeteaseSync && _neteaseFold is { Parent: not null } fold) OpenNeteaseFold(fold);
+    }
+
+    void OpenNeteaseFold(Expander fold)
+    {
+        _openNeteaseSync = false;
+        fold.IsExpanded = true;
+        // Scrolled to once it's on screen (a window just opened shows it a moment later).
+        void Reveal() => DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,
+            () => fold.StartBringIntoView(new BringIntoViewOptions { VerticalAlignmentRatio = 0, AnimationDesired = true }));
+        if (fold.IsLoaded) Reveal();
+        else
+        {
+            void Loaded(object sender, RoutedEventArgs e)
+            {
+                fold.Loaded -= Loaded;
+                Reveal();
+            }
+            fold.Loaded += Loaded;
+        }
+    }
 
     void NeteaseSyncSection()
     {
+        _neteaseFold = null;
         if (NeteaseSetup.Find() is not { } netease) return;
         TextBlock? status = null;
         var install = new Button { Style = Style("AccentButtonStyle") };
@@ -24,17 +56,21 @@ public sealed partial class SettingsWindow
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         buttons.Children.Add(remove);
         buttons.Children.Add(install);
-        Fold(L.Get("NeteaseSyncTitle"), L.Get("NeteaseSyncDetail"), () =>
+        var fold = Fold(L.Get("NeteaseSyncTitle"), L.Get("NeteaseSyncDetail"), () =>
         {
             Card(L.Get("NeteaseSyncWhat"), L.Get("NeteaseSyncWhatDetail"),
                 new HyperlinkButton { Content = L.Get("NeteaseSyncLearnMore"), NavigateUri = new Uri(NeteaseSync.HelperPage) });
-            Card(L.Get("NeteaseSyncBefore"), L.Get("NeteaseSyncBeforeDetail"), null);
+            // The README's steps, for doing it by hand (or with NetEase Cloud Music 2.x).
+            Card(L.Get("NeteaseSyncBefore"), L.Get("NeteaseSyncBeforeDetail"),
+                new HyperlinkButton { Content = L.Get("NeteaseSyncManual"), NavigateUri = new Uri(L.Get("NeteaseGuideUrl")) });
             var version = Value();
             version.Text = L.Format(NeteaseSync.IsTested(netease.Version) ? "NeteaseSyncTested" : "NeteaseSyncUntested", netease.Version.ToString(3));
             Card(L.Get("NeteaseSyncVersion"), netease.Is64Bit ? null : L.Get("NeteaseSyncUnsupported"), version);
             // Only the 64-bit NetEase Cloud Music 3.x can take BetterNCM 1.3.4.
             if (netease.Is64Bit) status = Card(L.Get("NeteaseSyncStatus"), "", buttons);
         });
+        _neteaseFold = fold;
+        if (_openNeteaseSync) OpenNeteaseFold(fold);
         if (status is not { } line) return;
 
         void Show(string? message = null)
