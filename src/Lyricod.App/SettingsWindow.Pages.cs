@@ -77,17 +77,12 @@ public sealed partial class SettingsWindow
         SyncFloating();
         Card(L.Get("LockIsland"), L.Get("LockIslandDetail"), lockIsland);
         Card(L.Get("PositionLabel"), null, resetIsland);
-        var hoverDetail = Card(L.Get("OnHover"), "", Choice(nameof(Settings.IslandHover), () => _settings.IslandHover, v => _settings.IslandHover = v,
+        var hoverDetail = Card(L.Get("OnHover"), L.Get("HoverByDirectionDetail"), Choice(nameof(Settings.IslandHover), () => _settings.IslandHover, v => _settings.IslandHover = v,
             (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing")),
             (IslandHover.ByDirection, L.Get("HoverByDirection"))))!;
-        // "By direction" spells out which edges do what: a floating island hides from above too.
-        void SyncHoverDetail()
-        {
-            hoverDetail.Text = L.Get(_settings.IslandStyle == IslandStyle.Floating ? "HoverByDirectionFloatingDetail" : "HoverByDirectionDefaultDetail");
-            hoverDetail.Visibility = _settings.IslandHover == IslandHover.ByDirection ? Visibility.Visible : Visibility.Collapsed;
-        }
+        // The line under it explains the gesture, only while "by direction" is chosen.
+        void SyncHoverDetail() => hoverDetail.Visibility = _settings.IslandHover == IslandHover.ByDirection ? Visibility.Visible : Visibility.Collapsed;
         Watch(nameof(Settings.IslandHover), SyncHoverDetail);
-        Watch(nameof(Settings.IslandStyle), SyncHoverDetail);
         SyncHoverDetail();
         Card(L.Get("AlbumColour"), L.Get("AlbumColourDetail"), Toggle(nameof(Settings.IslandAlbumColour), () => _settings.IslandAlbumColour, v => _settings.IslandAlbumColour = v));
         var colours = new ContentControl

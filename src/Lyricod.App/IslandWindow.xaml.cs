@@ -72,6 +72,8 @@ public sealed partial class IslandWindow : Window
     bool _shown, _hovered, _expanded, _barsRunning, _closed;
     IslandHover _hoverAction;
     (double X, double Y)? _lastOutside;
+    /// <summary>Where the pointer has been outside the island lately (screen pixels, steady-clock seconds).</summary>
+    readonly List<(double X, double Y, double T)> _trail = [];
     int _barRate;
     /// <summary>The player the meter listens to, or null when it's off.</summary>
     string? _meteredApp;
