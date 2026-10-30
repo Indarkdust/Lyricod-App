@@ -12,9 +12,13 @@ It works with Spotify, QQ Music, NetEase Cloud Music, Apple Music, and supported
 
 ### Lyricod Island
 
-The island sits at the top of your screen and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line. Lyric colours can follow the album artwork or use a colour you choose.
+The island sits at the top of the screen by default and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line. Lyric colours can follow the album artwork or use a colour you choose.
 
-Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. There is also an option to choose the action based on which direction the pointer enters from. The island can fade out after playback pauses.
+Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. You can also combine both actions: the island hides when the pointer moves onto it. To expand the mini player, move across the island horizontally, then up or down. The island can fade out after playback pauses.
+
+To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides and can be dragged anywhere once unlocked. Near screen edges, it expands inward to keep the lyrics and mini player on screen.
+
+Lyricod Glass gives the island a transparent background. On Windows 11, the default Liquid effect adds a slight blur, edge refraction and highlights. You can also choose Clear or Frosted, and adjust transparency, tint, blur and refraction. When using the Liquid effect, the island won't appear in screenshots, recordings or screen sharing.
 
 ### Desktop lyrics
 
@@ -77,7 +81,7 @@ InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.41 and 2.
 
 ## Customization
 
-You can change lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island animations and sizing, hover behaviour, and global shortcuts. The island, desktop lyrics, and lyrics window have separate display settings.
+You can customize lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island mode and theme, animations, hover behaviour, and global shortcuts. The island, desktop lyrics and lyrics window have separate display settings.
 
 Lyrics use Microsoft YaHei by default. You can choose another installed font or download **MiSans** by Xiaomi from Settings. MiSans is not bundled with Lyricod and is subject to Xiaomi's licence.
 
