@@ -46,6 +46,7 @@ public sealed partial class SettingsWindow
         Card(L.Get("NowPlayingLabel"), null, song);
         Card(L.Get("PlayerLabel"), null, player);
         Note(L.Get("PlayerNote"));
+        NeteaseSyncSection();
         Refresh();
     }
 
