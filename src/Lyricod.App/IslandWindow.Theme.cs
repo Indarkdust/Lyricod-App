@@ -12,6 +12,7 @@ namespace Lyricod;
 /// The island's theme (Settings › Lyricod Island › Theme): Classic black, or Lyricod Glass, a
 /// see-through tint. Glass's 3D effect lights it gently, as glass catches light: a faint shine along
 /// the top edge (no outline), a soft highlight behind the lyrics, and (floating) a shadow underneath.
+/// The liquid effect lights its own edge instead, following the curve of its lens.
 /// </summary>
 public sealed partial class IslandWindow
 {
@@ -31,14 +32,14 @@ public sealed partial class IslandWindow
     /// <summary>The pill's fill, highlight, bevel and shadow.</summary>
     void ApplyTheme()
     {
-        bool lit = GlassLit;
+        bool frosted = ApplyFrost();
+        bool liquid = ApplyLiquid();
+        bool lit = GlassLit && !liquid;
         Rim.Visibility = lit ? Visibility.Visible : Visibility.Collapsed;
         // Light catching the top edge only, gone a third of the way down: no outline round the island.
         Rim.BorderBrush ??= Vertical((Microsoft.UI.Colors.White, 80, 0), (Microsoft.UI.Colors.White, 0, 0.35));
         Sheen.Background = lit ? Highlight() : null;
         UpdateShadow();
-        bool frosted = ApplyFrost();
-        bool liquid = ApplyLiquid();
         if (Movable) { Pill.Background = new SolidColorBrush(MovingColour); return; }
         if (!Glass) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Black); return; }
         // The liquid layer draws the glass, tint and all.

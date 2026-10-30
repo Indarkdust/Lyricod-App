@@ -57,10 +57,51 @@ public class LiquidLensTests
         Assert.True(At(map, 1, 5).Across > 60);
     }
 
+    static byte Lit(byte[] light, int x, int y) => light[(y * Width + x) * 4 + 3];
+
+    [Fact]
+    public void LightCatchesTheEdgeNotTheMiddle()
+    {
+        var light = LiquidLens.Light(Width, Height, 12, squareTop: false, rim: 1.5);
+        Assert.Equal(Width * Height * 4, light.Length);
+        Assert.Equal(0, Lit(light, 150, 30));
+        Assert.True(Lit(light, 150, 0) > 100);
+        Assert.Equal(0, Lit(light, 0, 0)); // cut off by the rounding
+        // White, premultiplied.
+        Assert.All(Enumerable.Range(0, Width * Height), i =>
+            Assert.True(light[i * 4] == light[i * 4 + 3] && light[i * 4 + 1] == light[i * 4 + 3] && light[i * 4 + 2] == light[i * 4 + 3]));
+    }
+
+    [Fact]
+    public void TheTopFacesTheLightAndTheFarSideGlints()
+    {
+        var light = LiquidLens.Light(Width, Height, 12, squareTop: false, rim: 1.5);
+        Assert.True(Lit(light, 150, 0) > Lit(light, 150, 59));
+        Assert.True(Lit(light, 150, 59) > Lit(light, 299, 30));
+    }
+
+    [Fact]
+    public void TheLineAlongTheEdgeIsThin()
+    {
+        var light = LiquidLens.Light(Width, Height, 12, squareTop: false, rim: 1.5);
+        // A few pixels in, only the faint glow is left.
+        Assert.True(Lit(light, 150, 4) < Lit(light, 150, 0) / 4);
+    }
+
+    [Fact]
+    public void ASquareTopCatchesNoLightAlongTheScreensEdge()
+    {
+        var light = LiquidLens.Light(Width, Height, 12, squareTop: true, rim: 1.5);
+        Assert.Equal(0, Lit(light, 150, 0));
+        Assert.True(Lit(light, 150, 59) > 50);
+    }
+
     [Fact]
     public void TinyOrOddSizesWork()
     {
         Assert.Equal(4, LiquidLens.Map(1, 1, 12, squareTop: false).Length);
         Assert.Equal(7 * 3 * 4, LiquidLens.Map(7, 3, 40, squareTop: true).Length);
+        Assert.Equal(4, LiquidLens.Light(1, 1, 12, squareTop: false, rim: 1.5).Length);
+        Assert.Equal(7 * 3 * 4, LiquidLens.Light(7, 3, 40, squareTop: true, rim: 0).Length);
     }
 }

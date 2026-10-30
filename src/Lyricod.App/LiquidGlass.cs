@@ -14,7 +14,8 @@ namespace Lyricod;
 
 /// <summary>
 /// Lyricod Glass's liquid effect (experimental): what's behind the island, captured from the screen
-/// and drawn as its background, lightly blurred and bent at the edges like the rim of a lens. The
+/// and drawn as its background, lightly blurred and bent at the edges like the rim of a lens, with
+/// the light its edge catches (the 3D effect) drawn to follow the same curve. The
 /// island hides itself from screen capture while this runs, or it would capture itself, so it
 /// doesn't show in screenshots, recordings or screen sharing then. Windows 11 only: Windows 10
 /// outlines the whole screen in yellow while anything captures it.
@@ -23,8 +24,9 @@ sealed class LiquidGlass : IDisposable
 {
     public static bool IsSupported => Environment.OSVersion.Version.Build >= 22000 && GraphicsCaptureSession.IsSupported();
 
-    /// <summary>What to draw: where the island is on its screen (pixels), its corners, and the look.</summary>
-    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint);
+    /// <summary>What to draw: where the island is on its screen (pixels), its corners, and the look
+    /// (<c>Shine</c>: how wide the light along the edge is, in pixels; 0 for none).</summary>
+    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine);
 
     readonly DispatcherQueue _ui;
     readonly CanvasDevice _device = CanvasDevice.GetSharedDevice();
@@ -46,6 +48,8 @@ sealed class LiquidGlass : IDisposable
     CanvasBitmap? _screen;
     CanvasBitmap? _lens;
     (int Width, int Height, float Radius, bool SquareTop) _lensFor;
+    CanvasBitmap? _light;
+    (int Width, int Height, float Radius, bool SquareTop, float Rim) _lightFor;
     Look? _look;
     int _pending;
 
@@ -73,10 +77,11 @@ sealed class LiquidGlass : IDisposable
     /// <summary>
     /// Follows the island: the screen it's on (<paramref name="monitor"/>, whose top-left is
     /// <paramref name="origin"/>), its bounds there (<paramref name="pill"/>, pixels), its size and
-    /// corner radius in view pixels, and the look (blur and refraction in view pixels).
+    /// corner radius in view pixels, and the look (blur and refraction in view pixels; whether the
+    /// edge catches the light).
     /// </summary>
     public void Update(nint monitor, PointInt32 origin, RectInt32 pill, Vector2 size, float radius, bool squareTop,
-        float blur, float refraction, Windows.UI.Color tint)
+        float blur, float refraction, Windows.UI.Color tint, bool shine)
     {
         if (Failed) return;
         Visual.Size = size;
@@ -86,7 +91,7 @@ sealed class LiquidGlass : IDisposable
         _shape.CornerRadius = new Vector2(radius, radius);
         float scale = size.X > 0 ? pill.Width / size.X : 1;
         _look = new Look(new RectInt32(pill.X - origin.X, pill.Y - origin.Y, pill.Width, pill.Height), radius * scale, squareTop,
-            blur * scale, refraction * scale, tint);
+            blur * scale, refraction * scale, tint, shine ? 1.5f * scale : 0);
         try
         {
             if (monitor != _monitor) Start(monitor);
@@ -144,7 +149,7 @@ sealed class LiquidGlass : IDisposable
         catch (Exception e) { Fail(e); }
     }
 
-    /// <summary>The part of the screen behind the island: bent at the edges, blurred, a little more vivid, tinted.</summary>
+    /// <summary>The part of the screen behind the island: bent at the edges, blurred, a little more vivid, tinted, lit.</summary>
     void Draw(CanvasBitmap screen, Look look)
     {
         int width = look.Source.Width, height = look.Source.Height;
@@ -172,6 +177,7 @@ sealed class LiquidGlass : IDisposable
         session.Clear(Microsoft.UI.Colors.Transparent);
         session.DrawImage(_vivid);
         session.FillRectangle(0, 0, width, height, look.Tint);
+        if (look.Shine > 0) session.DrawImage(Light(width, height, look.Radius, look.SquareTop, look.Shine));
     }
 
     /// <summary>The lens map (see <see cref="LiquidLens"/>), made again only when the island's shape changes.</summary>
@@ -183,6 +189,17 @@ sealed class LiquidGlass : IDisposable
             Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
         _lensFor = (width, height, radius, squareTop);
         return _lens;
+    }
+
+    /// <summary>The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape changes.</summary>
+    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float rim)
+    {
+        if (_light != null && _lightFor == (width, height, radius, squareTop, rim)) return _light;
+        _light?.Dispose();
+        _light = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Light(width, height, radius, squareTop, rim), width, height,
+            Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
+        _lightFor = (width, height, radius, squareTop, rim);
+        return _light;
     }
 
     void Fail(Exception? e)
@@ -214,6 +231,7 @@ sealed class LiquidGlass : IDisposable
     {
         Stop();
         _lens?.Dispose();
+        _light?.Dispose();
         _surface.Dispose();
         _graphics.Dispose();
     }

@@ -59,6 +59,6 @@ public sealed partial class IslandWindow
         _liquid.Update(Microsoft.UI.Win32Interop.GetMonitorFromDisplayId(display.DisplayId), new PointInt32(screen.X, screen.Y),
             new RectInt32((int)Math.Round(left), (int)Math.Round(top), (int)Math.Round(width), (int)Math.Round(height)),
             new Vector2((float)Pill.ActualWidth, (float)Pill.ActualHeight), (float)Pill.CornerRadius.BottomLeft, !Floating,
-            blur: _settings.LiquidBlur / 100f * 16, refraction: _settings.LiquidRefraction / 100f * 14, GlassTintColour());
+            blur: _settings.LiquidBlur / 100f * 16, refraction: _settings.LiquidRefraction / 100f * 14, GlassTintColour(), shine: GlassLit);
     }
 }
