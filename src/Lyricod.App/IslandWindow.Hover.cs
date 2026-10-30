@@ -20,9 +20,14 @@ public sealed partial class IslandWindow
         // The default island's top is the screen's edge; a floating one gets the same margin as its other sides.
         double above = Floating ? 2 : 0;
         bool inside = p.X >= left - 2 && p.X <= left + width + 2 && p.Y >= top - above && p.Y <= top + height + 2;
-        bool near = (!Floating || p.Y >= top - 120) && p.Y <= top + height + 120 && p.X >= left - 160 && p.X <= left + width + 160;
+        bool gesture = _settings.IslandHover == IslandHover.ByDirection;
+        // The gesture needs the pointer's path, so it's followed closely from further out.
+        double reach = gesture ? 3 : 1;
+        bool near = (!Floating || p.Y >= top - 120 * reach) && p.Y <= top + height + 120 * reach
+            && p.X >= left - 160 * reach && p.X <= left + width + 160 * reach;
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(near || _hovered ? 33 : 250);
         double now = PlaybackModel.Now;
+        var path = _trail.ConvertAll(s => (s.X, s.Y));
         if (inside)
         {
             _lastInside = now;
@@ -32,20 +37,24 @@ public sealed partial class IslandWindow
                 var edge = IslandEntry.Edge(p.X, p.Y, left - 2, top - above, width + 4, height + 2 + above, _lastOutside);
                 // "By direction" hides however the pointer comes in, unless it moved sideways and then
                 // turned in through the top or bottom: that opens the mini player.
-                bool hide = _settings.IslandHover == IslandHover.ByDirection
-                    && !IslandGesture.IsSidewaysThenIn(_trail.ConvertAll(s => (s.X, s.Y)), (p.X, p.Y), edge, _overlay.Scale);
-                SetHovered(true, hide);
+                SetHovered(true, gesture && !IslandGesture.IsSidewaysThenIn(path, (p.X, p.Y), edge, _overlay.Scale));
+            }
+            else if (gesture && _hoverAction == IslandHover.Hide && IslandGesture.IsSidewaysThenTurn(path, (p.X, p.Y), _overlay.Scale))
+            {
+                // Hidden, then the turn made over it (in along the top of the screen, then down): open it after all.
+                SetHovered(false);
+                SetHovered(true);
                 _trail.Clear();
             }
         }
         else
         {
             _lastOutside = (p.X, p.Y);
-            // The last second of movement, for the gesture.
-            _trail.Add((p.X, p.Y, now));
-            _trail.RemoveAll(s => now - s.T > 1);
             if (_hovered && now - _lastInside > 0.3) SetHovered(false); // a moment's grace when brushing past
         }
+        // The last moment and a half of movement, inside and out, for the gesture.
+        _trail.Add((p.X, p.Y, now));
+        _trail.RemoveAll(s => now - s.T > 1.5);
     }
 
     void SetHovered(bool hovered, bool hideByDirection = false)
