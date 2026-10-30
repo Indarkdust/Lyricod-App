@@ -69,6 +69,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     int _glassTransparency = 40;
     GlassTint _glassTint = GlassTint.Neutral;
     bool _glassShine = true;
+    bool _glassBlur;
     IslandHover _islandHover = IslandHover.Expand;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
@@ -139,6 +140,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
     /// <summary>Lyricod Glass: a bright rim and a soft highlight at the top.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
+    /// <summary>Lyricod Glass: frost what's behind the island with Windows' acrylic (experimental, off by default).</summary>
+    public bool GlassBlur { get => _glassBlur; set => Set(ref _glassBlur, value); }
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }

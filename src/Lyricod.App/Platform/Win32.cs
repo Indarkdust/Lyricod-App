@@ -112,6 +112,13 @@ static partial class Win32
     public static void RefreshFrame(nint hwnd) =>
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020); // NOMOVE NOSIZE NOZORDER NOACTIVATE FRAMECHANGED
 
+    [LibraryImport("gdi32.dll")]
+    public static partial nint CreateRoundRectRgn(int left, int top, int right, int bottom, int widthEllipse, int heightEllipse);
+
+    /// <summary>Clips the window to <paramref name="region"/> (window pixels; Windows then owns it), or 0 to stop.</summary>
+    [LibraryImport("user32.dll")]
+    public static partial int SetWindowRgn(nint hwnd, nint region, [MarshalAs(UnmanagedType.Bool)] bool redraw);
+
     /// <summary>Window pixels per view pixel (1.0 at 100 % scaling).</summary>
     public static double Scale(nint hwnd) => Math.Max(GetDpiForWindow(hwnd), 96) / 96.0;
 }

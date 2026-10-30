@@ -78,6 +78,7 @@ public class IslandSettingsTests
         Assert.Equal(40, settings.GlassTransparency);
         Assert.Equal(GlassTint.Neutral, settings.GlassTint);
         Assert.True(settings.GlassShine);
+        Assert.False(settings.GlassBlur); // experimental
         settings.GlassTransparency = 0;
         Assert.Equal(10, settings.GlassTransparency);
         settings.GlassTransparency = 100;

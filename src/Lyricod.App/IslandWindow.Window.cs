@@ -16,6 +16,7 @@ public sealed partial class IslandWindow
         {
             PlaceFloating(k);
             UpdateShadow(); // follows the pill's new alignment
+            if (_shaped) Shape();
             return;
         }
         Pill.HorizontalAlignment = HorizontalAlignment.Center;
@@ -29,6 +30,7 @@ public sealed partial class IslandWindow
         int x = area.X + (area.Width - size.Width) / 2;
         if (AppWindow.Size.Width != size.Width || AppWindow.Size.Height != size.Height || AppWindow.Position.X != x || AppWindow.Position.Y != area.Y)
             AppWindow.MoveAndResize(new RectInt32(x, area.Y, size.Width, size.Height));
+        if (_shaped) Shape();
     }
 
     bool PausedLongEnough => _settings.IslandHideWhenPaused && _model.Track != null && !_model.IsPlaying;
@@ -52,6 +54,7 @@ public sealed partial class IslandWindow
         bool visible = _settings.ShowIsland && _model.IsSong && !_pausedAway;
         if (visible == _shown) return;
         _shown = visible;
+        ApplyTheme(); // frosted blur only while it shows: it can't fade with the island
         if (visible)
         {
             Place();

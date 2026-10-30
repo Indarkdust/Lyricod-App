@@ -37,11 +37,19 @@ public sealed partial class IslandWindow
         Rim.BorderBrush ??= Vertical((Microsoft.UI.Colors.White, 80, 0), (Microsoft.UI.Colors.White, 0, 0.35));
         Sheen.Background = lit ? Highlight() : null;
         UpdateShadow();
+        bool frosted = ApplyFrost();
         if (Movable) { Pill.Background = new SolidColorBrush(MovingColour); return; }
         if (!Glass) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Black); return; }
         // The album's colour is tuned to stand out on black; darkened, white lyrics stay readable on it.
         var tint = _settings.GlassTint == GlassTint.Album && _model.ArtworkColor is { } c ? Darken(c, 0.45) : NeutralGlass;
-        byte alpha = (byte)Math.Round(255 * (1 - _settings.GlassTransparency / 100.0));
+        double clear = _settings.GlassTransparency / 100.0;
+        byte alpha = (byte)Math.Round(255 * (1 - clear));
+        if (frosted)
+        {
+            // The blur carries most of the tint; the pill adds a little on top.
+            _frost!.SetTint(tint, (float)((1 - clear) * 0.6), (float)(0.15 + (1 - clear) * 0.6));
+            alpha = (byte)(alpha * 0.3);
+        }
         Pill.Background = new SolidColorBrush(Color.FromArgb(alpha, tint.R, tint.G, tint.B));
     }
 

@@ -126,6 +126,7 @@ public sealed partial class IslandWindow
         Rim.CornerRadius = Sheen.CornerRadius = Pill.CornerRadius;
         Rim.BorderThickness = Floating ? new Thickness(1) : new Thickness(1, 0, 1, 1);
         UpdateShadow();
+        if (_shaped) Shape();
     }
 
     /// <summary>A fast start and a soft settle, without overshooting.</summary>

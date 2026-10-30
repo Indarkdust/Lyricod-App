@@ -60,8 +60,11 @@ public sealed partial class IslandWindow
         _overlay.SetClickThrough(!expand);
         // "Hide": out of the way while the pointer is over it, so what's underneath can be seen too.
         if (_hoverAction == IslandHover.Hide)
+        {
             foreach (var part in new UIElement[] { Pill, ShadowHost })
                 Fade(part, hovered ? 0 : 1, hovered ? 0.16 : 0.28, delay: hovered ? 0 : 0.12);
+            ApplyTheme(); // the frosted blur goes while it's hidden
+        }
         if (expand != _expanded)
         {
             _expanded = expand;

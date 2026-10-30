@@ -83,6 +83,8 @@
   <data name="GlassTintNeutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>Album colour</value></data>
   <data name="GlassShine" xml:space="preserve"><value>3D effect</value></data>
+  <data name="GlassBlur" xml:space="preserve"><value>Frosted blur (experimental)</value></data>
+  <data name="GlassBlurDetail" xml:space="preserve"><value>Blurs what's behind the island. Its corners may look slightly jagged.</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

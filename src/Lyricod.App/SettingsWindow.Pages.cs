@@ -109,12 +109,19 @@ public sealed partial class SettingsWindow
         var tint = Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
             (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum")));
         var shine = Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v);
-        void SyncGlass() => transparency.IsEnabled = tint.IsEnabled = shine.IsEnabled = _settings.IslandTheme == IslandTheme.Glass;
+        var blur = Toggle(nameof(Settings.GlassBlur), () => _settings.GlassBlur, v => _settings.GlassBlur = v);
+        void SyncGlass()
+        {
+            transparency.IsEnabled = tint.IsEnabled = shine.IsEnabled = _settings.IslandTheme == IslandTheme.Glass;
+            // Only where Windows draws acrylic.
+            blur.IsEnabled = _settings.IslandTheme == IslandTheme.Glass && FrostedBackdrop.IsSupported;
+        }
         Watch(nameof(Settings.IslandTheme), SyncGlass);
         SyncGlass();
         Card(L.Get("GlassTransparency"), null, transparency);
         Card(L.Get("GlassTint"), null, tint);
         Card(L.Get("GlassShine"), null, shine);
+        Card(L.Get("GlassBlur"), L.Get("GlassBlurDetail"), blur);
         Card(L.Get("IslandSize"), null, Choice(nameof(Settings.IslandSize), () => _settings.IslandSize, v => _settings.IslandSize = v,
             (IslandSize.Small, L.Get("SizeSmall")), (IslandSize.Medium, L.Get("SizeMedium")),
             (IslandSize.Large, L.Get("SizeLarge")), (IslandSize.ExtraLarge, L.Get("SizeExtraLarge"))));
