@@ -89,8 +89,8 @@
   <data name="GlassShine" xml:space="preserve"><value>3D effect</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>Glass effect</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
-  <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted (experimental)</value></data>
-  <data name="GlassEffectLiquid" xml:space="preserve"><value>Liquid (experimental)</value></data>
+  <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted</value></data>
+  <data name="GlassEffectLiquid" xml:space="preserve"><value>Liquid</value></data>
   <data name="GlassEffectClearDetail" xml:space="preserve"><value>Shows what's behind the island without blurring it.</value></data>
   <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>Blurs the background using Windows acrylic. The corners may look slightly jagged.</value></data>
   <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>Adds a slight blur and refracted edges to the background. The island won't appear in screenshots, recordings or screen sharing while this is on.</value></data>

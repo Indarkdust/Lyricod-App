@@ -13,7 +13,7 @@ using WinRT;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Glass's liquid effect (experimental): what's behind the island, captured from the screen
+/// Lyricod Glass's liquid effect: what's behind the island, captured from the screen
 /// and drawn as its background, lightly blurred and bent at the edges like the rim of a lens, with
 /// the light its edge catches (the 3D effect) drawn to follow the same curve. The
 /// island hides itself from screen capture while this runs, or it would capture itself, so it

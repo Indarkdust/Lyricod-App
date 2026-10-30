@@ -138,7 +138,7 @@ public sealed partial class SettingsWindow
             Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90));
         Card(L.Get("GlassTint"), null, Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
             (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum"))));
-        // Clear, or one of the experimental effects (each says what it costs, and where it can't run).
+        // Clear, frosted or liquid (each says what it costs, and where it can't run).
         var effectDetail = Card(L.Get("GlassEffect"), "", Choice(nameof(Settings.GlassEffect), () => _settings.GlassEffect, v => _settings.GlassEffect = v,
             (GlassEffect.Clear, L.Get("GlassEffectClear")), (GlassEffect.Frosted, L.Get("GlassEffectFrosted")), (GlassEffect.Liquid, L.Get("GlassEffectLiquid"))))!;
         var liquidBlur = new ContentControl { Content = Percent(nameof(Settings.LiquidBlur), () => _settings.LiquidBlur, v => _settings.LiquidBlur = v, 0, 100) };

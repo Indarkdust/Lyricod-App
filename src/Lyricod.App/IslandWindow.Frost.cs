@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Media;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Glass's frosted blur (experimental): Windows' acrylic behind the island window, with the
+/// Lyricod Glass's frosted blur: Windows' acrylic behind the island window, with the
 /// window clipped to the pill's shape so the blur takes the island's outline. Windows doesn't smooth
 /// a clipped window's edges, so its corners can look slightly stepped. The blur is off while the
 /// island is hidden by the pointer, fading away, or being moved.

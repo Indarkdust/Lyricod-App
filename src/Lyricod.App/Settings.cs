@@ -17,7 +17,7 @@ public enum IslandTheme { Classic, Glass }
 public enum GlassTint { Neutral, Album }
 
 /// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it with Windows'
-/// acrylic, or redraws it lightly blurred and bent at the edges (both experimental).</summary>
+/// acrylic, or redraws it lightly blurred and bent at the edges.</summary>
 public enum GlassEffect { Clear, Frosted, Liquid }
 
 /// <summary>What the island does while the pointer is over it.</summary>

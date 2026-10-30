@@ -7,7 +7,7 @@ using Windows.Graphics;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Glass's liquid effect (experimental, see <see cref="LiquidGlass"/>). It runs only while
+/// Lyricod Glass's liquid effect (see <see cref="LiquidGlass"/>). It runs only while
 /// it's the chosen glass effect and the island shows (not while the pointer hides it or it's being
 /// moved); only then is the island hidden from screen capture.
 /// </summary>
