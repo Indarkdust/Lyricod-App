@@ -8,7 +8,7 @@ Lyricod for Windows is licensed under the Apache License 2.0 (see `LICENSE`). It
 - **C#/WinRT** runtime (`WinRT.Runtime.dll`): MIT License, © Microsoft Corporation (`licenses/CsWinRT-LICENSE.txt`). The Windows SDK projection for .NET (`Microsoft.Windows.SDK.NET.dll`) is redistributed under the Microsoft Windows SDK licence terms (`licenses/WindowsSDK-LICENSE.txt`).
 - **WinUIEx** by Morten Nielsen (tray icon, backdrops and window helpers): MIT License, © 2021 Morten Nielsen (`licenses/WinUIEx-LICENSE.txt`).
 - **ToolGood.Words** by ToolGood (pinyin): Apache License 2.0, © 2017-2025 ToolGood (`licenses/ToolGood.Words-LICENSE.txt`).
-- **Win2D** by Microsoft (drawing Lyricod Glass's liquid effect): MIT License, © Microsoft Corporation (`licenses/Win2D-LICENSE.txt`).
+- **Win2D** by Microsoft (drawing Lyricod Glass's liquid effect): the downloads include Microsoft's pre-built Win2D package (`Microsoft.Graphics.Canvas.dll`, `Microsoft.Graphics.Canvas.Interop.dll`), redistributed under Microsoft's licence terms for it. Win2D's source is available under the MIT License, © Microsoft Corporation (`licenses/Win2D-LICENSE.txt`).
 - **Lyricify Lyrics Helper** by WXRIW: `src/Lyricod.Core/Lyrics/QrcDecrypter.cs` is ported to Lyricod from its QRC decrypter, with changes. Apache License 2.0, © 2023 WXRIW (`licenses/Lyricify-Lyrics-Helper-LICENSE.txt`).
 - **Lyricify's Dynamic Lyrics Island**, a design by WXRIW licensed under CC BY-SA 4.0, inspired Lyricod Island, which is designed and written independently.
 - **MiSans** by Xiaomi is not included. If you choose it in Settings › Lyrics, Lyricod downloads it from Xiaomi ([hyperos.mi.com/font](https://hyperos.mi.com/font/)) to your PC, where it's used under Xiaomi's MiSans font licence, saved next to it.
