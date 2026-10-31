@@ -75,7 +75,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     bool _glassShine = true;
     GlassEffect _glassEffect = GlassEffect.Liquid;
     int _liquidBlur = 10, _liquidRefraction = 50;
-    IslandHover _islandHover = IslandHover.Expand;
+    // Hide when the pointer comes in, open the mini player on a sweep then a pull down.
+    IslandHover _islandHover = IslandHover.ByDirection;
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
     string? _islandColor;

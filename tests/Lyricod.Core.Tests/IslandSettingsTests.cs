@@ -11,7 +11,7 @@ public class IslandSettingsTests
     public void DefaultsStayTheSame()
     {
         var settings = new Settings();
-        Assert.Equal(IslandHover.Expand, settings.IslandHover);
+        Assert.Equal(IslandHover.ByDirection, settings.IslandHover);
         Assert.Equal("#8CD9FF", settings.IslandColor);
         Assert.Equal(settings.SungColor, settings.IslandColor);
         settings.SungColor = "#FFD36E";
