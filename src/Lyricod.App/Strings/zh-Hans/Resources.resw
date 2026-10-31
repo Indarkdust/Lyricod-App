@@ -250,6 +250,7 @@
   <data name="HideWhenPaused" xml:space="preserve"><value>暂停时隐藏</value></data>
   <data name="HideWhenPausedDetail" xml:space="preserve"><value>暂停一段时间后，歌词岛会淡出；继续播放时重新出现。</value></data>
   <data name="StyleHeading" xml:space="preserve"><value>样式</value></data>
+  <data name="IslandBehaviourHeading" xml:space="preserve"><value>位置与交互</value></data>
   <data name="IslandSize" xml:space="preserve"><value>大小</value></data>
   <data name="SizeExtraLarge" xml:space="preserve"><value>特大</value></data>
   <data name="IslandMaxWidth" xml:space="preserve"><value>最大宽度</value></data>

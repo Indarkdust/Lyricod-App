@@ -67,6 +67,31 @@ public sealed partial class SettingsWindow
     void Island()
     {
         Card(L.Get("ShowIsland"), L.Get("ShowIslandDetail"), Toggle(nameof(Settings.ShowIsland), () => _settings.ShowIsland, v => _settings.ShowIsland = v));
+
+        // How it looks first, then where it sits and how it reacts, then what it shows.
+        Heading(L.Get("StyleHeading"));
+        Card(L.Get("IslandTheme"), L.Get("IslandThemeDetail"), Choice(nameof(Settings.IslandTheme), () => _settings.IslandTheme, v => _settings.IslandTheme = v,
+            (IslandTheme.Classic, L.Get("IslandThemeClassic")), (IslandTheme.Glass, L.Get("IslandThemeGlass"))));
+        // Lyricod Glass's own settings, there while it's the theme.
+        var glass = Fold(L.Get("FoldGlass"), null, GlassSettings);
+        void SyncGlass() => glass.Visibility = _settings.IslandTheme == IslandTheme.Glass ? Visibility.Visible : Visibility.Collapsed;
+        Watch(nameof(Settings.IslandTheme), SyncGlass);
+        SyncGlass();
+        Card(L.Get("IslandSize"), null, Choice(nameof(Settings.IslandSize), () => _settings.IslandSize, v => _settings.IslandSize = v,
+            (IslandSize.Small, L.Get("SizeSmall")), (IslandSize.Medium, L.Get("SizeMedium")),
+            (IslandSize.Large, L.Get("SizeLarge")), (IslandSize.ExtraLarge, L.Get("SizeExtraLarge"))));
+        Card(L.Get("AlbumColour"), L.Get("AlbumColourDetail"), Toggle(nameof(Settings.IslandAlbumColour), () => _settings.IslandAlbumColour, v => _settings.IslandAlbumColour = v));
+        var colours = new ContentControl
+        {
+            Content = Colours(nameof(Settings.IslandColor), () => _settings.IslandColor, v => _settings.IslandColor = v),
+        };
+        void SyncColours() => colours.IsEnabled = !_settings.IslandAlbumColour;
+        Watch(nameof(Settings.IslandAlbumColour), SyncColours);
+        SyncColours();
+        Card(L.Get("IslandColour"), null, colours);
+        Card(L.Get("AudioBars"), L.Get("AudioBarsDetail"), Toggle(nameof(Settings.IslandAudioBars), () => _settings.IslandAudioBars, v => _settings.IslandAudioBars = v));
+
+        Heading(L.Get("IslandBehaviourHeading"));
         Card(L.Get("IslandStyle"), L.Get("IslandStyleDetail"), Choice(nameof(Settings.IslandStyle), () => _settings.IslandStyle, v => _settings.IslandStyle = v,
             (IslandStyle.Default, L.Get("IslandStyleDefault")), (IslandStyle.Floating, L.Get("IslandStyleFloating"))));
         // Only a floating island can be moved, so only it has these.
@@ -93,31 +118,11 @@ public sealed partial class SettingsWindow
         Watch(nameof(Settings.IslandHover), SyncHoverDetail);
         Watch(nameof(Settings.IslandStyle), SyncHoverDetail);
         SyncHoverDetail();
-        Card(L.Get("AlbumColour"), L.Get("AlbumColourDetail"), Toggle(nameof(Settings.IslandAlbumColour), () => _settings.IslandAlbumColour, v => _settings.IslandAlbumColour = v));
-        var colours = new ContentControl
-        {
-            Content = Colours(nameof(Settings.IslandColor), () => _settings.IslandColor, v => _settings.IslandColor = v),
-        };
-        void SyncColours() => colours.IsEnabled = !_settings.IslandAlbumColour;
-        Watch(nameof(Settings.IslandAlbumColour), SyncColours);
-        SyncColours();
-        Card(L.Get("IslandColour"), null, colours);
         Card(L.Get("HideWhenPaused"), L.Get("HideWhenPausedDetail"), Toggle(nameof(Settings.IslandHideWhenPaused),
             () => _settings.IslandHideWhenPaused, v => _settings.IslandHideWhenPaused = v));
-        Card(L.Get("AudioBars"), L.Get("AudioBarsDetail"), Toggle(nameof(Settings.IslandAudioBars), () => _settings.IslandAudioBars, v => _settings.IslandAudioBars = v));
-        Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v));
 
-        Heading(L.Get("StyleHeading"));
-        Card(L.Get("IslandTheme"), L.Get("IslandThemeDetail"), Choice(nameof(Settings.IslandTheme), () => _settings.IslandTheme, v => _settings.IslandTheme = v,
-            (IslandTheme.Classic, L.Get("IslandThemeClassic")), (IslandTheme.Glass, L.Get("IslandThemeGlass"))));
-        // Lyricod Glass's own settings, there while it's the theme.
-        var glass = Fold(L.Get("FoldGlass"), null, GlassSettings);
-        void SyncGlass() => glass.Visibility = _settings.IslandTheme == IslandTheme.Glass ? Visibility.Visible : Visibility.Collapsed;
-        Watch(nameof(Settings.IslandTheme), SyncGlass);
-        SyncGlass();
-        Card(L.Get("IslandSize"), null, Choice(nameof(Settings.IslandSize), () => _settings.IslandSize, v => _settings.IslandSize = v,
-            (IslandSize.Small, L.Get("SizeSmall")), (IslandSize.Medium, L.Get("SizeMedium")),
-            (IslandSize.Large, L.Get("SizeLarge")), (IslandSize.ExtraLarge, L.Get("SizeExtraLarge"))));
+        Heading(L.Get("TextHeading"));
+        Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v));
         Fold(L.Get("FoldText"), null, () =>
         {
             Card(L.Get("IslandMaxWidth"), L.Get("IslandMaxWidthDetail"), Choice(nameof(Settings.IslandMaxTextWidth),

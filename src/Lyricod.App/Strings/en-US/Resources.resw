@@ -250,6 +250,7 @@
   <data name="HideWhenPaused" xml:space="preserve"><value>Hide when paused</value></data>
   <data name="HideWhenPausedDetail" xml:space="preserve"><value>The island fades out after playback is paused for a while and returns when playback resumes.</value></data>
   <data name="StyleHeading" xml:space="preserve"><value>Style</value></data>
+  <data name="IslandBehaviourHeading" xml:space="preserve"><value>Position and behaviour</value></data>
   <data name="IslandSize" xml:space="preserve"><value>Size</value></data>
   <data name="SizeExtraLarge" xml:space="preserve"><value>Extra large</value></data>
   <data name="IslandMaxWidth" xml:space="preserve"><value>Maximum width</value></data>
