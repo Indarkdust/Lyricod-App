@@ -53,6 +53,8 @@ public partial class App : Application
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
 
         _settings = Settings.Load();
+        // A first run gets Lyricod Glass where its liquid effect can run (Windows 11); elsewhere the classic island.
+        if (_settings.IsNew && LiquidGlass.IsSupported) _settings.IslandTheme = IslandTheme.Glass;
         // The language chosen in Settings, read once: like the Mac, a change applies after a restart.
         L.Start(_settings.Language);
         Fonts.Start(_settings);

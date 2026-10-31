@@ -71,6 +71,15 @@ public class IslandSettingsTests
     }
 
     [Fact]
+    public void BeingNewIsntSaved()
+    {
+        // Only a first run's fresh settings are new (and may then pick defaults for the PC).
+        Assert.False(new Settings().IsNew);
+        Assert.DoesNotContain("IsNew", JsonSerializer.Serialize(new Settings(), Json));
+        Assert.False(JsonSerializer.Deserialize<Settings>("{\"IsNew\":true}", Json)!.IsNew);
+    }
+
+    [Fact]
     public void GlassIsOffByDefaultAndItsTransparencyStaysInRange()
     {
         var settings = new Settings();

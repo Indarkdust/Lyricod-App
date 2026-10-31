@@ -215,12 +215,15 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
             if (File.Exists(FilePath)) s = JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath), Json);
         }
         catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException) { }
-        s ??= new Settings();
+        s ??= new Settings { IsNew = true };
         s._ready = true; // reading the file set every property; saving starts now
         return s;
     }
 
     bool _ready;
+
+    /// <summary>Made fresh, with no saved settings to read (a first run): defaults that depend on the PC can still be chosen.</summary>
+    [JsonIgnore] public bool IsNew { get; private set; }
 
     void Save()
     {
