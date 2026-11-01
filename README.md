@@ -31,7 +31,9 @@ Hovering over the island can expand it into a mini player or hide it temporarily
 
 To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides and can be dragged anywhere once unlocked. Near screen edges, it expands inward to keep the lyrics and mini player on screen.
 
-Lyricod Glass gives the island a transparent background. On Windows 11, the default Liquid effect adds a slight blur, edge refraction and highlights. You can also choose Clear or Frosted, and adjust transparency, tint, blur and refraction. Updated Windows 11 builds that support per-session capture exclusion keep the Liquid effect live while allowing screenshots, recordings and screen sharing to see the island. On older builds, the island is hidden from capture to prevent feedback; **Show in screenshots** briefly pauses the glass background so you can capture it. See the [recording compatibility test notes](docs/recording-compatibility.md) for requirements and the NVIDIA test checklist.
+Lyricod Glass gives the island a transparent background. On Windows 11, the default Liquid effect adds a slight blur, edge refraction and highlights. You can also choose Clear or Frosted, and adjust transparency, tint, blur and refraction.
+
+On supported Windows 11 versions, the live Liquid Glass island appears in screenshots and recordings, including NVIDIA Instant Replay. On older versions, the island may be hidden from capture to prevent visual feedback. You can temporarily show it using **Show in screenshots**.
 
 ### Desktop lyrics
 
