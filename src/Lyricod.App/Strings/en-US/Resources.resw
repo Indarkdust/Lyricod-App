@@ -33,8 +33,6 @@
   <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
   <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent or Xiaomi.</value></data>
-  <data name="LyricsWindowMenu" xml:space="preserve"><value>Lyrics window…</value></data>
-  <data name="SettingsMenu" xml:space="preserve"><value>Settings…</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Lyricod settings</value></data>
   <data name="LyricsWindowTitle" xml:space="preserve"><value>Lyrics window</value></data>
   <data name="PaneGeneral" xml:space="preserve"><value>General</value></data>
@@ -240,7 +238,7 @@
   <data name="LanguageLabel" xml:space="preserve"><value>Language</value></data>
   <data name="LanguageSystem" xml:space="preserve"><value>Windows' language</value></data>
   <data name="RestartNow" xml:space="preserve"><value>Restart now</value></data>
-  <data name="RestartToChangeLanguage" xml:space="preserve"><value>Lyricod needs to restart to change language.</value></data>
+  <data name="RestartToApply" xml:space="preserve"><value>Lyricod needs to restart to apply this change.</value></data>
   <data name="FollowLabel" xml:space="preserve"><value>Follow</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>Whichever is playing</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>Players appear here after they've played a song.</value></data>
@@ -314,7 +312,7 @@
   <data name="ShowDiagnostics" xml:space="preserve"><value>Show</value></data>
   <data name="HideDiagnostics" xml:space="preserve"><value>Hide</value></data>
   <data name="DiagnosticsDetail" xml:space="preserve"><value>Copy these details to help troubleshoot a problem.</value></data>
-  <data name="LyricsFont" xml:space="preserve"><value>Lyrics font</value></data>
+  <data name="FontLabel" xml:space="preserve"><value>Font</value></data>
   <data name="FontDefault" xml:space="preserve"><value>Microsoft YaHei (default)</value></data>
   <data name="FontRecommended" xml:space="preserve"><value>MiSans (recommended)</value></data>
   <data name="FontSearch" xml:space="preserve"><value>Search installed fonts</value></data>
@@ -328,7 +326,7 @@
   <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download MiSans.</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>The download timed out. Please retry.</value></data>
   <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all MiSans files. Close Lyricod and try again.</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>MiSans could not be loaded or copied to the app folder. Lyrics are using Microsoft YaHei.</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>MiSans could not be loaded or copied to the app folder. Lyricod is using its default font.</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>Could not list installed fonts.</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and Install</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>What’s new</value></data>

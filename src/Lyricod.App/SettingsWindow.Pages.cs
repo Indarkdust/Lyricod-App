@@ -22,11 +22,13 @@ public sealed partial class SettingsWindow
         // Each language in its own name, so it can be found whatever is showing.
         Card(L.Get("LanguageLabel"), null, Choice(nameof(Settings.Language), () => _settings.Language, v => _settings.Language = v,
             ("", L.Get("LanguageSystem")), ("en-US", "English"), ("zh-Hans", "简体中文")));
+        // A new language, and a new font on Lyricod's own text, show after a restart.
         var restart = new Button { Content = L.Get("RestartNow"), Style = Style("AccentButtonStyle") };
         restart.Click += (_, _) => Restart?.Invoke();
         var restartCard = new Border { Style = Style("Card"), Child = RestartRow(restart) };
-        void SyncRestart() => restartCard.Visibility = _settings.Language != L.Language ? Visibility.Visible : Visibility.Collapsed;
+        void SyncRestart() => restartCard.Visibility = _settings.Language != L.Language || Fonts.AppNeedsRestart ? Visibility.Visible : Visibility.Collapsed;
         Watch(nameof(Settings.Language), SyncRestart);
+        FontPicker(SyncRestart);
         SyncRestart();
         Page.Children.Add(restartCard);
 
@@ -223,7 +225,7 @@ public sealed partial class SettingsWindow
         var grid = new Grid { ColumnSpacing = 24 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.Children.Add(new TextBlock { Text = L.Get("RestartToChangeLanguage"), Style = Style("Detail"), VerticalAlignment = VerticalAlignment.Center });
+        grid.Children.Add(new TextBlock { Text = L.Get("RestartToApply"), Style = Style("Detail"), VerticalAlignment = VerticalAlignment.Center });
         Grid.SetColumn(restart, 1);
         restart.VerticalAlignment = VerticalAlignment.Center;
         grid.Children.Add(restart);
@@ -260,7 +262,6 @@ public sealed partial class SettingsWindow
         Note(L.Get("TimingNote"));
 
         Heading(L.Get("DisplayHeading"));
-        FontPicker();
         var languages = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
         foreach (var (language, key) in new[] { (LyricLanguage.Japanese, "Japanese"), (LyricLanguage.Korean, "Korean"), (LyricLanguage.Chinese, "Chinese") })
         {

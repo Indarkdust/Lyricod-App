@@ -33,8 +33,6 @@
   <data name="PlatformNote" xml:space="preserve"><value>基于 Microsoft 的 .NET 和 Windows App SDK 构建。</value></data>
   <data name="Trademarks" xml:space="preserve"><value>商标</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯或小米没有关联，也未获得其认可或赞助。</value></data>
-  <data name="LyricsWindowMenu" xml:space="preserve"><value>歌词窗口…</value></data>
-  <data name="SettingsMenu" xml:space="preserve"><value>设置…</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Lyricod 设置</value></data>
   <data name="LyricsWindowTitle" xml:space="preserve"><value>歌词窗口</value></data>
   <data name="PaneGeneral" xml:space="preserve"><value>通用</value></data>
@@ -240,7 +238,7 @@
   <data name="LanguageLabel" xml:space="preserve"><value>语言</value></data>
   <data name="LanguageSystem" xml:space="preserve"><value>跟随系统</value></data>
   <data name="RestartNow" xml:space="preserve"><value>立即重新启动</value></data>
-  <data name="RestartToChangeLanguage" xml:space="preserve"><value>需要重新启动 Lyricod 才能切换语言。</value></data>
+  <data name="RestartToApply" xml:space="preserve"><value>需要重新启动 Lyricod 才能应用更改。</value></data>
   <data name="FollowLabel" xml:space="preserve"><value>跟随</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>正在播放的播放器</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>播放过歌曲的播放器会出现在这里。</value></data>
@@ -314,7 +312,7 @@
   <data name="ShowDiagnostics" xml:space="preserve"><value>显示</value></data>
   <data name="HideDiagnostics" xml:space="preserve"><value>隐藏</value></data>
   <data name="DiagnosticsDetail" xml:space="preserve"><value>遇到问题时，可以复制这些信息用于排查。</value></data>
-  <data name="LyricsFont" xml:space="preserve"><value>歌词字体</value></data>
+  <data name="FontLabel" xml:space="preserve"><value>字体</value></data>
   <data name="FontDefault" xml:space="preserve"><value>微软雅黑（默认）</value></data>
   <data name="FontRecommended" xml:space="preserve"><value>MiSans（推荐）</value></data>
   <data name="FontSearch" xml:space="preserve"><value>搜索已安装的字体</value></data>
@@ -328,7 +326,7 @@
   <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 MiSans。</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>下载超时，请重试。</value></data>
   <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 MiSans 文件。请关闭 Lyricod 后重试。</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 MiSans 或将其复制到应用文件夹。歌词将使用微软雅黑显示。</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 MiSans 或将其复制到应用文件夹。Lyricod 将使用默认字体显示。</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>无法读取已安装的字体。</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>下载并安装</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>更新内容</value></data>

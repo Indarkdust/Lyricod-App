@@ -13,7 +13,7 @@ public enum SettingsPane { General, Desktop, Island, LyricsWindow, Lyrics, Short
 /// <summary>
 /// Lyricod's settings, like the macOS app's: General, Desktop, Lyricod Island, Lyrics Window,
 /// Lyrics, Shortcuts and About. Each control follows its setting while the page is up, so a change from the
-/// tray menu or a shortcut shows here too.
+/// tray panel or a shortcut shows here too.
 /// </summary>
 public sealed partial class SettingsWindow : Window
 {

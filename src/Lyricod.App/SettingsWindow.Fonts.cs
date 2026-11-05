@@ -15,12 +15,13 @@ public sealed partial class SettingsWindow
     Action? _fontRefresh;
     IReadOnlyList<string>? _installedFonts;
 
-    void FontPicker()
+    /// <summary>The font for lyrics and the rest of Lyricod; <paramref name="changed"/> follows each change.</summary>
+    void FontPicker(Action changed)
     {
         var options = new List<(string Value, string Name)> { ("", L.Get("FontDefault")), ("MiSans", L.Get("FontRecommended")) };
         string? displayedChoice = null;
         var picker = new AutoSuggestBox { Width = 300, PlaceholderText = L.Get("FontSearch") };
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picker, L.Get("LyricsFont"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(picker, L.Get("FontLabel"));
         var info = new StackPanel { Spacing = 12, Margin = new Thickness(16, 4, 16, 12) };
         var description = new TextBlock { Text = L.Get("MiSansDownloadDetail"), Style = Style("Detail"), TextWrapping = TextWrapping.Wrap };
         var licence = new HyperlinkButton { Content = L.Get("ViewLicence"), NavigateUri = new Uri(MiSansArchive.LicenceUrl), Padding = new Thickness(0) };
@@ -39,7 +40,7 @@ public sealed partial class SettingsWindow
         info.Children.Add(progressRow);
         info.Children.Add(status);
         info.Children.Add(error);
-        Card(L.Get("LyricsFont"), null, picker);
+        Card(L.Get("FontLabel"), null, picker);
         Page.Children.Add(info);
         Page.Children.Add(listError);
 
@@ -73,6 +74,7 @@ public sealed partial class SettingsWindow
             });
             listError.Text = _fontListError ?? "";
             listError.Visibility = _fontListError == null ? Visibility.Collapsed : Visibility.Visible;
+            changed();
         }
         void Select(string name)
         {

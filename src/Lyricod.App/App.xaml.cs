@@ -3,14 +3,13 @@ using Lyricod.Core.Romanization;
 using Lyricod.Platform;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.AppLifecycle;
 using WinUIEx;
 
 namespace Lyricod;
 
 /// <summary>
-/// A tray app, like the Mac's menu-bar app: no main window. The tray icon's menu shows and hides
+/// A tray app, like the Mac's menu-bar app: no main window. The tray icon's panel shows and hides
 /// the views and opens the lyrics window and Settings.
 /// </summary>
 public partial class App : Application
@@ -58,6 +57,7 @@ public partial class App : Application
         // The language chosen in Settings, read once: like the Mac, a change applies after a restart.
         L.Start(_settings.Language);
         Fonts.Start(_settings);
+        Fonts.ApplyToApp(Resources); // before any window opens
         _updates = new UpdateChecker(_settings, DispatcherQueue.GetForCurrentThread());
         var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "dev";
         var provider = new LyricsProvider(Path.Combine(Settings.DataDir, "lyrics"), version);
@@ -70,12 +70,12 @@ public partial class App : Application
         _island = new IslandWindow(_model, _settings, OpenLyricsWindow, () => OpenSettings());
 
         _tray = new TrayIcon(1, Path.Combine(AppContext.BaseDirectory, "Assets", "Lyricod.ico"), "Lyricod");
-        // A click opens the panel (as the Mac's menu-bar icon does); right-click, Windows' usual short menu.
+        // Either click opens the panel, as the Mac's menu-bar icon does.
         _panel = new TrayPanel(_model, _settings, OpenLyricsWindow, () => OpenSettings(), OpenChooseLyrics, Quit, _updates)
         {
             OpenNeteaseSync = OpenNeteaseSync,
         };
-        _tray.ContextMenu += (_, e) => e.Flyout = BuildMenu();
+        _tray.ContextMenu += (_, _) => _panel.Toggle();
         _tray.Selected += (_, _) => _panel.Toggle();
         _tray.IsVisible = true;
         _model.Changed += change =>
@@ -159,53 +159,12 @@ public partial class App : Application
         catch (Exception) { }
     }
 
-    MenuFlyout BuildMenu()
-    {
-        var s = _settings!;
-        var m = _model!;
-        var menu = new MenuFlyout();
-
-        var song = m.Track is { } t ? Trim($"{t.Title} — {t.Artist}", 60) : L.Get("NothingPlaying");
-        menu.Items.Add(new MenuFlyoutItem { Text = song, IsEnabled = false });
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var show = new ToggleMenuFlyoutItem { Text = L.Get("DesktopLyrics"), IsChecked = s.ShowDesktopLyrics };
-        show.Click += (_, _) => s.ShowDesktopLyrics = !s.ShowDesktopLyrics;
-        menu.Items.Add(show);
-        var locked = new ToggleMenuFlyoutItem { Text = L.Get("LockDesktopLyrics"), IsChecked = s.DesktopLocked, IsEnabled = s.ShowDesktopLyrics };
-        locked.Click += (_, _) => s.DesktopLocked = !s.DesktopLocked;
-        menu.Items.Add(locked);
-        var island = new ToggleMenuFlyoutItem { Text = L.Get("PaneIsland"), IsChecked = s.ShowIsland };
-        island.Click += (_, _) => s.ShowIsland = !s.ShowIsland;
-        menu.Items.Add(island);
-        // Only a floating island can be moved, so only it can be locked.
-        if (s.IslandStyle == IslandStyle.Floating)
-        {
-            var islandLocked = new ToggleMenuFlyoutItem { Text = L.Get("LockIsland"), IsChecked = s.IslandLocked, IsEnabled = s.ShowIsland };
-            islandLocked.Click += (_, _) => s.IslandLocked = !s.IslandLocked;
-            menu.Items.Add(islandLocked);
-        }
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var lyrics = new MenuFlyoutItem { Text = L.Get("LyricsWindowMenu"), Icon = new FontIcon { Glyph = "\uE8FD" } };
-        lyrics.Click += (_, _) => OpenLyricsWindow();
-        menu.Items.Add(lyrics);
-        var settings = new MenuFlyoutItem { Text = L.Get("SettingsMenu"), Icon = new FontIcon { Glyph = "\uE713" } };
-        settings.Click += (_, _) => OpenSettings();
-        menu.Items.Add(settings);
-        menu.Items.Add(new MenuFlyoutSeparator());
-        var quit = new MenuFlyoutItem { Text = L.Get("Quit") };
-        quit.Click += (_, _) => Quit();
-        menu.Items.Add(quit);
-        return menu;
-    }
-
     /// <summary>Starts a new Lyricod and quits this one (to change language).</summary>
     void Restart() => Quit(restart: true);
 
     /// <summary>
-    /// Quits once the click that asked for it (the tray panel's button, the tray menu's item or
-    /// Settings' Restart) has finished, since its window closes on the way out.
+    /// Quits once the click that asked for it (the tray panel's button or Settings' Restart) has
+    /// finished, since its window closes on the way out.
     /// </summary>
     void Quit() => Quit(restart: false);
 
@@ -237,8 +196,6 @@ public partial class App : Application
         _shortcuts?.Dispose();
         if (_tray != null)
         {
-            // An open tray menu would otherwise close with its window and touch it as it goes.
-            _tray.CloseFlyout();
             _tray.Dispose();
             _tray = null;
         }

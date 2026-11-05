@@ -2,6 +2,7 @@ using Lyricod.Core;
 using Lyricod.Core.Fonts;
 using Lyricod.Core.Romanization;
 using Lyricod.Platform;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI.Text;
@@ -15,7 +16,7 @@ static class Fonts
     const string Korean = "Malgun Gothic, Microsoft YaHei UI, Yu Gothic UI";
     static readonly Dictionary<string, FontFamily> Families = [];
     static string _choice = "";
-    static string? _miSans, _hash;
+    static string? _miSans, _hash, _appFont;
     static bool _resolved;
 
     public static event Action? Changed;
@@ -28,6 +29,27 @@ static class Fonts
     public static string DiagnosticsText => UsingMiSans
         ? $"MiSans (downloaded, {(_hash == MiSansArchive.KnownHash ? "hash ok" : "hash differs")})"
         : _choice is "" or "MiSans" ? "Microsoft YaHei (default)" : _choice;
+
+    /// <summary>The chosen font, or null for the default (Microsoft YaHei for lyrics, Windows' own font elsewhere).</summary>
+    static string? Chosen => _choice == "MiSans" ? _miSans : _choice.Length > 0 ? _choice : null;
+
+    /// <summary>
+    /// Puts the chosen font on the rest of Lyricod's text too: Settings, the tray panel, buttons and
+    /// song titles. WinUI reads it as each window opens, so a change after start shows there after a
+    /// restart (<see cref="AppNeedsRestart"/>). The default keeps Windows' font: its Chinese is Microsoft
+    /// YaHei too, and it has the semibold that headings use and YaHei lacks.
+    /// </summary>
+    public static void ApplyToApp(ResourceDictionary resources)
+    {
+        _appFont = Chosen;
+        if (_appFont == null) return;
+        var family = new FontFamily(_appFont + ", " + Chinese);
+        resources["ContentControlThemeFontFamily"] = family; // controls and WinUI's text styles
+        resources[typeof(TextBlock)] = new Style(typeof(TextBlock)) { Setters = { new Setter(TextBlock.FontFamilyProperty, family) } }; // plain text
+    }
+
+    /// <summary>Whether the font changed since Lyricod started, so its own text needs a restart to follow.</summary>
+    public static bool AppNeedsRestart => Chosen != _appFont;
 
     public static void Start(Settings settings)
     {
@@ -116,7 +138,7 @@ static class Fonts
             LyricLanguage.Chinese => Chinese,
             _ => song == LyricLanguage.Japanese ? Japanese : song == LyricLanguage.Korean ? Korean : Chinese,
         };
-        string? selected = _choice == "MiSans" ? _miSans : _choice.Length > 0 ? _choice : null;
+        string? selected = Chosen;
         string source = selected == null ? fallback : selected + ", " + fallback;
         if (!Families.TryGetValue(source, out var family)) Families[source] = family = new FontFamily(source);
         return family;
