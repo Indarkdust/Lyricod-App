@@ -19,7 +19,7 @@ public static class Diagnostics
         playerId = Redact(playerId, userProfile);
         lastError = Redact(lastError, userProfile);
 
-        List<string> app = [$"Lyricod {version} · {system} · {architecture}"];
+        List<string> app = [$"Lyricod {version} on {system}, {architecture}"];
         if (installKind is { } installation) app.Add($"Install: {installation.ToString().ToLowerInvariant()}");
         if (font != null) app.Add($"Font: {Redact(font, userProfile)}");
         if (glass != null) app.Add($"Glass capture: {glass}");
@@ -27,9 +27,9 @@ public static class Diagnostics
         List<string> player = [];
         if (playerId != null)
         {
-            string line = $"Player: {playerName ?? playerId} ({playerId}) · {(isPlaying ? "playing" : "paused")}";
+            string line = $"Player: {playerName ?? playerId} ({playerId}), {(isPlaying ? "playing" : "paused")}";
             // Without the player's position, Lyricod times the song itself, and seeking can put it out of step.
-            if (playerTimeline is { } timeline) line += timeline ? " · position from the player" : " · no position from the player";
+            if (playerTimeline is { } timeline) line += timeline ? ", position from the player" : ", no position from the player";
             player.Add(line);
         }
         if (musicPlayer is { } music) player.Add($"Music player: {(music ? "yes" : "no")}");
@@ -38,23 +38,22 @@ public static class Diagnostics
         List<string> song = [];
         if (track != null)
         {
-            string line = $"Song: {track.Title} — {track.Artist}";
+            var details = new List<string>();
             if (double.IsFinite(track.Duration) && track.Duration > 0 && track.Duration < int.MaxValue)
             {
                 int seconds = (int)Math.Round(track.Duration);
-                line += FormattableString.Invariant($" · {seconds / 60}:{seconds % 60:00}");
+                details.Add(FormattableString.Invariant($"{seconds / 60}:{seconds % 60:00}"));
             }
-            if (track.QqSongMid != null) line += $" · QQ {track.QqSongMid}";
-            else if (track.QqSongId != null) line += $" · QQ {track.QqSongId}";
-            song.Add(line);
+            if ((track.QqSongMid ?? track.QqSongId?.ToString(CultureInfo.InvariantCulture)) is { } qq) details.Add($"QQ {qq}");
+            song.Add($"Song: {track.Title} — {track.Artist}" + (details.Count > 0 ? $" ({string.Join(", ", details)})" : ""));
         }
         if (treatedAsSong is { } songState) song.Add($"Treated as a song: {(songState ? "yes" : "no")}");
         if (cover is { } c)
         {
             // How big the cover the player handed over is, and whether it came whole (see ArtworkCheck).
-            string size = coverBytes is not { } n ? "" : n < 1024 * 1024 ? FormattableString.Invariant($" · {Math.Max(1, n / 1024)} KB")
-                : FormattableString.Invariant($" · {n / (1024.0 * 1024):0.0} MB");
-            string whole = coverWhole is not { } w ? "" : w ? " · whole" : " · cut short";
+            string size = coverBytes is not { } n ? "" : n < 1024 * 1024 ? FormattableString.Invariant($", {Math.Max(1, n / 1024)} KB")
+                : FormattableString.Invariant($", {n / (1024.0 * 1024):0.0} MB");
+            string whole = coverWhole is not { } w ? "" : w ? ", whole" : ", cut short";
             song.Add(FormattableString.Invariant($"Cover: {c.Width}×{c.Height} px{size}{whole}"));
         }
 
@@ -66,14 +65,15 @@ public static class Diagnostics
                 LyricsSource.Qq => "QQ Music", LyricsSource.Netease => "NetEase", LyricsSource.Lrclib => "LRCLIB", _ => lyrics.Source,
             };
             string kind = !lyrics.IsSynced ? "unsynced" : lyrics.IsWordSynced ? "word by word" : "line by line";
-            string line = $"Lyrics: {source} · {kind} · {lyrics.Lines.Count} lines";
-            if (lyrics.Ref is { } reference) line += $" · {reference.Source.ToString().ToLowerInvariant()}:{reference.Id}";
-            words.Add(line + $" · picked by hand: {(pinned ? "yes" : "no")}");
+            string line = $"Lyrics: {source}, {kind}, {lyrics.Lines.Count} line{(lyrics.Lines.Count == 1 ? "" : "s")}";
+            if (lyrics.Ref is { } reference) line += $" ({reference.Source.ToString().ToLowerInvariant()}:{reference.Id})";
+            words.Add(line);
+            words.Add($"Picked by hand: {(pinned ? "yes" : "no")}");
         }
         else if (track != null) words.Add(searching ? "Lyrics: searching" : "Lyrics: none");
         if (bestMatchScore != null || treatedAsSong != null)
             words.Add("Best match score: " + (bestMatchScore?.ToString("0.##", CultureInfo.InvariantCulture) ?? "unverified"));
-        string songTiming = track == null ? "" : $"this song {Seconds(songOffset)} · ";
+        string songTiming = track == null ? "" : $"this song {Seconds(songOffset)}, ";
         words.Add($"Timing: {songTiming}all songs {Seconds(offset)}");
 
         List<string> error = string.IsNullOrEmpty(lastError) ? [] : [$"Last error: {lastError}"];

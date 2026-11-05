@@ -44,14 +44,15 @@ public class DiagnosticsTests
             string text = Diagnostics.Text("0.4.5 (312)", "Windows 10.0.26100", "arm64", "QQ Music", "QQMusic.exe",
                 true, track, lyrics, false, false, 0.3, -0.2);
             Assert.Equal("""
-                Lyricod 0.4.5 (312) · Windows 10.0.26100 · arm64
+                Lyricod 0.4.5 (312) on Windows 10.0.26100, arm64
 
-                Player: QQ Music (QQMusic.exe) · playing
+                Player: QQ Music (QQMusic.exe), playing
 
-                Song: 晴天 — 周杰伦 · 4:29 · QQ 0039MnYb0qxYhV
+                Song: 晴天 — 周杰伦 (4:29, QQ 0039MnYb0qxYhV)
 
-                Lyrics: QQ Music · word by word · 1 lines · qq:0039MnYb0qxYhV · picked by hand: no
-                Timing: this song +0.30 s · all songs −0.20 s
+                Lyrics: QQ Music, word by word, 1 line (qq:0039MnYb0qxYhV)
+                Picked by hand: no
+                Timing: this song +0.30 s, all songs −0.20 s
                 """.Replace("\r\n", "\n"), text);
         }
         finally { CultureInfo.CurrentCulture = old; }
@@ -68,22 +69,23 @@ public class DiagnosticsTests
             font: "MiSans (downloaded, hash ok)", installKind: InstallKind.Portable, musicPlayer: true, treatedAsSong: true,
             bestMatchScore: 8.5, automaticLookupAllowed: true, coverBytes: 38_912, coverWhole: true, glass: "global exclusion fallback");
         Assert.Equal("""
-            Lyricod 0.5.7 (0) · Windows 10.0.26300.0 · x64
+            Lyricod 0.5.7 (0) on Windows 10.0.26300.0, x64
             Install: portable
             Font: MiSans (downloaded, hash ok)
             Glass capture: global exclusion fallback
 
-            Player: NetEase Cloud Music (cloudmusic.exe) · playing · position from the player
+            Player: NetEase Cloud Music (cloudmusic.exe), playing, position from the player
             Music player: yes
             Automatic lyric lookup: allowed
 
-            Song: 啄木鳥 — ヨルシカ · 3:36
+            Song: 啄木鳥 — ヨルシカ (3:36)
             Treated as a song: yes
-            Cover: 800×800 px · 38 KB · whole
+            Cover: 800×800 px, 38 KB, whole
 
-            Lyrics: QQ Music · word by word · 1 lines · qq:000E1FVU0aq6GB · picked by hand: no
+            Lyrics: QQ Music, word by word, 1 line (qq:000E1FVU0aq6GB)
+            Picked by hand: no
             Best match score: 8.5
-            Timing: this song +0.00 s · all songs +0.00 s
+            Timing: this song +0.00 s, all songs +0.00 s
 
             Last error: Player unavailable
             """.Replace("\r\n", "\n"), text);
@@ -103,7 +105,7 @@ public class DiagnosticsTests
     public void OmitsUnavailableDetails()
     {
         string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0);
-        Assert.Equal("Lyricod dev · Windows · x64\n\nTiming: all songs +0.00 s", text);
+        Assert.Equal("Lyricod dev on Windows, x64\n\nTiming: all songs +0.00 s", text);
     }
 
     [Fact]
@@ -112,7 +114,7 @@ public class DiagnosticsTests
         string text = Diagnostics.Text("dev", "Windows", "x64", "Player", "player.exe", false,
             new Track { Title = "Song", Artist = "Artist" }, new Lyrics([], "LRCLIB", false), false, true, -1.25, 0.5, "Player unavailable");
         Assert.Contains("Song: Song — Artist\n", text);
-        Assert.Contains("Lyrics: LRCLIB · unsynced · 0 lines · picked by hand: yes", text);
+        Assert.Contains("Lyrics: LRCLIB, unsynced, 0 lines\nPicked by hand: yes\n", text);
         Assert.EndsWith("Last error: Player unavailable", text);
     }
 
@@ -121,8 +123,8 @@ public class DiagnosticsTests
     {
         string with = Diagnostics.Text("dev", "Windows", "x64", "NetEase", "cloudmusic.exe", true, null, null, false, false, 0, 0, playerTimeline: true);
         string without = Diagnostics.Text("dev", "Windows", "x64", "NetEase", "cloudmusic.exe", true, null, null, false, false, 0, 0, playerTimeline: false);
-        Assert.Contains("Player: NetEase (cloudmusic.exe) · playing · position from the player\n", with);
-        Assert.Contains("Player: NetEase (cloudmusic.exe) · playing · no position from the player\n", without);
+        Assert.Contains("Player: NetEase (cloudmusic.exe), playing, position from the player\n", with);
+        Assert.Contains("Player: NetEase (cloudmusic.exe), playing, no position from the player\n", without);
     }
 
     [Fact]
@@ -138,9 +140,9 @@ public class DiagnosticsTests
     {
         string Cover(long bytes, bool whole) => Diagnostics.Text("dev", "Windows", "x64", "NetEase", "cloudmusic.exe", true,
             new Track { Title = "Song", Artist = "Artist" }, null, false, false, 0, 0, cover: (3000, 3000), coverBytes: bytes, coverWhole: whole);
-        Assert.Contains("Cover: 3000×3000 px · 2.5 MB · whole\n", Cover(2_621_440, true));
-        Assert.Contains("Cover: 3000×3000 px · 60 KB · cut short\n", Cover(61_440, false));
-        Assert.Contains("Cover: 3000×3000 px · 1 KB · whole\n", Cover(10, true));
+        Assert.Contains("Cover: 3000×3000 px, 2.5 MB, whole\n", Cover(2_621_440, true));
+        Assert.Contains("Cover: 3000×3000 px, 60 KB, cut short\n", Cover(61_440, false));
+        Assert.Contains("Cover: 3000×3000 px, 1 KB, whole\n", Cover(10, true));
     }
 
     [Fact]
