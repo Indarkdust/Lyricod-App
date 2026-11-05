@@ -23,10 +23,10 @@ public class DiagnosticsTests
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
             string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0,
                 musicPlayer: false, treatedAsSong: false, bestMatchScore: 4.5);
-            Assert.Contains("Music player: no\nTreated as a song: no\nBest match score: 4.5\n", text);
+            Assert.Contains("\n\nMusic player: no\n\nTreated as a song: no\n\nBest match score: 4.5\nTiming:", text);
             string pinned = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, true, 0, 0,
                 musicPlayer: false, treatedAsSong: true);
-            Assert.Contains("Treated as a song: yes\nBest match score: unverified\n", pinned);
+            Assert.Contains("Treated as a song: yes\n\nBest match score: unverified\n", pinned);
         }
         finally { CultureInfo.CurrentCulture = old; }
     }
@@ -45,13 +45,48 @@ public class DiagnosticsTests
                 true, track, lyrics, false, false, 0.3, -0.2);
             Assert.Equal("""
                 Lyricod 0.4.5 (312) · Windows 10.0.26100 · arm64
+
                 Player: QQ Music (QQMusic.exe) · playing
+
                 Song: 晴天 — 周杰伦 · 4:29 · QQ 0039MnYb0qxYhV
+
                 Lyrics: QQ Music · word by word · 1 lines · qq:0039MnYb0qxYhV · picked by hand: no
                 Timing: this song +0.30 s · all songs −0.20 s
                 """.Replace("\r\n", "\n"), text);
         }
         finally { CultureInfo.CurrentCulture = old; }
+    }
+
+    [Fact]
+    public void GroupsLyricodThePlayerTheSongAndItsLyrics()
+    {
+        var track = new Track { Title = "啄木鳥", Artist = "ヨルシカ", Duration = 216 };
+        var lyrics = new Lyrics([new LyricLine { Text = "a", Words = [new LyricWord(0, 1, "a")] }], "QQ音乐")
+        { Ref = new LyricsRef(LyricsSource.Qq, "000E1FVU0aq6GB") };
+        string text = Diagnostics.Text("0.5.7 (0)", "Windows 10.0.26300.0", "x64", "NetEase Cloud Music", "cloudmusic.exe", true,
+            track, lyrics, false, false, 0, 0, "Player unavailable", playerTimeline: true, cover: (800, 800),
+            font: "MiSans (downloaded, hash ok)", installKind: InstallKind.Portable, musicPlayer: true, treatedAsSong: true,
+            bestMatchScore: 8.5, automaticLookupAllowed: true, coverBytes: 38_912, coverWhole: true, glass: "global exclusion fallback");
+        Assert.Equal("""
+            Lyricod 0.5.7 (0) · Windows 10.0.26300.0 · x64
+            Install: portable
+            Font: MiSans (downloaded, hash ok)
+            Glass capture: global exclusion fallback
+
+            Player: NetEase Cloud Music (cloudmusic.exe) · playing · position from the player
+            Music player: yes
+            Automatic lyric lookup: allowed
+
+            Song: 啄木鳥 — ヨルシカ · 3:36
+            Treated as a song: yes
+            Cover: 800×800 px · 38 KB · whole
+
+            Lyrics: QQ Music · word by word · 1 lines · qq:000E1FVU0aq6GB · picked by hand: no
+            Best match score: 8.5
+            Timing: this song +0.00 s · all songs +0.00 s
+
+            Last error: Player unavailable
+            """.Replace("\r\n", "\n"), text);
     }
 
     [Theory]
@@ -68,7 +103,7 @@ public class DiagnosticsTests
     public void OmitsUnavailableDetails()
     {
         string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0);
-        Assert.Equal("Lyricod dev · Windows · x64\nTiming: all songs +0.00 s", text);
+        Assert.Equal("Lyricod dev · Windows · x64\n\nTiming: all songs +0.00 s", text);
     }
 
     [Fact]

@@ -49,8 +49,8 @@ public sealed partial class PlaybackModel
 
     /// <summary>Debug: LYRICOD_STATE_FILE=path writes the playhead and line for checks from outside.</summary>
     static readonly string? DebugStatePath = Environment.GetEnvironmentVariable("LYRICOD_STATE_FILE");
-    /// <summary>Debug: the glass's capture status, for the state file.</summary>
-    internal static Func<string>? DebugGlass;
+    /// <summary>The liquid glass's capture status, for diagnostics and the debug state file.</summary>
+    internal static Func<string>? GlassStatus;
 
     public string DiagnosticsText => Diagnostics.Text(
         UpdateChecker.TestBuild is { } build ? $"{UpdateChecker.Version} (test build {build})"
@@ -60,7 +60,7 @@ public sealed partial class PlaybackModel
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,
         SongOffset, _settings.Offset, LastError, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind, IsMusicPlayer, IsSong, BestMatchScore, AutomaticLookupAllowed,
-        Artwork?.Length, Artwork == null ? null : _artworkWhole);
+        Artwork?.Length, Artwork == null ? null : _artworkWhole, GlassStatus?.Invoke());
 
     void WriteDebugState(double position)
     {
@@ -78,7 +78,7 @@ public sealed partial class PlaybackModel
                 musicPlayer = IsMusicPlayer, song = IsSong, bestMatchScore = BestMatchScore,
                 automaticLookupAllowed = AutomaticLookupAllowed,
                 artwork = Artwork == null ? null : $"{Artwork.Length} bytes, {(_artworkWhole ? "whole" : "cut short")}",
-                glass = DebugGlass?.Invoke(),
+                glass = GlassStatus?.Invoke(),
             }));
         }
         catch (IOException) { }

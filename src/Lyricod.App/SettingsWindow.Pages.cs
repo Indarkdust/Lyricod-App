@@ -11,7 +11,7 @@ public sealed partial class SettingsWindow
 {
     void General()
     {
-        var startup = new ToggleSwitch { IsOn = Startup.IsEnabled, OnContent = L.Get("ToggleOn"), OffContent = L.Get("ToggleOff") };
+        var startup = Switch(Startup.IsEnabled);
         startup.Toggled += (_, _) =>
         {
             if (startup.IsOn != Startup.IsEnabled && !Startup.Set(startup.IsOn)) startup.IsOn = Startup.IsEnabled;
@@ -350,7 +350,7 @@ public sealed partial class SettingsWindow
             TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true,
             Visibility = Visibility.Collapsed, // hidden until asked for
         };
-        void RefreshDiagnostics() => diagnostics.Text = _model.DiagnosticsText + "\nGlass capture: " + ((App)Application.Current).GlassCaptureDiagnostics;
+        void RefreshDiagnostics() => diagnostics.Text = _model.DiagnosticsText;
         _songWatchers.Add(RefreshDiagnostics);
         Watch(nameof(Settings.Offset), RefreshDiagnostics);
         RefreshDiagnostics();

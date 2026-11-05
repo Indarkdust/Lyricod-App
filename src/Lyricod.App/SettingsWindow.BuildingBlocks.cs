@@ -123,10 +123,14 @@ public sealed partial class SettingsWindow
         catch (Exception e) when (e is Win32Exception or FileNotFoundException) { }
     }
 
+    /// <summary>A switch that lines up with the other controls at a card's right edge (WinUI's own
+    /// minimum width leaves a gap after it), saying On/Off in Lyricod's language, not Windows'.</summary>
+    static ToggleSwitch Switch(bool on) =>
+        new() { IsOn = on, MinWidth = 0, OnContent = L.Get("ToggleOn"), OffContent = L.Get("ToggleOff") };
+
     ToggleSwitch Toggle(string property, Func<bool> get, Action<bool> set)
     {
-        // WinUI's own On/Off would stay in Windows' language.
-        var toggle = new ToggleSwitch { IsOn = get(), MinWidth = 0, OnContent = L.Get("ToggleOn"), OffContent = L.Get("ToggleOff") };
+        var toggle = Switch(get());
         toggle.Toggled += (_, _) => { if (toggle.IsOn != get()) set(toggle.IsOn); };
         Watch(property, () => { if (toggle.IsOn != get()) toggle.IsOn = get(); });
         return toggle;

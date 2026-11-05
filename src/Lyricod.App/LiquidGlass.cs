@@ -364,7 +364,8 @@ sealed class LiquidGlass : IDisposable
 
     /// <summary>Diagnostics: how the island is left out of the glass's capture.</summary>
     internal string ExclusionDetail => SessionExclusion
-        ? $"from capture configuration {_excludedFrom}; newest frame's {(_newestIteration is { } i ? i.ToString() : "unknown")}; {_earlyFrames} earlier frame(s) unused"
+        ? $"excluded from configuration {_excludedFrom} · newest frame: configuration {(_newestIteration is { } i ? i.ToString() : "unknown")}"
+            + $" · {_earlyFrames} earlier frame{(_earlyFrames == 1 ? "" : "s")} skipped"
         : "";
 
     /// <summary>The part of the screen behind the island: bent at the edges, blurred, a little more vivid, tinted, lit.</summary>
