@@ -59,26 +59,30 @@
                 </StackPanel>
             </Border>
 
-            <!-- The two views, as quick-settings tiles. -->
+            <!-- The two views, as quick-settings tiles, each with its lock in the corner (added in code). -->
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <ToggleButton x:Name="DesktopTile" HorizontalAlignment="Stretch" Height="72" Padding="12,8"
-                              HorizontalContentAlignment="Left" Click="OnDesktopTile">
-                    <StackPanel Spacing="6">
-                        <FontIcon Glyph="&#xE7F4;" FontSize="16" HorizontalAlignment="Left" />
-                        <TextBlock x:Name="DesktopTileText" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                </ToggleButton>
-                <ToggleButton x:Name="IslandTile" Grid.Column="1" HorizontalAlignment="Stretch" Height="72" Padding="12,8"
-                              HorizontalContentAlignment="Left" Click="OnIslandTile">
-                    <StackPanel Spacing="6">
-                        <FontIcon Glyph="&#xE8D6;" FontSize="16" HorizontalAlignment="Left" />
-                        <TextBlock x:Name="IslandTileText" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                </ToggleButton>
+                <Grid x:Name="DesktopTileHost">
+                    <ToggleButton x:Name="DesktopTile" HorizontalAlignment="Stretch" Height="72" Padding="12,8,44,8"
+                                  HorizontalContentAlignment="Left" Click="OnDesktopTile">
+                        <StackPanel Spacing="6">
+                            <FontIcon Glyph="&#xE7F4;" FontSize="16" HorizontalAlignment="Left" />
+                            <TextBlock x:Name="DesktopTileText" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </ToggleButton>
+                </Grid>
+                <Grid x:Name="IslandTileHost" Grid.Column="1">
+                    <ToggleButton x:Name="IslandTile" HorizontalAlignment="Stretch" Height="72" Padding="12,8,44,8"
+                                  HorizontalContentAlignment="Left" Click="OnIslandTile">
+                        <StackPanel Spacing="6">
+                            <FontIcon Glyph="&#xE8D6;" FontSize="16" HorizontalAlignment="Left" />
+                            <TextBlock x:Name="IslandTileText" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </ToggleButton>
+                </Grid>
             </Grid>
 
             <!-- This song: its lyrics (opens Choose Lyrics) and timing. -->
