@@ -112,6 +112,17 @@ static partial class Win32
     public static void RefreshFrame(nint hwnd) =>
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020); // NOMOVE NOSIZE NOZORDER NOACTIVATE FRAMECHANGED
 
+    const int GWL_EXSTYLE = -20;
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    private static partial nint SetWindowLongPtr(nint hwnd, int index, nint value);
+
+    /// <summary>
+    /// Sets the window's extended style and nothing else: no frame refresh, which can activate it and
+    /// take focus from the window in use (the tray panel closed when its lock was clicked).
+    /// </summary>
+    public static void SetExtendedStyle(nint hwnd, long style) => SetWindowLongPtr(hwnd, GWL_EXSTYLE, (nint)style);
+
     [LibraryImport("gdi32.dll")]
     public static partial nint CreateRoundRectRgn(int left, int top, int right, int bottom, int widthEllipse, int heightEllipse);
 

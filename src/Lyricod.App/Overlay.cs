@@ -84,7 +84,7 @@ sealed class Overlay
     {
         var style = _window.GetExtendedWindowStyle() | ExtendedWindowStyle.Layered | ExtendedWindowStyle.ToolWindow | ExtendedWindowStyle.NoActivate;
         style = through ? style | ExtendedWindowStyle.Transparent : style & ~ExtendedWindowStyle.Transparent;
-        _window.SetExtendedWindowStyle(style);
+        Win32.SetExtendedStyle(_hwnd, (long)style);
         // A layered window needs its opacity set once, or it doesn't draw.
         Win32.SetLayeredWindowAttributes(_hwnd, 0, 255, Win32.LWA_ALPHA);
     }
