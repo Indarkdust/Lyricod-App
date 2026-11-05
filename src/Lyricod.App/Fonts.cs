@@ -44,9 +44,17 @@ static class Fonts
         _appFont = Chosen;
         if (_appFont == null) return;
         var family = new FontFamily(_appFont + ", " + Chinese);
-        resources["ContentControlThemeFontFamily"] = family; // controls and WinUI's text styles
-        resources[typeof(TextBlock)] = new Style(typeof(TextBlock)) { Setters = { new Setter(TextBlock.FontFamilyProperty, family) } }; // plain text
+        resources["ContentControlThemeFontFamily"] = family; // controls, and text inside them
+        Style WithFont(Style? basedOn) => new(typeof(TextBlock)) { BasedOn = basedOn, Setters = { new Setter(TextBlock.FontFamilyProperty, family) } };
+        resources[typeof(TextBlock)] = WithFont(null); // plain text
+        // Text in WinUI's own styles takes the font of the control it's in, or Windows' outside one
+        // (the tray panel's song title), so these get it too.
+        foreach (string key in TextStyles)
+            if (resources.TryGetValue(key, out object? style) && style is Style found) resources[key] = WithFont(found);
     }
+
+    static readonly string[] TextStyles = ["CaptionTextBlockStyle", "BodyTextBlockStyle", "BodyStrongTextBlockStyle", "BodyLargeTextBlockStyle",
+        "SubtitleTextBlockStyle", "TitleTextBlockStyle", "TitleLargeTextBlockStyle", "DisplayTextBlockStyle"];
 
     /// <summary>Whether the font changed since Lyricod started, so its own text needs a restart to follow.</summary>
     public static bool AppNeedsRestart => Chosen != _appFont;
