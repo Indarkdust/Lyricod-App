@@ -107,10 +107,34 @@ public class RomanizerTests
         ], "test");
         new Romanizer(new FakeReader(("東京", "とうきょう"), ("の", "の"), ("空", "そら"))).Fill(l);
         Assert.Equal(new Pronunciation("yu me na ra ba", LyricLanguage.Japanese), l.Lines[0].Pronunciation);
-        Assert.Equal(new Pronunciation("toukyou no sora", LyricLanguage.Japanese), l.Lines[1].Pronunciation);
+        Assert.Equal(new Pronunciation("toukyou no sora", LyricLanguage.Japanese, PronunciationOrigin.Lyricod), l.Lines[1].Pronunciation);
 
         var k = new Lyrics([new LyricLine { Text = "사랑해요", Pronunciation = new("sa lang hae yo") }], "test");
         new Romanizer().Fill(k);
         Assert.Equal("saranghaeyo", k.Lines[0].Pronunciation?.Text);
+    }
+
+    [Fact]
+    public void SourceRomajiReadingTheSameIsGroupedByWord()
+    {
+        // QQ Music's romaji, a syllable at a time, reads the same as Windows' words: shown by word.
+        var reader = new FakeReader(("惹かれ", "ひかれ"), ("合う", "あう"), ("の", "の"), ("は", "は"), (" ", null), ("なぜ", "なぜ"));
+        var l = new Lyrics([new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na ze") }], "test");
+        new Romanizer(reader).Fill(l);
+        Assert.Equal(new Pronunciation("hikare au no wa naze", LyricLanguage.Japanese, PronunciationOrigin.SourceByWord), l.Lines[0].Pronunciation);
+
+        // A different reading (the source's typed one) is kept as it is.
+        var other = new Lyrics([new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na n de") }], "test");
+        new Romanizer(reader).Fill(other);
+        Assert.Equal("hi ka re a u no wa na n de", other.Lines[0].Pronunciation?.Text);
+    }
+
+    [Fact]
+    public void ReadingsCompareWithoutSpellingDifferences()
+    {
+        Assert.True(Romanizer.SameReading("te wo hiita", "te o hi i ta"));
+        Assert.True(Romanizer.SameReading("toukyou", "Tōkyō"));
+        Assert.True(Romanizer.SameReading("koohii", "ko o hi i"));
+        Assert.False(Romanizer.SameReading("naze", "nande"));
     }
 }

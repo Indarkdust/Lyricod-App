@@ -23,8 +23,10 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
 {
     /// <summary>
     /// Fills in every sung line's pronunciation. A source's own romaji is kept for Japanese
-    /// (people typed it, so kanji readings are right); Korean and Chinese are always worked
-    /// out here, since sources spell those inconsistently.
+    /// (people typed it, so kanji readings are right), unless the line worked out here reads
+    /// the same: then that's shown instead, grouped by word ("hikare au no wa naze" rather than
+    /// QQ Music's syllable by syllable "hi ka re a u no wa na ze"). Korean and Chinese are always
+    /// worked out here, since sources spell those inconsistently.
     /// </summary>
     public void Fill(Lyrics lyrics)
     {
@@ -37,9 +39,10 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
                 lyrics.Lines[i] = line with { Pronunciation = null };
                 continue;
             }
+            var ours = Romanize(line.Text, language);
             Pronunciation? p = language == LyricLanguage.Japanese && line.Pronunciation?.Text is { Length: > 0 } given
-                ? new Pronunciation(given, language)
-                : Romanize(line.Text, language) is { } text ? new Pronunciation(text, language) : null;
+                ? ours != null && SameReading(ours, given) ? new Pronunciation(ours, language, PronunciationOrigin.SourceByWord) : new Pronunciation(given, language)
+                : ours != null ? new Pronunciation(ours, language, PronunciationOrigin.Lyricod) : null;
             lyrics.Lines[i] = line with { Pronunciation = p };
         }
     }
@@ -56,6 +59,24 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
         var tidy = Tidy(output);
         // Nothing to add if it reads the same (the line was already in Latin letters).
         return tidy.Length == 0 || tidy == Tidy(text) ? null : tidy;
+    }
+
+    /// <summary>
+    /// Whether two romaji lines say the same thing, however they're spaced, punctuated and spelled:
+    /// "o" or "wo" for を, and long vowels written out, doubled, with a macron or left short.
+    /// </summary>
+    public static bool SameReading(string a, string b) => Reading(a) == Reading(b);
+
+    static string Reading(string romaji)
+    {
+        var letters = new StringBuilder();
+        foreach (char c in romaji.Normalize(NormalizationForm.FormD))
+            if (c is >= 'a' and <= 'z' or >= 'A' and <= 'Z') letters.Append(char.ToLowerInvariant(c));
+        var s = letters.ToString().Replace("wo", "o").Replace("ou", "o");
+        var shorter = new StringBuilder();
+        foreach (char c in s)
+            if (!(shorter.Length > 0 && shorter[^1] == c && "aeiou".Contains(c))) shorter.Append(c);
+        return shorter.ToString();
     }
 
     static string Tidy(string s) => string.Join(' ', s.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));

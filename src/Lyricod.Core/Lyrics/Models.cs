@@ -16,7 +16,11 @@ public enum LyricLanguage { Japanese, Korean, Chinese }
 
 /// <summary>How a line is said, in Latin letters: romaji, romanised Korean or pinyin.</summary>
 /// <param name="Language">Null until <c>Romanizer.Fill</c> has looked at the line.</param>
-public sealed record Pronunciation(string Text, LyricLanguage? Language = null);
+public sealed record Pronunciation(string Text, LyricLanguage? Language = null, PronunciationOrigin Origin = PronunciationOrigin.Source);
+
+/// <summary>Where a pronunciation came from: the lyric source's own as given, the source's reading
+/// grouped by word (Windows read the line the same way), or worked out by Lyricod.</summary>
+public enum PronunciationOrigin { Source, SourceByWord, Lyricod }
 
 public sealed record LyricLine
 {
