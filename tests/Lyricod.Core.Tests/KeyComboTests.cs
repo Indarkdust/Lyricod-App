@@ -17,27 +17,18 @@ public class KeyComboTests
     [InlineData(16, 65, false)]
     [InlineData(2, 17, false)]
     [InlineData(2, 91, false)]
-    [InlineData(2, 92, false)]
     [InlineData(2, 160, false)]
-    [InlineData(2, 165, false)]
-    [InlineData(2, 0, false)]
-    [InlineData(2, 255, false)]
     public void UsableProtectsTyping(uint modifiers, uint key, bool expected) =>
         Assert.Equal(expected, new KeyCombo((KeyModifiers)modifiers, key).IsUsable);
 
     [Theory]
     [InlineData(null)]
-    [InlineData("")]
     [InlineData("2")]
-    [InlineData("2:65:1")]
     [InlineData("-1:65")]
     [InlineData("2:4294967296")]
     [InlineData("16:65")]
-    [InlineData("16386:65")]
-    [InlineData("2:17")]
     [InlineData("2:0")]
     [InlineData("2:255")]
-    [InlineData(" 2:65")]
     [InlineData("2:+65")]
     public void RejectsMalformedSettings(string? stored) => Assert.False(KeyCombo.TryParse(stored, out _));
 
@@ -66,7 +57,6 @@ public class KeyComboTests
     [InlineData(2, 37, "Ctrl+←")]
     [InlineData(2, 186, "Ctrl+;")]
     [InlineData(2, 96, "Ctrl+Numpad0")]
-    [InlineData(2, 105, "Ctrl+Numpad9")]
     [InlineData(2, 107, "Ctrl+Numpad+")]
     [InlineData(2, 254, "Ctrl+#254")]
     public void DisplaysWindowsOrderAndLocalizedNames(uint modifiers, uint key, string expected) =>

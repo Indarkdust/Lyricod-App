@@ -3,13 +3,11 @@ namespace Lyricod.Core.Tests;
 public class PlaybackTests
 {
     [Fact]
-    public void BrowserStaysHiddenUntilLyricsArriveAndResetsForTheNextTrack()
+    public void BrowserIsCheckedUntilItsLyricsDecide()
     {
         Assert.Equal(SongState.Checking, SongRecognition.Classify(false, false, true, false));
         Assert.Equal(SongState.NotSong, SongRecognition.Classify(false, false, false, false));
-        Assert.Equal(SongState.Checking, SongRecognition.Classify(false, false, true, false));
         Assert.Equal(SongState.Song, SongRecognition.Classify(false, false, false, true));
-        Assert.Equal(SongState.Checking, SongRecognition.Classify(false, false, true, false));
     }
 
     [Theory]

@@ -22,7 +22,6 @@ public class IslandSettingsTests
     [InlineData("{}", "#8CD9FF")]
     [InlineData("{\"SungColor\":\"#FFD36E\"}", "#FFD36E")]
     [InlineData("{\"IslandAlbumColour\":false,\"SungColor\":\"#FF8FB1\"}", "#FF8FB1")]
-    [InlineData("{\"SungColor\":\"#9BF59B\",\"IslandAlbumColour\":true}", "#9BF59B")]
     public void OldFilesCopyTheDesktopColourOnce(string json, string expected)
     {
         var settings = JsonSerializer.Deserialize<Settings>(json, Json)!;

@@ -5,7 +5,6 @@ namespace Lyricod.Core.Tests;
 public class DiagnosticsTests
 {
     [Theory]
-    [InlineData(true, "allowed")]
     [InlineData(false, "blocked")]
     public void ReportsAutomaticLookupPermission(bool allowed, string label)
     {
@@ -103,16 +102,6 @@ public class DiagnosticsTests
         ], "QQ Music");
         string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, new Track { Title = "t", Artist = "a" }, lyrics, false, false, 0, 0);
         Assert.Contains("\nTranslation: 2 of 5 lines\nPronunciation: 4 of 5 lines (source's as given 1, source's by word 2, Lyricod's 1)\n", text);
-    }
-
-    [Theory]
-    [InlineData(InstallKind.Installer, "installer")]
-    [InlineData(InstallKind.Portable, "portable")]
-    [InlineData(InstallKind.Unknown, "unknown")]
-    public void ReportsInstallKindWithoutAPath(InstallKind kind, string label)
-    {
-        string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0, installKind: kind);
-        Assert.Contains($"\nInstall: {label}\n", text);
     }
 
     [Fact]

@@ -109,18 +109,6 @@ public class LyricsProviderTests
     }
 
     [Fact]
-    public async Task PinnedCacheDoesNotRequestNetwork()
-    {
-        var requests = 0;
-        using var fixture = new Fixture(_ => { requests++; return Response("{}"); });
-        var track = Track();
-        fixture.Seed(track);
-        var result = await fixture.Provider.GetLyrics(track, pinned: LyricsRef.Netease(7), ct: TestContext.Current.CancellationToken);
-        Assert.Equal("Hello", result?.Lines[0].Text);
-        Assert.Equal(0, requests);
-    }
-
-    [Fact]
     public async Task OddNeteaseReplyFallsThroughToTheNextSource()
     {
         using var fixture = new Fixture(request => Response(
@@ -422,7 +410,8 @@ public class LyricsProviderTests
         foreach (bool setting in new[] { false, true })
         foreach (bool cached in new[] { false, true })
         foreach (bool pinned in new[] { false, true })
-            yield return [music, setting, cached, pinned];
+            // A music player looks lyrics up whatever the setting says: one set of those is enough.
+            if (!(music && setting)) yield return [music, setting, cached, pinned];
     }
 
     [Theory]

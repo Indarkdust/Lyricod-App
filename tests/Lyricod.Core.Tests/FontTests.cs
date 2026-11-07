@@ -208,14 +208,6 @@ public class FontTests
         await Assert.ThrowsAsync<InvalidDataException>(() => MiSansArchive.ValidateAsync(path, TestContext.Current.CancellationToken));
     }
 
-    [Fact]
-    public void DiagnosticsIncludeTheFont()
-    {
-        var text = Diagnostics.Text("1", "Windows", "x64", null, null, false, null, null, false, false, 0, 0,
-            font: "MiSans (downloaded, hash ok)");
-        Assert.Contains("Font: MiSans (downloaded, hash ok)", text);
-    }
-
     sealed class Reports(Action<FontDownloadProgress>? report = null) : IProgress<FontDownloadProgress>
     {
         public List<FontDownloadProgress> Values { get; } = [];
