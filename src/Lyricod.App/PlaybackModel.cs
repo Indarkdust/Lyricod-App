@@ -94,6 +94,7 @@ public sealed partial class PlaybackModel
         _media = media;
         _provider = provider;
         _romanizer = romanizer;
+        _romanizer.GroupJapaneseByWord = settings.RomajiByWord;
         _overrides = overrides;
         _settings = settings;
         _lineTimer = ui.CreateTimer();

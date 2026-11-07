@@ -278,6 +278,7 @@ public sealed partial class SettingsWindow
             languages.Children.Add(box);
         }
         Card(L.Get("PronunciationFor"), L.Get("PronunciationForDetail"), languages);
+        Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
         Card(L.Get("ShowCredits"), null, Toggle(nameof(Settings.ShowCredits), () => _settings.ShowCredits, v => _settings.ShowCredits = v));
         Note(L.Get(Lyricod.Platform.JapaneseReader.IsAvailable ? "PronunciationNote" : "PronunciationNoteNoReader"));
 

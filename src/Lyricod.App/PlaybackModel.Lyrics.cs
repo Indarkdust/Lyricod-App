@@ -146,6 +146,11 @@ public sealed partial class PlaybackModel
                 case nameof(Settings.LookUpOtherPlayers):
                     if (Track is { } track) LoadLyrics(track, ignoreCache: false);
                     break;
+                case nameof(Settings.RomajiByWord):
+                    // Loaded again, so the source's romaji starts from how it came.
+                    _romanizer.GroupJapaneseByWord = _settings.RomajiByWord;
+                    if (Track is { } song) LoadLyrics(song, ignoreCache: false);
+                    break;
                 case nameof(Settings.Offset):
                     ApplyOffset();
                     break;

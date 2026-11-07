@@ -172,6 +172,8 @@
   <data name="Japanese" xml:space="preserve"><value>Japanese</value></data>
   <data name="Korean" xml:space="preserve"><value>Korean</value></data>
   <data name="Chinese" xml:space="preserve"><value>Chinese</value></data>
+  <data name="RomajiByWord" xml:space="preserve"><value>Romaji by word (experimental)</value></data>
+  <data name="RomajiByWordDetail" xml:space="preserve"><value>Spaces Japanese romaji between words instead of syllables, using Windows' Japanese reader (add Japanese in Windows' language settings). Some words may still be split.</value></data>
   <data name="ShowCredits" xml:space="preserve"><value>Show songwriter credits</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>Japanese uses romaji from the lyrics source when available. Otherwise, Windows may generate it, although some kanji may be read incorrectly. Each lyrics view has its own translation and pronunciation settings.</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>Japanese romaji comes from the lyrics source when it has some. For Lyricod to work it out for other songs, add Japanese in Windows Settings › Time &amp; language › Language &amp; region.</value></data>

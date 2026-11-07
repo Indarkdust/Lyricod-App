@@ -23,11 +23,19 @@ public interface IJapaneseReader
 public sealed class Romanizer(IJapaneseReader? japanese = null)
 {
     /// <summary>
+    /// Romaji by word (experimental, off unless chosen): a source's romaji is spaced by the words
+    /// of the line worked out here, and a kanji's kana ending stays with it. Off, the source's
+    /// romaji shows as it came (QQ Music's a syllable at a time) and Windows' words as they come.
+    /// </summary>
+    public bool GroupJapaneseByWord { get; set; }
+
+    /// <summary>
     /// Fills in every sung line's pronunciation. A source's own romaji is kept for Japanese
-    /// (people typed it, so kanji readings are right), spaced by the words of the line worked out
-    /// here where the two line up ("hikare au no wa naze" rather than QQ Music's syllable by
-    /// syllable "hi ka re a u no wa na ze"; "asu kara" where Windows would read 明日 "ashita").
-    /// Korean and Chinese are always worked out here, since sources spell those inconsistently.
+    /// (people typed it, so kanji readings are right); with <see cref="GroupJapaneseByWord"/>,
+    /// spaced by the words of the line worked out here where the two line up ("hikare au no wa
+    /// naze" rather than QQ Music's "hi ka re a u no wa na ze"; "asu kara" where Windows would
+    /// read 明日 "ashita"). Korean and Chinese are always worked out here, since sources spell
+    /// those inconsistently.
     /// </summary>
     public void Fill(Lyrics lyrics)
     {
@@ -42,7 +50,8 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
             }
             var ours = Romanize(line.Text, language);
             Pronunciation? p = language == LyricLanguage.Japanese && line.Pronunciation?.Text is { Length: > 0 } given
-                ? ours != null && Regroup(given, ours) is { } grouped ? new Pronunciation(grouped, language, PronunciationOrigin.SourceByWord) : new Pronunciation(given, language)
+                ? GroupJapaneseByWord && ours != null && Regroup(given, ours) is { } grouped
+                    ? new Pronunciation(grouped, language, PronunciationOrigin.SourceByWord) : new Pronunciation(given, language)
                 : ours != null ? new Pronunciation(ours, language, PronunciationOrigin.Lyricod) : null;
             lyrics.Lines[i] = line with { Pronunciation = p };
         }
@@ -53,7 +62,7 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
         string? output = language switch
         {
             LyricLanguage.Chinese => Chinese(text),
-            LyricLanguage.Japanese => japanese == null ? null : Japanese(text, japanese),
+            LyricLanguage.Japanese => japanese == null ? null : Japanese(text, japanese, GroupJapaneseByWord),
             _ => Korean(text),
         };
         if (output == null) return null;
@@ -314,7 +323,7 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
 
     static bool EndsWithKanji(string s) => s.Length > 0 && !KanaRomaji.IsKana(s[^1]) && char.IsLetter(s[^1]);
 
-    static string Japanese(string text, IJapaneseReader reader)
+    static string Japanese(string text, IJapaneseReader reader, bool byWord)
     {
         var parts = new List<Part>();
         string pending = "";
@@ -329,7 +338,7 @@ public sealed class Romanizer(IJapaneseReader? japanese = null)
                 lastSurface = null;
                 continue;
             }
-            if (!phraseStart && pending.Length == 0 && lastSurface is { } before && lastReading is { } said && EndsWithKanji(before) && IsEnding(surface))
+            if (byWord && !phraseStart && pending.Length == 0 && lastSurface is { } before && lastReading is { } said && EndsWithKanji(before) && IsEnding(surface))
             {
                 var joined = said + reading;
                 if (joined.EndsWith('っ') || joined.EndsWith('ッ'))

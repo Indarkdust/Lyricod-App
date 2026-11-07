@@ -172,6 +172,8 @@
   <data name="Japanese" xml:space="preserve"><value>日语</value></data>
   <data name="Korean" xml:space="preserve"><value>韩语</value></data>
   <data name="Chinese" xml:space="preserve"><value>中文</value></data>
+  <data name="RomajiByWord" xml:space="preserve"><value>按词分隔罗马音（实验性）</value></data>
+  <data name="RomajiByWordDetail" xml:space="preserve"><value>借助 Windows 的日语分析，按词而不是按音节分隔日语罗马音（需要在 Windows 语言设置中添加日语）。部分词语仍可能被拆开。</value></data>
   <data name="ShowCredits" xml:space="preserve"><value>显示词曲作者信息</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词自带的罗马音；没有时尝试通过 Windows 生成，部分汉字可能读错。各个歌词视图可以分别设置是否显示翻译和音译。</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语罗马音来自歌词来源（如有）。如需 Lyricod 为其他歌曲生成，请在 Windows 设置 › 时间和语言 › 语言和区域 中添加日语。</value></data>

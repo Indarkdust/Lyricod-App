@@ -117,6 +117,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 
     double _offset;
     bool _showCredits;
+    bool _romajiByWord;
     bool _lookUpOtherPlayers = true;
     List<LyricLanguage> _pronunciationLanguages = [LyricLanguage.Japanese, LyricLanguage.Korean];
 
@@ -201,6 +202,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// <summary>Seconds for every song; positive shows lyrics earlier.</summary>
     public double Offset { get => _offset; set => Set(ref _offset, Math.Round(value, 2)); }
     public bool ShowCredits { get => _showCredits; set => Set(ref _showCredits, value); }
+    /// <summary>Japanese romaji spaced by word rather than by syllable (experimental; needs Windows' Japanese reader).</summary>
+    public bool RomajiByWord { get => _romajiByWord; set => Set(ref _romajiByWord, value); }
     public bool LookUpOtherPlayers { get => _lookUpOtherPlayers; set => Set(ref _lookUpOtherPlayers, value); }
     /// <summary>Languages that get a pronunciation line. Chinese is off by default.</summary>
     public List<LyricLanguage> PronunciationLanguages { get => _pronunciationLanguages; set => Set(ref _pronunciationLanguages, value); }
