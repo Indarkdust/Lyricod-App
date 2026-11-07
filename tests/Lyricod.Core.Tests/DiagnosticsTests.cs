@@ -102,6 +102,11 @@ public class DiagnosticsTests
         ], "QQ Music");
         string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, new Track { Title = "t", Artist = "a" }, lyrics, false, false, 0, 0);
         Assert.Contains("\nTranslation: 2 of 5 lines\nPronunciation: 4 of 5 lines (source's as given 1, source's by word 2, Lyricod's 1)\n", text);
+        // The player's platform's translation over another platform's words says where it's from.
+        lyrics.Ref = new LyricsRef(LyricsSource.Qq, "mid");
+        lyrics.TranslationRef = LyricsRef.Netease(7);
+        text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, new Track { Title = "t", Artist = "a" }, lyrics, false, false, 0, 0);
+        Assert.Contains("\nTranslation: 2 of 5 lines, from NetEase (netease:7)\n", text);
     }
 
     [Fact]

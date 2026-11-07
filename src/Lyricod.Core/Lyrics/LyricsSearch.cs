@@ -1,11 +1,13 @@
 namespace Lyricod.Core;
 
 /// <summary>Acceptance and diagnostics for one automatic lookup.</summary>
-public sealed class LyricsSearch(bool isMusicPlayer, bool lookUpOtherPlayers = true)
+/// <param name="playerSource">The playing app's own lyric source (NetEase Cloud Music's, QQ Music's): searched first.</param>
+public sealed class LyricsSearch(bool isMusicPlayer, bool lookUpOtherPlayers = true, LyricsSource? playerSource = null)
 {
     // An exact title and artist score 6; an exact title and length alone score 5.5.
     public const double ConfidentScore = 5.5;
     public bool IsMusicPlayer { get; } = isMusicPlayer;
+    public LyricsSource? PlayerSource { get; } = playerSource;
     public bool AutomaticLookupAllowed { get; } = isMusicPlayer || lookUpOtherPlayers;
     public double? BestScore { get; private set; }
 

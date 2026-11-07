@@ -60,17 +60,20 @@ public static class Diagnostics
         List<string> words = [];
         if (lyrics != null)
         {
-            string source = lyrics.Ref?.Source switch
+            string Name(LyricsSource? s) => s switch
             {
                 LyricsSource.Qq => "QQ Music", LyricsSource.Netease => "NetEase", LyricsSource.Lrclib => "LRCLIB", _ => lyrics.Source,
             };
+            string source = Name(lyrics.Ref?.Source);
             string kind = !lyrics.IsSynced ? "unsynced" : lyrics.IsWordSynced ? "word by word" : "line by line";
             string line = $"Lyrics: {source}, {kind}, {lyrics.Lines.Count} line{(lyrics.Lines.Count == 1 ? "" : "s")}";
             if (lyrics.Ref is { } reference) line += $" ({reference.Source.ToString().ToLowerInvariant()}:{reference.Id})";
             words.Add(line);
             int count = lyrics.Lines.Count;
             int translated = lyrics.Lines.Count(l => !string.IsNullOrWhiteSpace(l.Translation));
-            if (translated > 0) words.Add($"Translation: {translated} of {count} lines");
+            // The player's platform's translation over another platform's word-by-word lines.
+            string from = lyrics.TranslationRef is { } tr && tr != lyrics.Ref ? $", from {Name(tr.Source)} ({tr.Source.ToString().ToLowerInvariant()}:{tr.Id})" : "";
+            if (translated > 0) words.Add($"Translation: {translated} of {count} lines{from}");
             // Where each pronunciation came from: the source's romaji as given, the source's grouped by
             // word (Windows read the line the same), or Lyricod's own.
             var said = lyrics.Lines.Select(l => l.Pronunciation).OfType<Pronunciation>().Where(p => !string.IsNullOrWhiteSpace(p.Text)).ToList();

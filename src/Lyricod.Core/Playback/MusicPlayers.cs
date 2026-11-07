@@ -21,6 +21,12 @@ public static class MusicPlayers
     public static bool IsNetease(string? appId) =>
         !string.IsNullOrWhiteSpace(appId) && appId.Replace('\\', '/').Split('/')[^1].Equals("cloudmusic.exe", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>The player's own lyric source: NetEase Cloud Music's or QQ Music's, else null.</summary>
+    public static LyricsSource? OwnSource(string? appId) =>
+        IsNetease(appId) ? LyricsSource.Netease
+        : !string.IsNullOrWhiteSpace(appId) && appId.Replace('\\', '/').Split('/')[^1].Equals("QQMusic.exe", StringComparison.OrdinalIgnoreCase) ? LyricsSource.Qq
+        : null;
+
     public static bool IsMusicPlayer(string? appId)
     {
         if (string.IsNullOrWhiteSpace(appId)) return false;

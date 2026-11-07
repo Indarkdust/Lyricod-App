@@ -4,9 +4,9 @@ using System.Text.Json;
 namespace Lyricod.Core;
 
 /// <summary>
-/// Finds lyrics for a track: NetEase first (best coverage for Chinese music, has
-/// translations and word timing), then QQ Music, then LRCLIB. Results are cached on disk.
-/// A port of the macOS app's LyricsProvider; behaviour should stay the same.
+/// Finds lyrics for a track: the player's own platform first (NetEase Cloud Music's, QQ Music's),
+/// then NetEase (best coverage for Chinese music, has translations and word timing), QQ Music
+/// and LRCLIB. Results are cached on disk. A port of the macOS app's LyricsProvider.
 /// </summary>
 public sealed partial class LyricsProvider
 {
@@ -68,6 +68,7 @@ public sealed partial class LyricsProvider
         if (pinned != null) raw = await Fetch(pinned, ct);
         else
         {
+            // The player's own platform comes first: its translation is the one its listeners know.
             // Timed lyrics from any source beat untimed ones from an earlier source (QQ Music has
             // plain uploads where LRCLIB has the timed version); untimed is the last resort. Word
             // timing beats line timing: see WordTimed.
@@ -79,12 +80,12 @@ public sealed partial class LyricsProvider
             foreach (bool requireTitle in search.IsMusicPlayer ? new[] { true, false } : new[] { true })
             {
                 RawLyrics? untimed = null;
-                foreach (var source in new Func<Track, bool, CancellationToken, Task<RawLyrics?>>[]
+                foreach (var (_, source) in new (LyricsSource Source, Func<Track, bool, CancellationToken, Task<RawLyrics?>> Find)[]
                 {
-                    (t, r, c) => FromNetease(t, r, c, search),
-                    (t, r, c) => FromQq(t, r, c, search: search),
-                    (t, r, c) => FromLrclib(t, r, c, search),
-                })
+                    (LyricsSource.Netease, (t, r, c) => FromNetease(t, r, c, search)),
+                    (LyricsSource.Qq, (t, r, c) => FromQq(t, r, c, search: search)),
+                    (LyricsSource.Lrclib, (t, r, c) => FromLrclib(t, r, c, search)),
+                }.OrderBy(s => s.Source == search.PlayerSource ? 0 : 1))
                 {
                     var found = await source(track, requireTitle, ct);
                     if (found?.Parse() is not { } candidate) continue;
@@ -102,30 +103,55 @@ public sealed partial class LyricsProvider
         return parsed;
     }
 
-    /// <summary>NetEase lyrics with line timing only: QQ Music may have the song word by word.</summary>
+    /// <summary>NetEase or QQ Music lyrics with line timing only: the other may have the song word by word.</summary>
     static bool NeedsWordCheck(RawLyrics raw, Lyrics parsed) =>
-        raw.SongRef?.Source == LyricsSource.Netease && parsed is { IsSynced: true, IsWordSynced: false };
+        raw.SongRef?.Source is LyricsSource.Netease or LyricsSource.Qq && parsed is { IsSynced: true, IsWordSynced: false };
 
     /// <summary>
-    /// Saved line-timed lyrics are checked against QQ Music at most once a day, so a song QQ Music
-    /// doesn't have word by word costs one lookup a day, and one it couldn't be asked about
+    /// Saved line-timed lyrics are checked against the other platform at most once a day, so a song
+    /// it doesn't have word by word costs one lookup a day, and one it couldn't be asked about
     /// (offline, throttled) is tried again. The file's date marks the last try.
     /// </summary>
     static bool WordCheckDue(string file) => DateTime.UtcNow - File.GetLastWriteTimeUtc(file) > TimeSpan.FromHours(24);
 
     /// <summary>
-    /// NetEase comes first but has many songs with line timing only that QQ Music has word by word
-    /// (周杰伦's 龙卷风): for those, QQ Music's copy, when it's clearly this recording (title, artist
-    /// and length agree, or the exact song QQ Music is playing) and keeps any translation. Null
-    /// when <paramref name="raw"/> should stay.
+    /// Many songs have line timing only on one platform and word by word on the other (周杰伦's
+    /// 龙卷风 on NetEase, ヨルシカ's 都落ち too). When the other platform's copy is clearly this
+    /// recording (title, artist and length agree, or the exact song QQ Music is playing), its lines
+    /// and words, with <paramref name="raw"/>'s translation: the word timing is only in the lyrics
+    /// themselves, and the platform found first (the player's own) has the translation its
+    /// listeners know. Null when <paramref name="raw"/> should stay.
     /// </summary>
     async Task<RawLyrics?> WordTimed(Track track, RawLyrics raw, bool requireTitle, CancellationToken ct, LyricsSearch search)
     {
         if (raw.Parse() is not { } lines || !NeedsWordCheck(raw, lines)) return null;
-        if (await FromQq(track, requireTitle, ct, minScore: 7, search: search) is not { } qq || qq.Parse() is not { IsWordSynced: true } words) return null;
+        var other = raw.SongRef?.Source == LyricsSource.Netease
+            ? await FromQq(track, requireTitle, ct, minScore: 7, search: search)
+            : await FromNetease(track, requireTitle, ct, search, minScore: 7);
+        if (other?.Parse() is not { IsWordSynced: true }) return null;
         ct.ThrowIfCancellationRequested();
-        static bool Translated(Lyrics l) => l.Lines.Any(x => x.Translation != null);
-        return Translated(lines) && !Translated(words) ? null : qq;
+        return WithTranslation(other, raw);
+    }
+
+    /// <summary>
+    /// <paramref name="words"/> (word-by-word lyrics) with <paramref name="first"/>'s translation
+    /// in place of its own. The two platforms' timings differ a little, so each translated line goes
+    /// to the nearest line; when most of them don't land (lines split differently), the words'
+    /// own translation stays, or with none, null: <paramref name="first"/> stays as it is. The
+    /// pronunciation goes with the words, as it reads their text (the first's if they have none).
+    /// </summary>
+    internal static RawLyrics? WithTranslation(RawLyrics words, RawLyrics first)
+    {
+        static int Translated(Lyrics? l) => l?.Lines.Count(x => x.Translation != null) ?? 0;
+        if (string.IsNullOrEmpty(first.Translation) || Translated(first.Parse()) is not (> 0 and var wanted))
+            return words;
+        var merged = words.Copy();
+        merged.Translation = first.Translation;
+        merged.TranslationRef = first.SongRef;
+        merged.Romanization ??= first.Romanization;
+        merged.Source = $"{words.Source} + {first.Source}";
+        if (Translated(merged.Parse()) * 5 >= wanted * 4) return merged;
+        return Translated(words.Parse()) > 0 ? words : null;
     }
 
     /// <summary>Lyrics for one song in any source.</summary>

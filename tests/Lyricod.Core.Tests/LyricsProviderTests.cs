@@ -462,6 +462,98 @@ public class LyricsProviderTests
         }
     }
 
+    // ---- The player's own platform first; another platform's words with its translation ----
+
+    const string QqTranslated = """{"lyric":"[00:01.00]Hello","trans":"[00:01.00]QQ's translation"}""";
+    const string NeteaseWords = """{"lrc":{"lyric":"[00:01.00]Hello"},"yrc":{"lyric":"[1200,2000](1200,1000,0)Hel(2200,1000,0)lo"},"tlyric":{"lyric":"[00:01.00]NetEase's translation"}}""";
+
+    /// <summary>Both platforms have Hello; NetEase's reply is <paramref name="neteaseLyrics"/>, QQ Music's <paramref name="qqLyrics"/> (no word-by-word QRC).</summary>
+    static Fixture TwoPlatforms(string neteaseLyrics, string qqLyrics) => new(request =>
+    {
+        var uri = request.RequestUri!;
+        return Response(uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") ? NeteaseSong
+            : uri.AbsolutePath.Contains("lyric/v1") ? neteaseLyrics
+            : uri.Host == "u.y.qq.com" ? ModernJson
+            : uri.AbsolutePath.Contains("fcg_query_lyric") ? qqLyrics : "{}");
+    });
+
+    [Theory]
+    [InlineData(null, "NetEase")]
+    [InlineData(LyricsSource.Netease, "NetEase")]
+    [InlineData(LyricsSource.Qq, "QQ Music")]
+    public async Task ThePlayersOwnPlatformIsSearchedFirst(LyricsSource? player, string expected)
+    {
+        using var fixture = TwoPlatforms(NeteaseLyrics, LineJson);
+        var result = await fixture.Provider.GetLyrics(new Track { Title = "Hello", Artist = "Singer", Duration = 120 },
+            search: new LyricsSearch(true, playerSource: player), ct: TestContext.Current.CancellationToken);
+        Assert.Equal(expected, result?.Source);
+        Assert.Null(result?.TranslationRef);
+    }
+
+    [Fact]
+    public async Task OtherPlatformsWordsKeepThePlayersTranslation()
+    {
+        using var fixture = TwoPlatforms(NeteaseWords, QqTranslated);
+        var track = new Track { Title = "Hello", Artist = "Singer", Duration = 120 };
+        var search = new LyricsSearch(true, playerSource: LyricsSource.Qq);
+        var result = await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.True(result?.IsWordSynced);
+        Assert.Equal("QQ's translation", result!.Lines[0].Translation);
+        Assert.Equal("NetEase + QQ Music", result.Source);
+        Assert.Equal(LyricsSource.Netease, result.Ref?.Source);
+        Assert.Equal(new LyricsRef(LyricsSource.Qq, "wrong-song", 43), result.TranslationRef);
+        // Saved as merged: shown again without asking either platform.
+        var again = await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.Equal("QQ's translation", again?.Lines[0].Translation);
+        Assert.Equal(result.TranslationRef, again?.TranslationRef);
+    }
+
+    static RawLyrics Words(string? translation = null, string? romanization = null) => new()
+    {
+        Source = "QQ Music", Qrc = "[1200,2000]Hel(1200,1000)lo(2200,1000)\n[4200,2000]World(4200,2000)", Translation = translation,
+        Romanization = romanization, Ref = new LyricsRef(LyricsSource.Qq, "mid", 1), MatchScore = 8, TitleMatched = true,
+    };
+
+    static RawLyrics FirstFound(string? translation, string? romanization = null) => new()
+    {
+        Source = "NetEase", Lrc = "[00:01.00]Hello\n[00:04.00]World", Translation = translation, Romanization = romanization, Ref = LyricsRef.Netease(7),
+    };
+
+    [Fact]
+    public void MergedLyricsTakeTheWordsAndTheFirstPlatformsTranslation()
+    {
+        var merged = LyricsProvider.WithTranslation(Words("[00:01.20]QQ one\n[00:04.20]QQ two", "[00:01.20]qq ro"),
+            FirstFound("[00:01.00]NetEase one\n[00:04.00]NetEase two", "[00:01.00]netease ro"))!.Parse()!;
+        Assert.True(merged.IsWordSynced);
+        Assert.Equal(["NetEase one", "NetEase two"], merged.Lines.Select(l => l.Translation));
+        Assert.Equal("qq ro", merged.Lines[0].Pronunciation?.Text); // reads the words' own text
+        Assert.Equal(LyricsRef.Netease(7), merged.TranslationRef);
+        Assert.Equal("QQ Music + NetEase", merged.Source);
+        // No pronunciation with the words: the first platform's.
+        var borrowed = LyricsProvider.WithTranslation(Words(), FirstFound("[00:01.00]NetEase one", "[00:01.00]netease ro"))!.Parse()!;
+        Assert.Equal("netease ro", borrowed.Lines[0].Pronunciation?.Text);
+    }
+
+    [Fact]
+    public void WithoutATranslationTheWordsComeAsTheyAre()
+    {
+        var words = Words("[00:01.20]QQ one");
+        Assert.Same(words, LyricsProvider.WithTranslation(words, FirstFound(null)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TranslationThatDoesNotLineUpIsNotLaidOver(bool wordsTranslated)
+    {
+        // The first platform's lines start seconds apart from the words' (another edit of the song).
+        var words = Words(wordsTranslated ? "[00:01.20]QQ one" : null);
+        var first = FirstFound("[00:09.00]NetEase one\n[00:14.00]NetEase two");
+        first.Lrc = "[00:09.00]Hello\n[00:14.00]World";
+        var result = LyricsProvider.WithTranslation(words, first);
+        if (wordsTranslated) Assert.Same(words, result); else Assert.Null(result);
+    }
+
     static HttpResponseMessage Response(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body) };
 

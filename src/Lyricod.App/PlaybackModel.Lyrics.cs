@@ -61,7 +61,7 @@ public sealed partial class PlaybackModel
         Lyrics = null;
         CurrentIndex = null;
         BestMatchScore = null;
-        var search = new LyricsSearch(IsMusicPlayer, _settings.LookUpOtherPlayers);
+        var search = new LyricsSearch(IsMusicPlayer, _settings.LookUpOtherPlayers, MusicPlayers.OwnSource(NowPlaying?.AppId));
         var pinned = _overrides[track].Lyrics;
         IsSearching = search.AutomaticLookupAllowed || pinned != null;
         Changed?.Invoke(Change.Lyrics | Change.Line);
@@ -128,7 +128,7 @@ public sealed partial class PlaybackModel
                 Id = i, // ids are row indices
                 Pronunciation = l.Pronunciation is { Language: { } lang } p && languages.Contains(lang) ? p : null,
             }).ToList();
-        Lyrics = lines.Count == 0 ? null : new Lyrics(lines, all.Source, all.IsSynced) { Ref = all.Ref };
+        Lyrics = lines.Count == 0 ? null : new Lyrics(lines, all.Source, all.IsSynced) { Ref = all.Ref, TranslationRef = all.TranslationRef };
         CurrentIndex = null;
         Changed?.Invoke(Change.Lyrics);
         Tick();

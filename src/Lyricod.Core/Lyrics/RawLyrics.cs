@@ -18,16 +18,20 @@ public sealed class RawLyrics
     /// <summary>Older macOS cache entries only recorded a NetEase id; see <see cref="SongRef"/>.</summary>
     [JsonPropertyName("neteaseID")] public long? NeteaseId { get; set; }
     [JsonPropertyName("ref")] public LyricsRef? Ref { get; set; }
+    /// <summary>The song the translation came from, when not <see cref="Ref"/>.</summary>
+    [JsonPropertyName("translationRef")] public LyricsRef? TranslationRef { get; set; }
     [JsonPropertyName("matchScore")] public double? MatchScore { get; set; }
     [JsonPropertyName("titleMatched")] public bool? TitleMatched { get; set; }
     // 0.1.0 saved a "wordsChecked" flag here; it's ignored now (see LyricsProvider.WordCheckDue).
 
     [JsonIgnore] public LyricsRef? SongRef => Ref ?? (NeteaseId is { } id ? LyricsRef.Netease(id) : null);
 
+    /// <summary>A copy to change: LRCLIB's raw text can be shared by concurrent searches and manual previews.</summary>
+    internal RawLyrics Copy() => (RawLyrics)MemberwiseClone();
+
     internal RawLyrics Matched(double score, bool titleMatched)
     {
-        // LRCLIB's raw text can be shared by concurrent searches and manual previews.
-        var copy = (RawLyrics)MemberwiseClone();
+        var copy = Copy();
         copy.MatchScore = score;
         copy.TitleMatched = titleMatched;
         return copy;
@@ -43,6 +47,7 @@ public sealed class RawLyrics
         if (l == null) return null;
         if (!string.IsNullOrEmpty(Romanization)) LyricParser.AttachPronunciation(Romanization, l);
         l.Ref = SongRef;
+        l.TranslationRef = TranslationRef;
         // Some uploads are only credits ("作词: 无"); that's not lyrics.
         return l.Lines.Any(x => !x.IsCredit) ? l : null;
     }

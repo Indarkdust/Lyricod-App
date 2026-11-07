@@ -11,7 +11,9 @@ public sealed partial class LyricsProvider
         return req;
     }
 
-    async Task<RawLyrics?> FromNetease(Track track, bool requireTitle, CancellationToken ct, LyricsSearch search)
+    /// <param name="minScore">How well the best search result must match: 3 takes a likely
+    /// match, 7 needs title, artist and length to agree.</param>
+    async Task<RawLyrics?> FromNetease(Track track, bool requireTitle, CancellationToken ct, LyricsSearch search, double minScore = 3)
     {
         // Player titles carry suffixes like "(Theme Song from …)" that bury the real match,
         // so also search the bare title, then keep the best across queries.
@@ -30,10 +32,11 @@ public sealed partial class LyricsProvider
                 if (c.Score > (best?.Score ?? 0)) best = c;
             if (best is { Score: >= 7 }) break; // title + artist + duration all agree
         }
-        if (best is not { Score: >= 3 } b || !search.Accepts(b.Score, b.TitleMatched)) return null;
+        if (best is not { } b || b.Score < minScore || !search.Accepts(b.Score, b.TitleMatched)) return null;
         if (await Fetch(b.Id, ct) is { } raw && raw.Parse() != null) return raw.Matched(b.Score, b.TitleMatched);
         // The best match had no usable lyrics: try the next few good candidates.
-        var others = (await NeteaseSearch(queries[0], track, requireTitle, ct, search)).Where(c => c.Id != b.Id && c.Score >= b.Score - 1.5 && search.Accepts(c.Score, c.TitleMatched)).Take(3);
+        var others = (await NeteaseSearch(queries[0], track, requireTitle, ct, search))
+            .Where(c => c.Id != b.Id && c.Score >= Math.Max(b.Score - 1.5, minScore) && search.Accepts(c.Score, c.TitleMatched)).Take(3);
         foreach (var c in others)
             if (await Fetch(c.Id, ct) is { } r && r.Parse() != null) return r.Matched(c.Score, c.TitleMatched);
         return null;

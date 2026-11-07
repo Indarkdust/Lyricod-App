@@ -51,6 +51,11 @@ public sealed class Lyrics
     public bool IsSynced { get; set; }
     /// <summary>The song the lyrics came from, if known.</summary>
     public LyricsRef? Ref { get; set; }
+    /// <summary>
+    /// Where the translation came from when another song did: the player's own platform's,
+    /// laid over the other platform's word-by-word lines (see <c>LyricsProvider.WordTimed</c>).
+    /// </summary>
+    public LyricsRef? TranslationRef { get; set; }
 
     public bool IsWordSynced => Lines.Any(l => l.Words != null);
 
@@ -67,7 +72,7 @@ public sealed class Lyrics
         return lo;
     }
 
-    public Lyrics Copy() => new([.. Lines], Source, IsSynced) { Ref = Ref };
+    public Lyrics Copy() => new([.. Lines], Source, IsSynced) { Ref = Ref, TranslationRef = TranslationRef };
 }
 
 /// <summary>Which lyric source a song lives in.</summary>
