@@ -63,7 +63,7 @@ For videos in browsers, Lyricod only displays lyrics when it can match the conte
 
 ## Lyrics sources
 
-Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net). Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. Lyrics are cached on your PC for later playback.
+Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net), starting with the platform you're listening on. Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. When one platform has a song word by word and the other only line by line, the word-by-word lyrics come with the translation from the platform you're listening on. Lyrics are cached on your PC for later playback.
 
 If Lyricod finds the wrong song, open Choose Lyrics to compare search results and preview the lyrics before selecting one. Your choice and any timing adjustment are saved for that song, even if you clear the lyrics cache.
 
