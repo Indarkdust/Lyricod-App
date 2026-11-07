@@ -160,6 +160,7 @@ public sealed partial class DesktopLyricsWindow : Window
         {
             AppWindow.Show(false);
             _overlay.StripFrame();
+            _overlay.KeepOnTop();
         }
         else AppWindow.Hide();
     }

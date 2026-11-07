@@ -112,7 +112,77 @@ static partial class Win32
     public static void RefreshFrame(nint hwnd) =>
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020); // NOMOVE NOSIZE NOZORDER NOACTIVATE FRAMECHANGED
 
+    /// <summary>
+    /// Puts an always-on-top window above the others (another one brought forward later covers it),
+    /// without moving, sizing or activating it.
+    /// </summary>
+    public static void RaiseTopmost(nint hwnd) =>
+        SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010); // HWND_TOPMOST; NOMOVE NOSIZE NOACTIVATE
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsIconic(nint hwnd);
+
+    public const int SW_SHOWNOACTIVATE = 4;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ShowWindow(nint hwnd, int command);
+
+    [LibraryImport("user32.dll")]
+    public static partial uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003, EVENT_SYSTEM_MINIMIZESTART = 0x0016, WINEVENT_OUTOFCONTEXT = 0;
+
+    [LibraryImport("user32.dll")]
+    public static partial nint GetForegroundWindow();
+
+    [LibraryImport("user32.dll")]
+    private static partial nint GetWindow(nint hwnd, uint command);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetClassNameW")]
+    private static unsafe partial int GetClassName(nint hwnd, char* name, int max);
+
+    [LibraryImport("dwmapi.dll")]
+    private static partial int DwmGetWindowAttribute(nint hwnd, int attribute, out int value, int size);
+
+    /// <summary>
+    /// Whether a window is shown above <paramref name="hwnd"/> and overlaps it, leaving out
+    /// <paramref name="ignoredProcesses"/>' windows, menus, tooltips and the taskbar with its pop-ups
+    /// (but not the desktop, which Show Desktop can put on top).
+    /// </summary>
+    public static unsafe bool IsCovered(nint hwnd, params uint[] ignoredProcesses)
+    {
+        if (!GetWindowRect(hwnd, out var me)) return false;
+        char* name = stackalloc char[64];
+        for (nint above = GetWindow(hwnd, 3); above != 0; above = GetWindow(above, 3)) // GW_HWNDPREV: up the z-order
+        {
+            if (!IsWindowVisible(above) || IsIconic(above)) continue;
+            if (DwmGetWindowAttribute(above, 14, out int cloaked, sizeof(int)) == 0 && cloaked != 0) continue; // DWMWA_CLOAKED
+            if (!GetWindowRect(above, out var r) || r.Right <= me.Left || r.Left >= me.Right || r.Bottom <= me.Top || r.Top >= me.Bottom) continue;
+            GetWindowThreadProcessId(above, out uint process);
+            if (Array.IndexOf(ignoredProcesses, process) >= 0) continue;
+            var kind = new string(name, 0, GetClassName(above, name, 64));
+            if (kind is "#32768" or "tooltips_class32" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "NotifyIconOverflowWindow"
+                or "TopLevelWindowForOverflowXamlIsland" or "TaskListThumbnailWnd" or "XamlExplorerHostIslandWindow"
+                or "Windows.UI.Core.CoreWindow" or "MultitaskingViewFrame" or "ForegroundStaging") continue;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>Calls <paramref name="callback"/> on this thread (it must pump messages) when the events happen.</summary>
+    [LibraryImport("user32.dll")]
+    public static unsafe partial nint SetWinEventHook(uint eventMin, uint eventMax, nint module,
+        delegate* unmanaged<nint, uint, nint, int, int, uint, uint, void> callback, uint processId, uint threadId, uint flags);
+
     const int GWL_EXSTYLE = -20;
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static partial nint GetWindowLongPtr(nint hwnd, int index);
+
+    /// <summary>Whether the window is always on top (WS_EX_TOPMOST).</summary>
+    public static bool IsTopmost(nint hwnd) => ((long)GetWindowLongPtr(hwnd, GWL_EXSTYLE) & 0x8) != 0;
 
     [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
     private static partial nint SetWindowLongPtr(nint hwnd, int index, nint value);

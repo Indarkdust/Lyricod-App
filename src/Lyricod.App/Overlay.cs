@@ -11,8 +11,21 @@ namespace Lyricod;
 /// Makes a window an overlay, like the desktop strip and the island: borderless, always on
 /// top, fully transparent around its content, out of Alt-Tab, and never taking focus.
 /// </summary>
+/// <remarks>
+/// Always on top is set once, but another always-on-top window shown later goes above it, and
+/// Show Desktop (Win+D) can push it down or minimise it. So whenever another app's window comes
+/// forward (the desktop too), and every second besides, an overlay that's showing goes back on top
+/// if it needs to: minimised, no longer always on top, or covered by another window. Windows of the
+/// app in use (its menus and pop-ups, its own always-on-top window), the taskbar and its pop-ups,
+/// and Lyricod's own windows are left above it. Nothing here takes focus.
+/// </remarks>
 sealed class Overlay
 {
+    static readonly List<Overlay> Showing = [];
+    static readonly uint OwnProcess = (uint)Environment.ProcessId;
+    static bool _watching;
+    static Microsoft.UI.Dispatching.DispatcherQueueTimer? _check;
+
     readonly Window _window;
     readonly nint _hwnd;
     // Kept alive for the window's lifetime: it hooks the window's messages.
@@ -35,6 +48,70 @@ sealed class Overlay
         window.AppWindow.IsShownInSwitchers = false;
         StripFrame();
         _messages = SuppressFrame();
+        Showing.Add(this);
+        window.Closed += (_, _) => Showing.Remove(this);
+        Watch();
+    }
+
+    /// <summary>Back above every always-on-top window, and out of minimised, without taking focus (only while it shows).</summary>
+    public void KeepOnTop()
+    {
+        if (!Win32.IsWindowVisible(_hwnd)) return;
+        if (Win32.IsIconic(_hwnd)) Win32.ShowWindow(_hwnd, Win32.SW_SHOWNOACTIVATE);
+        Win32.RaiseTopmost(_hwnd);
+    }
+
+    /// <summary>Puts every showing overlay back on top that needs it; <paramref name="inUse"/> is the app in use's process.</summary>
+    static void GuardAll(uint inUse)
+    {
+        foreach (var overlay in Showing.ToArray())
+        {
+            nint hwnd = overlay._hwnd;
+            if (!Win32.IsWindowVisible(hwnd)) continue;
+            if (Win32.IsIconic(hwnd) || !Win32.IsTopmost(hwnd) || Win32.IsCovered(hwnd, OwnProcess, inUse)) overlay.KeepOnTop();
+        }
+    }
+
+    static unsafe void Watch()
+    {
+        if (_watching) return;
+        _watching = true;
+        Win32.SetWinEventHook(Win32.EVENT_SYSTEM_FOREGROUND, Win32.EVENT_SYSTEM_FOREGROUND, 0, &OnWindowEvent, 0, 0, Win32.WINEVENT_OUTOFCONTEXT);
+        Win32.SetWinEventHook(Win32.EVENT_SYSTEM_MINIMIZESTART, Win32.EVENT_SYSTEM_MINIMIZESTART, 0, &OnWindowEvent, OwnProcess, 0, Win32.WINEVENT_OUTOFCONTEXT);
+        _check = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _check.Interval = TimeSpan.FromSeconds(1);
+        _check.Tick += (_, _) =>
+        {
+            try
+            {
+                Win32.GetWindowThreadProcessId(Win32.GetForegroundWindow(), out uint inUse);
+                GuardAll(inUse);
+            }
+            catch (Exception e) { System.Diagnostics.Debug.WriteLine("keep on top: " + e); }
+        };
+        _check.Start();
+    }
+
+    /// <summary>
+    /// Another app's window came forward, or one of ours is being minimised. Lyricod's own windows
+    /// coming forward (Settings, the tray panel) leave the overlays where they are.
+    /// </summary>
+    [UnmanagedCallersOnly]
+    static void OnWindowEvent(nint hook, uint ev, nint hwnd, int objectId, int childId, uint thread, uint time)
+    {
+        try
+        {
+            if (ev == Win32.EVENT_SYSTEM_MINIMIZESTART)
+            {
+                foreach (var overlay in Showing.ToArray())
+                    if (overlay._hwnd == hwnd) overlay.KeepOnTop();
+                return;
+            }
+            Win32.GetWindowThreadProcessId(hwnd, out uint process);
+            if (process == OwnProcess) return;
+            GuardAll(process);
+        }
+        catch (Exception e) { System.Diagnostics.Debug.WriteLine("keep on top: " + e); }
     }
 
     public nint Handle => _hwnd;
@@ -66,6 +143,10 @@ sealed class Overlay
                     break;
                 case 0x0086: // WM_NCACTIVATE: don't repaint a frame
                     e.Result = 1;
+                    e.Handled = true;
+                    break;
+                case 0x0112 when ((long)e.Message.WParam & 0xFFF0) == 0xF020: // WM_SYSCOMMAND SC_MINIMIZE: an overlay doesn't minimise
+                    e.Result = 0;
                     e.Handled = true;
                     break;
                 case 0x007C when (long)e.Message.WParam == -16: // WM_STYLECHANGING for GWL_STYLE

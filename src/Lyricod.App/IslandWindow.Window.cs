@@ -62,6 +62,7 @@ public sealed partial class IslandWindow
             Place();
             AppWindow.Show(false);
             _overlay.StripFrame();
+            _overlay.KeepOnTop();
             _pointerTimer.Start();
             AnimateShown(true);
         }
