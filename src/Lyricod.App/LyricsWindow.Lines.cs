@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Numerics;
 using Lyricod.Core;
 using Lyricod.Core.Romanization;
@@ -34,6 +35,7 @@ public sealed partial class LyricsWindow
         }
         Message.Visibility = Visibility.Collapsed;
         UpdatePadding();
+        _linesWidth = TextWidth;
         foreach (var line in lyrics.Lines)
         {
             var panel = new StackPanel
@@ -57,7 +59,11 @@ public sealed partial class LyricsWindow
         MoveToCurrent(animate: false);
     }
 
-    /// <summary>Draws a line plain (wrapped, faded) or, while it's being sung, as rows that sweep.</summary>
+    /// <summary>
+    /// Draws a line plain (faded) or, while it's being sung, as rows that sweep. Both break into the
+    /// same rows (LinePieces: even, at spaces, punctuation and between words), so a line doesn't
+    /// move or rewrap when it lights up.
+    /// </summary>
     void RenderLine(LineView view, bool current)
     {
         var lyrics = _model.Lyrics;
@@ -97,11 +103,13 @@ public sealed partial class LyricsWindow
         }
         else
         {
-            Add(view, new TextBlock
-            {
-                Text = line.Text, FontFamily = font, FontSize = _fontSize, FontWeight = Fonts.BoldWeight,
-                Foreground = new SolidColorBrush(Colors.White), TextWrapping = TextWrapping.Wrap, TextAlignment = align,
-            }, soft: true);
+            foreach (var piece in LinePieces.Split(line, TextWidth, Measure(font)))
+                Add(view, new TextBlock
+                {
+                    Text = piece.Text, FontFamily = font, FontSize = _fontSize, FontWeight = Fonts.BoldWeight,
+                    Foreground = new SolidColorBrush(Colors.White), TextWrapping = TextWrapping.NoWrap,
+                    HorizontalAlignment = _settings.LyricsCentered ? HorizontalAlignment.Center : HorizontalAlignment.Left,
+                }, soft: true);
         }
         if (_settings.ShowPronunciation && line.Pronunciation is { } p)
             Add(view, Extra(p.Text, Math.Round(_fontSize * 0.5), current ? 0.7 : 0.3, song, align), soft: !current);
@@ -189,20 +197,93 @@ public sealed partial class LyricsWindow
         // Before the window's first layout the viewport has no height yet; Relayout scrolls again.
         double viewport = Scroller.ViewportHeight > 0 ? Scroller.ViewportHeight : Scroller.ActualHeight;
         var top = _views[target].Panel.TransformToVisual(Lines).TransformPoint(new Point(0, 0)).Y;
-        Scroller.ScrollTo(0, Math.Max(0, top - viewport * 0.3),
+        double to = Math.Max(0, top - viewport * 0.3);
+        // Moving on to the next line: the lines below follow one after another.
+        _stagger = animate && Math.Abs(to - Scroller.VerticalOffset) > 1;
+        Scroller.ScrollTo(0, to,
             new ScrollingScrollOptions(animate ? ScrollingAnimationMode.Enabled : ScrollingAnimationMode.Disabled, ScrollingSnapPointsMode.Ignore));
     }
 
-    /// <summary>Scrolls to the next line with a soft, spring-like ease (the Mac's spring), not Windows' quick default.</summary>
+    /// <summary>How long the list takes to glide to the next line.</summary>
+    const double Glide = 0.6;
+
+    /// <summary>
+    /// Scrolls to the next line with a soft, spring-like ease (the Mac's spring), not Windows' quick
+    /// default. Moving on a line, the lines don't move as one block: each one below the line just
+    /// sung sets off a moment after the one above (like Apple Music's lyrics), held back by a
+    /// translation that runs beside the scroll on the compositor and ends at nothing. A line still
+    /// catching up from the last move eases the rest of the way instead of jumping.
+    /// </summary>
     void OnScrollAnimationStarting(ScrollView sender, ScrollingScrollAnimationStartingEventArgs args)
     {
         if (args.Animation is not Microsoft.UI.Composition.Vector3KeyFrameAnimation stock) return;
         var compositor = stock.Compositor;
-        var eased = compositor.CreateVector3KeyFrameAnimation();
-        eased.InsertKeyFrame(1, new Vector3((float)args.EndPosition.X, (float)args.EndPosition.Y, 0),
-            compositor.CreateCubicBezierEasingFunction(new Vector2(0.2f, 0.9f), new Vector2(0.25f, 1)));
-        eased.Duration = TimeSpan.FromSeconds(0.6);
-        args.Animation = eased;
+        bool stagger = _stagger;
+        _stagger = false;
+        double from = args.StartPosition.Y, delta = args.EndPosition.Y - from;
+        double viewport = Scroller.ViewportHeight > 0 ? Scroller.ViewportHeight : Scroller.ActualHeight;
+        List<(StackPanel Panel, double Delay)> followers = stagger && delta > 0 && delta < viewport ? Followers() : [];
+        if (followers.Count == 0)
+        {
+            var eased = compositor.CreateVector3KeyFrameAnimation();
+            eased.InsertKeyFrame(1, new Vector3((float)args.EndPosition.X, (float)args.EndPosition.Y, 0),
+                compositor.CreateCubicBezierEasingFunction(new Vector2(0.2f, 0.9f), new Vector2(0.25f, 1)));
+            eased.Duration = TimeSpan.FromSeconds(Glide);
+            args.Animation = eased;
+            return;
+        }
+
+        // The scroll and every line's lag share the same frames, so they stay in step.
+        const int steps = 24;
+        double total = Glide + followers.Max(f => f.Delay);
+        var linear = compositor.CreateLinearEasingFunction();
+        var scroll = compositor.CreateVector3KeyFrameAnimation();
+        for (int k = 0; k <= steps; k++)
+            scroll.InsertKeyFrame((float)k / steps, new Vector3((float)args.EndPosition.X, (float)(from + delta * Ease(total * k / steps / Glide)), 0), linear);
+        scroll.Duration = TimeSpan.FromSeconds(total);
+        args.Animation = scroll;
+        foreach (var (panel, delay) in followers)
+        {
+            var lag = compositor.CreateVector3KeyFrameAnimation();
+            for (int k = 0; k <= steps; k++)
+            {
+                double t = total * k / steps;
+                // Where this line would be had it set off later, less where the scroll puts it;
+                // plus what's left of the last move's lag, fading as the scroll goes.
+                double behind = delta * (Ease(t / Glide) - Ease((t - delay) / Glide));
+                string left = (1 - Ease(t / Glide)).ToString("0.####", CultureInfo.InvariantCulture);
+                lag.InsertExpressionKeyFrame((float)k / steps,
+                    $"this.StartingValue * {left} + Vector3(0, {behind.ToString("0.###", CultureInfo.InvariantCulture)}, 0)", linear);
+            }
+            lag.Duration = TimeSpan.FromSeconds(total);
+            lag.Target = "Translation";
+            panel.StartAnimation(lag);
+        }
+    }
+
+    /// <summary>The lines near the one being sung and how long each waits before following.</summary>
+    List<(StackPanel Panel, double Delay)> Followers()
+    {
+        if (_current is not int current) return [];
+        var followers = new List<(StackPanel, double)>();
+        for (int i = Math.Max(0, current - 4); i < Math.Min(_views.Count, current + 14); i++)
+            followers.Add((_views[i].Panel, Math.Clamp(i - current + 1, 0, 9) * 0.04));
+        return followers;
+    }
+
+    /// <summary>The scroll's ease, cubic-bezier(0.2, 0.9, 0.25, 1), at <paramref name="x"/> of the way through.</summary>
+    static double Ease(double x)
+    {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        static double Curve(double s, double p1, double p2) => 3 * (1 - s) * (1 - s) * s * p1 + 3 * (1 - s) * s * s * p2 + s * s * s;
+        double lo = 0, hi = 1, at = x;
+        for (int k = 0; k < 24; k++)
+        {
+            at = (lo + hi) / 2;
+            if (Curve(at, 0.2, 0.25) < x) lo = at; else hi = at;
+        }
+        return Curve(at, 0.9, 1);
     }
 
     void AnimateCurrent()

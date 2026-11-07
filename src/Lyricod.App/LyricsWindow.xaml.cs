@@ -36,6 +36,10 @@ public sealed partial class LyricsWindow : Window
     double _fontSize = 30;
     /// <summary>Text widths in the current line's font, cleared when the font or size changes.</summary>
     readonly Dictionary<string, double> _widths = [];
+    /// <summary>The width the lines were broken into rows for.</summary>
+    double _linesWidth;
+    /// <summary>Set while the next scroll is the move to the next line, which the lines below follow.</summary>
+    bool _stagger;
 
     /// <summary>One lyric line on screen; while it's being sung, its rows and their sweeps.</summary>
     sealed class LineView(LyricLine line, StackPanel panel)

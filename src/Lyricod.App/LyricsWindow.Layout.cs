@@ -57,10 +57,11 @@ public sealed partial class LyricsWindow
     void Relayout()
     {
         ApplyLayout();
-        // Same layout, new width: only the sung line's rows change.
-        if (_current is int i && i < _views.Count)
+        // Same layout, new width: the lines break into new rows.
+        if (Math.Abs(TextWidth - _linesWidth) > 0.5)
         {
-            RenderLine(_views[i], current: true);
+            _linesWidth = TextWidth;
+            for (int i = 0; i < _views.Count; i++) RenderLine(_views[i], current: i == _current);
             AnimateCurrent();
         }
         UpdatePadding();
