@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Text.Json;
 
 namespace Lyricod.Core;
@@ -12,10 +11,11 @@ public sealed partial class LyricsProvider
 {
     readonly HttpClient _http;
     readonly string _cacheDir;
+    internal const int AliasCacheCapacity = 256, LrclibCacheCapacity = 128;
     /// <summary>An artist's other names, by the name a player shows (see <see cref="WithAliases"/>).</summary>
-    readonly ConcurrentDictionary<(string Artist, bool AllowGuess), IReadOnlyList<string>> _aliasCache = new();
+    readonly BoundedCache<(string Artist, bool AllowGuess), IReadOnlyList<string>> _aliasCache = new(AliasCacheCapacity);
     /// <summary>LRCLIB search results carry the lyrics too; kept so picking one needs no second request.</summary>
-    readonly ConcurrentDictionary<string, RawLyrics> _lrclibSeen = new();
+    readonly BoundedCache<string, RawLyrics> _lrclibSeen = new(LrclibCacheCapacity);
 
     static readonly JsonSerializerOptions CacheJson = new() { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
 

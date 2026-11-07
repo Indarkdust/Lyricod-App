@@ -12,6 +12,8 @@ public sealed record NowPlaying(
     string AppId, string Title, string Artist, string Album, double Duration,
     double Position, DateTimeOffset PositionAt, bool IsPlaying, bool HasTimeline, bool CanSeek = false)
 {
+    /// <summary>Changes when the selected SMTC session changes, even within the same player.</summary>
+    public long SessionId { get; init; }
     /// <summary>Identifies the song across reports.</summary>
     public string TrackId => $"{AppId}|{Title}|{Artist}|{Album}";
 }
@@ -27,6 +29,7 @@ public sealed class MediaSession : IDisposable
     GlobalSystemMediaTransportControlsSessionManager? _manager;
     GlobalSystemMediaTransportControlsSession? _session;
     readonly Lock _gate = new();
+    long _sessionId;
     volatile bool _disposed;
 
     /// <summary>Raised on a background thread when the song, play state or position changed.</summary>
@@ -110,6 +113,7 @@ public sealed class MediaSession : IDisposable
                     _session.TimelinePropertiesChanged -= OnSessionChanged;
                 }
                 _session = chosen;
+                _sessionId++;
                 if (_session != null)
                 {
                     _session.MediaPropertiesChanged += OnDetailsChanged;
@@ -126,6 +130,10 @@ public sealed class MediaSession : IDisposable
 
     void OnDetailsChanged(GlobalSystemMediaTransportControlsSession sender, object args)
     {
+        lock (_gate)
+        {
+            if (!ReferenceEquals(sender, _session) || _disposed) return;
+        }
         DetailsChanged?.Invoke();
         Changed?.Invoke();
     }
@@ -144,7 +152,8 @@ public sealed class MediaSession : IDisposable
     public async Task<NowPlaying?> ReadAsync()
     {
         GlobalSystemMediaTransportControlsSession? s;
-        lock (_gate) s = _session;
+        long sessionId;
+        lock (_gate) { s = _session; sessionId = _sessionId; }
         if (s == null) return null;
         try
         {
@@ -161,20 +170,20 @@ public sealed class MediaSession : IDisposable
                 try { if (Choose() is { } better && !ReferenceEquals(better, s)) Pick(); }
                 catch (Exception) { /* the session list can change underneath us */ }
             }
-            // Some players report a stale or empty update time; then the position is as of now.
+            // Keep the raw timestamp, including empty/invalid values. MediaClock recognises
+            // repeated snapshots before deciding whether a timestamp can be extrapolated.
             var at = timeline.LastUpdatedTime;
-            var now = DateTimeOffset.Now;
-            if (at > now || now - at > TimeSpan.FromDays(1)) at = now;
             return new NowPlaying(
                 s.SourceAppUserModelId ?? "", props.Title.Trim(), props.Artist?.Trim() ?? "", props.AlbumTitle?.Trim() ?? "",
                 hasTimeline ? duration : 0, (timeline.Position - timeline.StartTime).TotalSeconds, at,
                 info?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing, hasTimeline,
-                info?.Controls?.IsPlaybackPositionEnabled == true);
+                info?.Controls?.IsPlaybackPositionEnabled == true) { SessionId = sessionId };
         }
         catch (Exception) { return null; } // the player quit while being read
     }
 
     GlobalSystemMediaTransportControlsSession? Current { get { lock (_gate) return _session; } }
+    public long SessionId { get { lock (_gate) return _sessionId; } }
 
     /// <summary>The followed player's cover art (encoded image bytes), or null.</summary>
     public async Task<byte[]?> ReadArtworkAsync()
@@ -233,13 +242,31 @@ public sealed class MediaSession : IDisposable
         };
     }
 
-    public async Task PlayPause() { if (Current is { } s) await s.TryTogglePlayPauseAsync(); }
+    // Pick can switch the followed session before its UI notification is delivered.
+    GlobalSystemMediaTransportControlsSession? CommandTarget(NowPlaying? displayed)
+    {
+        lock (_gate)
+            return !_disposed && (displayed == null || displayed.SessionId == _sessionId)
+                ? _session : null;
+    }
+
+    public Task<bool> PlayPause() => PlayPause(null);
+
+    internal async Task<bool> PlayPause(NowPlaying? displayed)
+    {
+        if (CommandTarget(displayed) is not { } s) return false;
+        try { return await s.TryTogglePlayPauseAsync(); }
+        catch (Exception) { return false; } // the player went away or rejected the request
+    }
     public async Task Next() { if (Current is { } s) await s.TrySkipNextAsync(); }
     public async Task Previous() { if (Current is { } s) await s.TrySkipPreviousAsync(); }
 
     /// <summary>Moves the player to <paramref name="seconds"/>, if it allows seeking.</summary>
-    public async Task<bool> Seek(double seconds) =>
-        Current is { } s && await s.TryChangePlaybackPositionAsync((long)(Math.Max(seconds, 0) * TimeSpan.TicksPerSecond));
+    public Task<bool> Seek(double seconds) => Seek(seconds, null);
+
+    internal async Task<bool> Seek(double seconds, NowPlaying? displayed) =>
+        CommandTarget(displayed) is { } s &&
+            await s.TryChangePlaybackPositionAsync((long)(Math.Max(seconds, 0) * TimeSpan.TicksPerSecond));
 
     /// <summary>Stops listening to Windows' media controls; no more <see cref="Changed"/>.</summary>
     public void Dispose()

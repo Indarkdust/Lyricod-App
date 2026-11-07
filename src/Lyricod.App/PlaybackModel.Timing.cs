@@ -15,13 +15,15 @@ public sealed partial class PlaybackModel
     }
 
     /// <summary>Nudges this song's timing (positive shows lyrics earlier) and remembers it.</summary>
-    public void SetSongOffset(double value)
+    public void NudgeSongOffset(double delta, bool clamp) =>
+        EditSongOffset(choice => choice.NudgeOffset(delta, clamp));
+
+    public void ResetSongOffset() => EditSongOffset(choice => choice.Offset = 0);
+
+    void EditSongOffset(Action<TrackOverride> edit)
     {
         if (Track is not { } t) return;
-        var o = _overrides[t];
-        o.Offset = Math.Round(value, 2);
-        _overrides[t] = o;
-        ApplyOffset();
+        if (TrySaveSongChoice(t, edit)) ApplyOffset();
     }
 
     /// <summary>
