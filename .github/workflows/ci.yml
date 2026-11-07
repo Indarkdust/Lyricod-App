@@ -1,8 +1,11 @@
 name: Windows
 
-# Builds and tests Lyricod for Windows on every push and pull request.
+# Builds and tests Lyricod for Windows on every branch push and pull request. Each build keeps
+# just its portable zip, for as long as the repository's artifact setting says: Actions storage is
+# small. Tags are built by release.yml, whose downloads go on the release itself.
 on:
   push:
+    branches: ['**']
   pull_request:
   workflow_dispatch:
 
@@ -47,13 +50,7 @@ jobs:
           ./scripts/package-portable.ps1 -Version $version -Arch '${{ matrix.platform }}' -PublishFolder 'publish/${{ matrix.rid }}' -OutputFolder publish -Label 'test.${{ github.run_number }}'
       - uses: actions/upload-artifact@v7
         with:
-          name: Lyricod-${{ matrix.rid }}
-          path: publish/${{ matrix.rid }}
-          retention-days: 14
-      - uses: actions/upload-artifact@v7
-        with:
           name: Lyricod-${{ matrix.rid }}-portable
           path: publish/*.zip
           if-no-files-found: error
           compression-level: 0
-          retention-days: 14
