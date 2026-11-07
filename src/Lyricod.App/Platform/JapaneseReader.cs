@@ -98,7 +98,7 @@ public sealed class JapaneseReader : IJapaneseReader
                 if (found < 0) continue;
                 if (found > at) words.Add(new WordReading(chunk[at..found], null));
                 bool isWord = display.Any(char.IsLetterOrDigit);
-                words.Add(new WordReading(display, isWord ? phoneme.YomiText : null));
+                words.Add(new WordReading(display, isWord ? phoneme.YomiText : null, phoneme.IsPhraseStart));
                 at = found + display.Length;
             }
             if (at < chunk.Length) words.Add(new WordReading(chunk[at..], null));
