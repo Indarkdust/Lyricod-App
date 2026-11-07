@@ -205,6 +205,45 @@ public class LinePiecesTests
         Assert.Equal("you, ", pieces[1].Words![0].Text);
     }
 
+    static string[] Rows(string text, double width) =>
+        [.. LinePieces.Split(new LyricLine { Start = 0, End = 10, Text = text }, width, Measure).Select(p => p.Text)];
+
+    [Fact]
+    public void JapaneseBreaksAfterTheClosingQuoteNotInsideIt() =>
+        Assert.Equal(["ただ「見て、綺麗」", "だと手を引い た"], Rows("ただ「見て、綺麗」だと手を引い た", 120));
+
+    [Fact]
+    public void NoRowIsALoneCharacter()
+    {
+        // Ten characters fit a row, so eleven are two rows of five and six, not ten and one.
+        var rows = Rows("あいうえおかきくけこさ", 100);
+        Assert.Equal(2, rows.Length);
+        Assert.All(rows, r => Assert.InRange(r.Length, 5, 6));
+    }
+
+    [Fact]
+    public void RowsNeverStartWithACommaOrStop() =>
+        Assert.Equal(["あいうえお、", "かきくけこ。", "さしすせそ"], Rows("あいうえお、かきくけこ。さしすせそ", 60));
+
+    [Fact]
+    public void ChineseBreaksAfterTheQuotedWords() =>
+        Assert.Equal(["不过是“瞧啊，真美”", "如此便牵系起彼此的手"], Rows("不过是“瞧啊，真美”如此便牵系起彼此的手", 120));
+
+    [Fact]
+    public void AWordTooWideForARowIsSplitEvenly() =>
+        Assert.Equal(["abcd", "efgh", "ijkl"], Rows("abcdefghijkl", 50));
+
+    [Fact]
+    public void ATimedWordSplitBetweenRowsSharesItsTime()
+    {
+        var line = new LyricLine { Start = 0, End = 9, Text = "aaaa bbbb", Words = [new LyricWord(0, 9, "aaaa bbbb")] };
+        var pieces = LinePieces.Split(line, 50, Measure);
+        Assert.Equal(["aaaa", "bbbb"], pieces.Select(p => p.Text));
+        Assert.Equal(5, pieces[1].Start, 3);
+        Assert.Equal(new LyricWord(5, 4, "bbbb"), pieces[1].Words![0]);
+        Assert.Equal(5, pieces[0].End, 3);
+    }
+
     [Fact]
     public void LatinWordsStayTogetherWithoutTiming()
     {
