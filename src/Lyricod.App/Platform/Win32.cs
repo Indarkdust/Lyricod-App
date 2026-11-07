@@ -114,10 +114,19 @@ static partial class Win32
 
     /// <summary>
     /// Puts an always-on-top window above the others (another one brought forward later covers it),
-    /// without moving, sizing or activating it.
+    /// or just above <paramref name="cover"/>, under whatever is above that, without moving, sizing
+    /// or activating it.
     /// </summary>
-    public static void RaiseTopmost(nint hwnd) =>
-        SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010); // HWND_TOPMOST; NOMOVE NOSIZE NOACTIVATE
+    public static void RaiseTopmost(nint hwnd, nint cover = 0)
+    {
+        // It goes under the window it's placed after: the one above the cover, if any.
+        nint after = cover == 0 ? 0 : GetWindow(cover, 3); // GW_HWNDPREV
+        SetWindowPos(hwnd, after == 0 ? -1 : after, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010); // HWND_TOPMOST; NOMOVE NOSIZE NOACTIVATE
+    }
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsWindow(nint hwnd);
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -147,28 +156,30 @@ static partial class Win32
     private static partial int DwmGetWindowAttribute(nint hwnd, int attribute, out int value, int size);
 
     /// <summary>
-    /// Whether a window is shown above <paramref name="hwnd"/> and overlaps it, leaving out
-    /// <paramref name="ignoredProcesses"/>' windows, menus, tooltips and the taskbar with its pop-ups
-    /// (but not the desktop, which Show Desktop can put on top).
+    /// The highest window shown above <paramref name="hwnd"/> that overlaps it, or 0, leaving out
+    /// <paramref name="leftAbove"/>, <paramref name="ignoredProcesses"/>' windows, menus, tooltips and
+    /// the taskbar with its pop-ups (but not the desktop, which Show Desktop can put on top).
     /// </summary>
-    public static unsafe bool IsCovered(nint hwnd, params uint[] ignoredProcesses)
+    public static unsafe nint CoveredBy(nint hwnd, ICollection<nint> leftAbove, params uint[] ignoredProcesses)
     {
-        if (!GetWindowRect(hwnd, out var me)) return false;
+        if (!GetWindowRect(hwnd, out var me)) return 0;
+        nint highest = 0;
         char* name = stackalloc char[64];
         for (nint above = GetWindow(hwnd, 3); above != 0; above = GetWindow(above, 3)) // GW_HWNDPREV: up the z-order
         {
             if (!IsWindowVisible(above) || IsIconic(above)) continue;
             if (DwmGetWindowAttribute(above, 14, out int cloaked, sizeof(int)) == 0 && cloaked != 0) continue; // DWMWA_CLOAKED
             if (!GetWindowRect(above, out var r) || r.Right <= me.Left || r.Left >= me.Right || r.Bottom <= me.Top || r.Top >= me.Bottom) continue;
+            if (leftAbove.Contains(above)) continue;
             GetWindowThreadProcessId(above, out uint process);
             if (Array.IndexOf(ignoredProcesses, process) >= 0) continue;
             var kind = new string(name, 0, GetClassName(above, name, 64));
             if (kind is "#32768" or "tooltips_class32" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "NotifyIconOverflowWindow"
                 or "TopLevelWindowForOverflowXamlIsland" or "TaskListThumbnailWnd" or "XamlExplorerHostIslandWindow"
                 or "Windows.UI.Core.CoreWindow" or "MultitaskingViewFrame" or "ForegroundStaging") continue;
-            return true;
+            highest = above;
         }
-        return false;
+        return highest;
     }
 
     /// <summary>Calls <paramref name="callback"/> on this thread (it must pump messages) when the events happen.</summary>

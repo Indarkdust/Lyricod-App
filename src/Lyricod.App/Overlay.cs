@@ -17,7 +17,10 @@ namespace Lyricod;
 /// forward (the desktop too), and every second besides, an overlay that's showing goes back on top
 /// if it needs to: minimised, no longer always on top, or covered by another window. Windows of the
 /// app in use (its menus and pop-ups, its own always-on-top window), the taskbar and its pop-ups,
-/// and Lyricod's own windows are left above it. Nothing here takes focus.
+/// and Lyricod's own windows are left above it: a covered overlay goes just above the window
+/// covering it, not to the very top. A window that keeps putting itself back on top (another app
+/// holding its own there) is left above after three rounds, rather than the two swapping places
+/// every second. Nothing here takes focus.
 /// </remarks>
 sealed class Overlay
 {
@@ -25,11 +28,19 @@ sealed class Overlay
     static readonly uint OwnProcess = (uint)Environment.ProcessId;
     static bool _watching;
     static Microsoft.UI.Dispatching.DispatcherQueueTimer? _check;
+    /// <summary>Other apps' windows that kept coming back on top, now left there.</summary>
+    static readonly HashSet<nint> LeftAbove = [];
+    const int Rounds = 3;
 
     readonly Window _window;
     readonly nint _hwnd;
     // Kept alive for the window's lifetime: it hooks the window's messages.
     readonly WindowMessageMonitor _messages;
+    // The window it last went above, with the app in use then, when, and how many times running.
+    nint _raisedAbove;
+    uint _raisedFor;
+    long _raisedAt;
+    int _rounds;
 
     public Overlay(Window window)
     {
@@ -68,8 +79,24 @@ sealed class Overlay
         {
             nint hwnd = overlay._hwnd;
             if (!Win32.IsWindowVisible(hwnd)) continue;
-            if (Win32.IsIconic(hwnd) || !Win32.IsTopmost(hwnd) || Win32.IsCovered(hwnd, OwnProcess, inUse)) overlay.KeepOnTop();
+            if (Win32.IsIconic(hwnd) || !Win32.IsTopmost(hwnd)) { overlay.KeepOnTop(); continue; }
+            nint cover = Win32.CoveredBy(hwnd, LeftAbove, OwnProcess, inUse);
+            if (cover != 0) overlay.RaiseAbove(cover, inUse);
         }
+    }
+
+    /// <summary>
+    /// Just above <paramref name="cover"/>, unless it has come straight back over the overlay, with the
+    /// same app in use, <see cref="Rounds"/> times running: then it's left above.
+    /// </summary>
+    void RaiseAbove(nint cover, uint inUse)
+    {
+        long now = Environment.TickCount64;
+        bool again = cover == _raisedAbove && inUse == _raisedFor && now - _raisedAt < 3000;
+        _rounds = again ? _rounds + 1 : 1;
+        (_raisedAbove, _raisedFor, _raisedAt) = (cover, inUse, now);
+        if (_rounds > Rounds) { LeftAbove.Add(cover); return; }
+        Win32.RaiseTopmost(_hwnd, cover);
     }
 
     static unsafe void Watch()
@@ -84,6 +111,7 @@ sealed class Overlay
         {
             try
             {
+                LeftAbove.RemoveWhere(h => !Win32.IsWindow(h));
                 Win32.GetWindowThreadProcessId(Win32.GetForegroundWindow(), out uint inUse);
                 GuardAll(inUse);
             }

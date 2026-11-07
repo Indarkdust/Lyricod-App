@@ -165,22 +165,30 @@ sealed class ArtworkDrift
             set.StartAnimation("Scale", breathe);
         }
         // The smaller copies wander around the middle on slow loops (the third the other way round,
-        // and faster); their paths depend on the size.
-        small.StartAnimation("Offset", Wander(small.Size, 60, 0.2f, 0.15f, 1, 0.8));
-        third.StartAnimation("Offset", Wander(third.Size, 38, -0.26f, 0.2f, 1.3, 1));
+        // and faster); their paths depend on the size. The small one goes across in 60 s and down in
+        // 75 s, so its path comes back to where it started after 5 minutes; the third, 29.2 s and 38 s.
+        small.StartAnimation("Offset", Wander(small.Size, 300, 0.2f, 0.15f, 5, 4));
+        third.StartAnimation("Offset", Wander(third.Size, 380, -0.26f, 0.2f, 13, 10));
         SetPaused(set, !_moving);
     }
 
-    Vector3KeyFrameAnimation Wander(Vector2 copy, double seconds, float across, float down, double acrossRate, double downRate)
+    /// <summary>
+    /// A loop of <paramref name="seconds"/> going across and back <paramref name="acrossTurns"/> times
+    /// and down and back <paramref name="downTurns"/> times: whole turns, so it ends where it starts
+    /// and runs on with no jump.
+    /// </summary>
+    Vector3KeyFrameAnimation Wander(Vector2 copy, double seconds, float across, float down, int acrossTurns, int downTurns)
     {
         var middle = _size / 2;
         var wander = _compositor.CreateVector3KeyFrameAnimation();
-        const int points = 24;
+        var linear = _compositor.CreateLinearEasingFunction();
+        // 24 points a turn of the faster way: at least as smooth as before.
+        int points = 24 * Math.Max(acrossTurns, downTurns);
         for (int i = 0; i <= points; i++)
         {
             double t = (double)i / points * 2 * Math.PI;
-            var at = middle - copy / 2 + new Vector2((float)(_size.X * across * Math.Sin(t * acrossRate)), (float)(_size.Y * down * Math.Cos(t * downRate)));
-            wander.InsertKeyFrame((float)i / points, new Vector3(at, 0), _compositor.CreateLinearEasingFunction());
+            var at = middle - copy / 2 + new Vector2((float)(_size.X * across * Math.Sin(t * acrossTurns)), (float)(_size.Y * down * Math.Cos(t * downTurns)));
+            wander.InsertKeyFrame((float)i / points, new Vector3(at, 0), linear);
         }
         wander.Duration = TimeSpan.FromSeconds(seconds);
         wander.IterationBehavior = AnimationIterationBehavior.Forever;
