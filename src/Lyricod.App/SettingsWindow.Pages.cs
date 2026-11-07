@@ -63,7 +63,7 @@ public sealed partial class SettingsWindow
         Heading(L.Get("AppearanceHeading"));
         Card(L.Get("TextSize"), null, TextSize());
         Card(L.Get("SungColour"), null, Colours());
-        Card(L.Get("LayoutLabel"), L.Get("LayoutDetail"), Layout(nameof(Settings.SecondLine), () => _settings.SecondLine, v => _settings.SecondLine = v));
+        Card(L.Get("LayoutLabel"), L.Get("LayoutDetail"), Layout(nameof(Settings.SecondLine), () => _settings.SecondLine, v => _settings.SecondLine = v, rows: 2));
     }
 
     void Island()
@@ -124,7 +124,7 @@ public sealed partial class SettingsWindow
             () => _settings.IslandHideWhenPaused, v => _settings.IslandHideWhenPaused = v));
 
         Heading(L.Get("TextHeading"));
-        Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v));
+        Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v, rows: 1));
         Fold(L.Get("FoldText"), null, () =>
         {
             Card(L.Get("IslandMaxWidth"), L.Get("IslandMaxWidthDetail"), Choice(nameof(Settings.IslandMaxTextWidth),

@@ -37,7 +37,7 @@ On supported Windows 11 versions, the live Liquid Glass island appears in screen
 
 ### Desktop lyrics
 
-Display one or two lines above other windows. When locked, clicks pass through the lyrics. Unlock them to drag the lyrics to a different position.
+Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. When locked, clicks pass through the lyrics. Unlock them to drag the lyrics to a different position.
 
 ![Desktop lyrics with word-by-word highlighting](assets/desktop-lyrics.gif)
 

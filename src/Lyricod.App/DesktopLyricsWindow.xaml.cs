@@ -62,6 +62,7 @@ public sealed partial class DesktopLyricsWindow : Window
         _sung = new SweepPainter(Dim, LitHost);
         AttachShadow(Dim, LineShadow);
         AttachShadow(Second, SecondShadow);
+        AttachShadow(Third, ThirdShadow);
         LineHost.RenderTransformOrigin = new Point(0.5, 0.5);
         MoveHint.Text = L.Get("MoveHint");
 
@@ -97,13 +98,21 @@ public sealed partial class DesktopLyricsWindow : Window
         MoveFrame.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>Main line, plus the second line unless there's none, plus padding (view pixels).</summary>
+    /// <summary>Main line, plus the rows the layout puts under it, plus padding (view pixels).</summary>
     double StripHeight()
     {
         double f = _settings.DesktopFontSize;
-        double second = _settings.SecondLine == SecondLine.None ? 0 : f * 0.6 * 1.25 + 4;
-        return Math.Round(f * 1.25 + second + 32);
+        double under = _settings.SecondLine.MaxRows() switch
+        {
+            0 => 0,
+            1 => f * UnderScale * 1.25 + 4,
+            _ => f * PronunciationScale * 1.25 + 4 + f * UnderScale * 1.25 + 4,
+        };
+        return Math.Round(f * 1.25 + under + 32);
     }
+
+    /// <summary>The rows under the line, as a share of the line's size; a pronunciation over a translation is a little smaller.</summary>
+    const double UnderScale = 0.6, PronunciationScale = 0.55;
 
     /// <summary>Sizes the strip and puts it where the user left it, or at the bottom centre.</summary>
     void Place()
@@ -172,9 +181,11 @@ public sealed partial class DesktopLyricsWindow : Window
         double f = _settings.DesktopFontSize;
         Dim.FontSize = Measurer.FontSize = f;
         Dim.FontWeight = Measurer.FontWeight = Fonts.BoldWeight;
-        Second.FontSize = Math.Round(f * 0.6);
-        Second.FontWeight = Fonts.SemiboldWeight;
-        Second.MaxWidth = StripWidth - 2 * SidePadding;
+        bool both = _settings.SecondLine.MaxRows() == 2;
+        Second.FontSize = Math.Round(f * (both ? PronunciationScale : UnderScale));
+        Third.FontSize = Math.Round(f * UnderScale);
+        Second.FontWeight = Third.FontWeight = Fonts.SemiboldWeight;
+        Second.MaxWidth = Third.MaxWidth = StripWidth - 2 * SidePadding;
         _sung.Color = ParseColor(_settings.SungColor);
         _widths.Clear();
     }
@@ -247,6 +258,7 @@ public sealed partial class DesktopLyricsWindow : Window
                 Render();
                 break;
             case nameof(Settings.SecondLine):
+                ApplyStyle();
                 Place();
                 Render();
                 break;
@@ -280,7 +292,7 @@ public sealed partial class DesktopLyricsWindow : Window
             _widths.Clear();
             _sung.Set(0, 1);
             LineScale.ScaleX = LineScale.ScaleY = 1;
-            Second.Visibility = Visibility.Collapsed;
+            Second.Visibility = Third.Visibility = Visibility.Collapsed;
             return;
         }
         Dim.FontSize = Measurer.FontSize = _settings.DesktopFontSize;
@@ -297,12 +309,18 @@ public sealed partial class DesktopLyricsWindow : Window
         _pieces = LinePieces.Split(line, StripWidth - 2 * SidePadding, Measure);
         _piece = null;
 
-        var under = _model.CurrentIndex is int i && lyrics != null ? _settings.SecondLine.TextUnder(i, lyrics) : null;
-        Second.Text = under?.Text ?? "";
-        if (under is { } u) Second.FontFamily = Fonts.For(u.Text, song);
-        Second.Opacity = under is { IsExtra: true } ? 0.9 : 0.6;
-        Second.Visibility = under == null ? Visibility.Collapsed : Visibility.Visible;
+        List<(string Text, bool IsExtra)> rows = _model.CurrentIndex is int i && lyrics != null ? _settings.SecondLine.RowsUnder(i, lyrics) : [];
+        ShowUnder(Second, rows.Count > 0 ? rows[0] : null, song);
+        ShowUnder(Third, rows.Count > 1 ? rows[1] : null, song);
         ShowPiece();
+    }
+
+    static void ShowUnder(TextBlock row, (string Text, bool IsExtra)? under, LyricLanguage? song)
+    {
+        row.Text = under?.Text ?? "";
+        if (under is { } u) row.FontFamily = Fonts.For(u.Text, song);
+        row.Opacity = under is { IsExtra: true } ? 0.9 : 0.6;
+        row.Visibility = under == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>Puts up the piece being sung and plans its sweep from now; sets a timer for the next piece.</summary>

@@ -88,6 +88,7 @@
   <data name="LayoutTranslation" xml:space="preserve"><value>Translation</value></data>
   <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>Pronunciation, or translation if unavailable</value></data>
   <data name="LayoutPronunciation" xml:space="preserve"><value>Pronunciation</value></data>
+  <data name="LayoutPronunciationAndTranslation" xml:space="preserve"><value>Pronunciation and translation</value></data>
   <data name="LayoutNext" xml:space="preserve"><value>Next line</value></data>
   <data name="LayoutNone" xml:space="preserve"><value>None (single line)</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>Show Lyricod Island</value></data>

@@ -150,8 +150,9 @@ public sealed partial class SettingsWindow
         return box;
     }
 
-    ComboBox Layout(string property, Func<SecondLine> get, Action<SecondLine> set) =>
-        Choice(property, get, set, [.. Enum.GetValues<SecondLine>().Select(mode => (mode, L.Get("Layout" + mode)))]);
+    /// <summary>What goes under the line, from the layouts that fit in <paramref name="rows"/> rows.</summary>
+    ComboBox Layout(string property, Func<SecondLine> get, Action<SecondLine> set, int rows) =>
+        Choice(property, get, set, [.. Enum.GetValues<SecondLine>().Where(mode => mode.MaxRows() <= rows).Select(mode => (mode, L.Get("Layout" + mode)))]);
 
     /// <summary>A slider for a whole percentage, with its value beside it.</summary>
     FrameworkElement Percent(string property, Func<int> get, Action<int> set, int min, int max)

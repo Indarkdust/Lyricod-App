@@ -88,6 +88,7 @@
   <data name="LayoutTranslation" xml:space="preserve"><value>翻译</value></data>
   <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>优先显示音译，否则显示翻译</value></data>
   <data name="LayoutPronunciation" xml:space="preserve"><value>音译</value></data>
+  <data name="LayoutPronunciationAndTranslation" xml:space="preserve"><value>音译和翻译</value></data>
   <data name="LayoutNext" xml:space="preserve"><value>下一行</value></data>
   <data name="LayoutNone" xml:space="preserve"><value>不显示（单行）</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>显示歌词岛</value></data>

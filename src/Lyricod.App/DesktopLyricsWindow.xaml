@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The floating lyric strip over every app: the line being sung, its sung part sweeping in the
-     sung colour word by word, and a smaller line under it. Click-through while locked. -->
+     sung colour word by word, and one or two smaller lines under it. Click-through while locked. -->
 <Window
     x:Class="Lyricod.DesktopLyricsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -31,6 +31,12 @@
             <Grid HorizontalAlignment="Center">
                 <Grid x:Name="SecondShadow" />
                 <TextBlock x:Name="Second" Foreground="White" TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" IsHitTestVisible="False" />
+            </Grid>
+            <!-- The translation, under the pronunciation, when both are chosen. -->
+            <Grid HorizontalAlignment="Center">
+                <Grid x:Name="ThirdShadow" />
+                <TextBlock x:Name="Third" Foreground="White" TextWrapping="NoWrap"
                            TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" IsHitTestVisible="False" />
             </Grid>
         </StackPanel>
