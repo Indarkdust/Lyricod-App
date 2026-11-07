@@ -350,4 +350,5 @@
   <data name="UpdateApplyFailed" xml:space="preserve"><value>无法启动更新。请重试，或前往发布页面下载。</value></data>
   <data name="UpdateOpenPageFailed" xml:space="preserve"><value>无法打开发布页面，请重试。</value></data>
   <data name="NotASong" xml:space="preserve"><value>当前内容可能不是歌曲，因此没有显示歌词。</value></data>
+  <data name="ShortcutF12Reserved" xml:space="preserve"><value>F12 为系统调试器保留，请选择其他快捷键。</value></data>
 </root>

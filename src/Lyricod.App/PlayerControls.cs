@@ -1,5 +1,7 @@
 using System.Globalization;
+using Lyricod.Core;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -67,20 +69,38 @@ sealed partial class ProgressLine : Grid
     readonly PlaybackModel _model;
     readonly ProgressBar _bar;
     readonly TextBlock _elapsed, _left;
-    /// <summary>While dragging: where the pointer is (0–1), shown instead of the playhead.</summary>
-    double? _scrub;
+    readonly ProgressInteraction _interaction;
+    readonly DispatcherQueueTimer? _hoverTimer;
     bool? _seekable;
     static readonly InputCursor Hand = InputSystemCursor.Create(InputSystemCursorShape.Hand);
 
-    public ProgressLine(PlaybackModel model)
+    public ProgressLine(PlaybackModel model, bool hoverPreview = false)
     {
         _model = model;
+        _interaction = new ProgressInteraction(hoverPreview);
+        if (hoverPreview)
+        {
+            _hoverTimer = DispatcherQueue.CreateTimer();
+            _hoverTimer.IsRepeating = false;
+            _hoverTimer.Tick += (_, _) =>
+            {
+                try
+                {
+                    _interaction.ActivatePreview(PlaybackModel.Now);
+                    Update();
+                    SchedulePreview();
+                }
+                catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            };
+        }
         // As on the Mac: press or drag on the bar to pick a point, let go to move the player there.
         Background = new SolidColorBrush(Colors.Transparent); // so the whole strip takes the pointer
         PointerPressed += OnPointerPressed;
+        PointerEntered += OnPointerMoved;
         PointerMoved += OnPointerMoved;
+        PointerExited += (_, _) => CancelPreview();
         PointerReleased += OnPointerReleased;
-        PointerCaptureLost += (_, _) => { if (_scrub != null) { _scrub = null; Update(); } };
+        PointerCaptureLost += (_, _) => { if (_interaction.IsScrubbing) { _interaction.Cancel(); Update(); } };
         RowSpacing = 4;
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -105,17 +125,21 @@ sealed partial class ProgressLine : Grid
         _elapsed.FontSize = _left.FontSize = 11 * scale;
     }
 
-    bool CanSeek => _model.CanSeek && _model.Duration > 0;
+    bool HasDuration => double.IsFinite(_model.Duration) && _model.Duration > 0;
+    bool CanSeek => _model.CanSeek && HasDuration;
 
     void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         try
         {
+            if (_interaction.IsScrubbing) return;
+            CancelPreview();
             if (!CanSeek) return;
             var p = e.GetCurrentPoint(_bar).Position;
             if (p.Y < -10 || p.Y > _bar.ActualHeight + 10) return; // the bar, not the times under it
-            if (!CapturePointer(e.Pointer)) return;
-            Scrub(p.X);
+            if (_bar.ActualWidth <= 0 || !CapturePointer(e.Pointer)) return;
+            _interaction.BeginScrub(p.X / Math.Max(_bar.ActualWidth, 1), CanSeek);
+            Update();
             e.Handled = true;
         }
         catch (Exception) { /* a pointer that went away */ }
@@ -123,36 +147,65 @@ sealed partial class ProgressLine : Grid
 
     void OnPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (_scrub == null) return;
-        try { Scrub(e.GetCurrentPoint(_bar).Position.X); e.Handled = true; }
+        try
+        {
+            var point = e.GetCurrentPoint(_bar);
+            var p = point.Position;
+            if (_interaction.IsScrubbing)
+            {
+                _interaction.MoveScrub(p.X / Math.Max(_bar.ActualWidth, 1));
+                Update();
+                e.Handled = true;
+                return;
+            }
+            if (_hoverTimer == null) return;
+            // Do not preview over the time labels or while the pointer is pressed.
+            bool inside = !point.IsInContact && p.X >= 0 && p.X <= _bar.ActualWidth
+                && p.Y >= -10 && p.Y < _bar.ActualHeight + RowSpacing;
+            bool wasPreviewing = _interaction.IsPreviewing;
+            double? due = _interaction.HoverDueAt;
+            _interaction.Hover(p.X, p.Y, _bar.ActualWidth, inside, PlaybackModel.Now);
+            if (_interaction.HoverDueAt != due) SchedulePreview();
+            if (wasPreviewing || _interaction.IsPreviewing) Update();
+        }
         catch (Exception) { }
     }
 
     void OnPointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (_scrub is not double at) return;
         try
         {
-            _scrub = null;
+            if (!_interaction.IsScrubbing) return;
+            var point = e.GetCurrentPoint(_bar);
+            _interaction.MoveScrub(point.Position.X / Math.Max(_bar.ActualWidth, 1));
+            double? target = _interaction.ReleaseScrub(_model.Duration, CanSeek);
             ReleasePointerCapture(e.Pointer);
-            _model.SeekPlayer(at * _model.Duration);
+            if (target is double seconds) _model.SeekPlayer(seconds);
             Update();
             e.Handled = true;
         }
         catch (Exception) { }
     }
 
-    void Scrub(double x)
+    void SchedulePreview()
     {
-        _scrub = Math.Clamp(x / Math.Max(_bar.ActualWidth, 1), 0, 1);
+        if (_hoverTimer == null) return;
+        _hoverTimer.Stop();
+        if (_interaction.HoverDueAt is not double due) return;
+        _hoverTimer.Interval = TimeSpan.FromSeconds(Math.Max(due - PlaybackModel.Now, 0.001));
+        _hoverTimer.Start();
+    }
+
+    void CancelPreview()
+    {
+        _hoverTimer?.Stop();
+        _interaction.CancelPreview();
         Update();
     }
 
     public void Update()
     {
-        double duration = _model.Duration;
-        double position = _scrub is double at ? at * duration : _model.PlayerPosition;
-        Visibility = duration > 0 ? Visibility.Visible : Visibility.Collapsed;
+        Visibility = HasDuration ? Visibility.Visible : Visibility.Collapsed;
         bool seekable = CanSeek;
         if (seekable != _seekable)
         {
@@ -160,10 +213,12 @@ sealed partial class ProgressLine : Grid
             ProtectedCursor = seekable ? Hand : null;
             ToolTipService.SetToolTip(this, seekable ? null : L.Get("CantSeek"));
         }
-        if (duration <= 0) return;
-        _bar.Value = Math.Clamp(position / duration, 0, 1);
-        _elapsed.Text = Time(position);
-        _left.Text = "-" + Time(duration - position);
+        if (!HasDuration) return;
+        var display = _interaction.Display(_model.PlayerPosition, _model.Duration);
+        _bar.Value = display.Fraction;
+        _elapsed.Text = Time(display.Elapsed);
+        _elapsed.Opacity = display.IsPreviewing ? 0.85 : 0.6;
+        _left.Text = "-" + Time(display.Remaining);
     }
 
     static string Time(double seconds)

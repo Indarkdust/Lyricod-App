@@ -386,14 +386,14 @@ public class LyricsProviderTests
         var oldFile = fixture.Seed(stale);
         var overrideFile = Path.Combine(Path.GetDirectoryName(oldFile)!, "overrides");
         var overrides = new TrackOverrides(overrideFile);
-        overrides[stale] = new TrackOverride { Lyrics = LyricsRef.Netease(7), Offset = 1.5 };
+        Assert.True(overrides.TrySet(stale, new TrackOverride { Lyrics = LyricsRef.Netease(7), Offset = 1.5 }));
         if (existingChoice)
         {
             var newFile = fixture.Seed(corrected);
             File.WriteAllText(newFile, File.ReadAllText(newFile).Replace("Hello", "Correct recording").Replace("\"7\"", "\"8\""));
-            overrides[corrected] = new TrackOverride { Lyrics = LyricsRef.Netease(8), Offset = 0.25 };
+            Assert.True(overrides.TrySet(corrected, new TrackOverride { Lyrics = LyricsRef.Netease(8), Offset = 0.25 }));
         }
-        var transition = fixture.Provider.CorrectDuration(stale, 120, overrides);
+        Assert.True(fixture.Provider.TryCorrectDuration(stale, 120, overrides, out var transition));
         var saved = new TrackOverrides(overrideFile);
         var lyrics = await fixture.Provider.GetLyrics(transition, pinned: saved[transition].Lyrics, ct: TestContext.Current.CancellationToken);
         Assert.Equal(stale.TrackId, transition.TrackId);
@@ -402,6 +402,45 @@ public class LyricsProviderTests
         Assert.Equal(existingChoice ? 0.25 : 1.5, saved[transition].Offset);
         Assert.True(saved[stale].IsEmpty);
         Assert.False(File.Exists(oldFile));
+    }
+
+    [Fact]
+    public void ClearCacheToleratesADirectoryAtTheCacheFilePath()
+    {
+        using var fixture = new Fixture(_ => throw new Exception("Clearing a cache should not request the network"));
+        var track = Track();
+        var file = fixture.Seed(track);
+        File.Delete(file);
+        Directory.CreateDirectory(file);
+
+        fixture.Provider.ClearCache(track);
+
+        Assert.True(Directory.Exists(file));
+    }
+
+    [Fact]
+    public void FailedDurationCorrectionKeepsTheTrackChoicesAndManualCache()
+    {
+        using var fixture = new Fixture(_ => throw new Exception("Duration correction should not request the network"));
+        var stale = Track() with { Duration = 0 };
+        var corrected = stale with { Duration = 120 };
+        var oldFile = fixture.Seed(stale);
+        var newFile = Path.Combine(Path.GetDirectoryName(oldFile)!, LyricsProvider.CacheKey(corrected) + ".json");
+        var overrideFile = Path.Combine(Path.GetDirectoryName(oldFile)!, "overrides");
+        var overrides = new TrackOverrides(overrideFile);
+        Assert.True(overrides.TrySet(stale, new TrackOverride { Lyrics = LyricsRef.Netease(7), Offset = 1.5 }));
+        var oldCache = File.ReadAllText(oldFile);
+        var oldOverrides = File.ReadAllText(overrideFile);
+        Directory.CreateDirectory(overrideFile + ".tmp");
+
+        Assert.False(fixture.Provider.TryCorrectDuration(stale, 120, overrides, out var unchanged));
+        Assert.Equal(stale, unchanged);
+        Assert.Equal(LyricsRef.Netease(7), overrides[stale].Lyrics);
+        Assert.Equal(1.5, overrides[stale].Offset);
+        Assert.True(overrides[corrected].IsEmpty);
+        Assert.Equal(oldOverrides, File.ReadAllText(overrideFile));
+        Assert.Equal(oldCache, File.ReadAllText(oldFile));
+        Assert.False(File.Exists(newFile));
     }
 
     public static IEnumerable<object[]> LookupCases()

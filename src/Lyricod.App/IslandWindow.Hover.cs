@@ -90,9 +90,8 @@ public sealed partial class IslandWindow
             if (expand)
             {
                 Expanded.Visibility = Visibility.Visible;
-                _progress.Update();
+                UpdateProgress();
                 _transport.Update();
-                if (_model.IsPlaying) _progressTimer.Start();
             }
             else _progressTimer.Stop();
             // As on the Mac: the mini player fades in once the pill has mostly grown, and goes at once on collapse.
