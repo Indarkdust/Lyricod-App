@@ -178,6 +178,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
         _islandColor ??= _sungColor;
     }
 
+    /// <summary>A background this version doesn't know (a test build's, or a newer version's) reads as the moving album art.</summary>
+    [JsonConverter(typeof(KnownOrDefault<LyricsBackground>))]
     public LyricsBackground LyricsBackground { get => _lyricsBackground; set => Set(ref _lyricsBackground, value); }
     public LyricsTextSize LyricsTextSize { get => _lyricsTextSize; set => Set(ref _lyricsTextSize, value); }
     /// <summary>The lyrics window shows translations / pronunciation under each line (its buttons flip these).</summary>
@@ -244,4 +246,16 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 
     [JsonConstructor]
     public Settings() { }
+}
+
+/// <summary>
+/// Reads a choice by name, falling back to the first choice for a name this version doesn't know,
+/// rather than failing to read the whole settings file (which would start everything afresh).
+/// </summary>
+sealed class KnownOrDefault<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
+        reader.TokenType == JsonTokenType.String && Enum.TryParse<T>(reader.GetString(), out var value) && Enum.IsDefined(value) ? value : default;
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
 }
