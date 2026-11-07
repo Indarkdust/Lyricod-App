@@ -74,6 +74,7 @@ public sealed partial class PlaybackModel
                 reportedPosition = NowPlaying?.Position, reportedAt = NowPlaying?.PositionAt, hasTimeline = NowPlaying?.HasTimeline,
                 reportedPlaying = NowPlaying?.IsPlaying, playing = IsPlaying, position, lines = Lyrics?.Lines.Count,
                 synced = Lyrics?.IsSynced, firstLine = Lyrics?.Lines.FirstOrDefault()?.Start, index = CurrentIndex, line = CurrentLine?.Text, error = LastError,
+                pronunciation = CurrentLine?.Pronunciation?.Text, translation = CurrentLine?.Translation,
                 meter = Platform.AudioMeter.LastStatus,
                 musicPlayer = IsMusicPlayer, song = IsSong, bestMatchScore = BestMatchScore,
                 automaticLookupAllowed = AutomaticLookupAllowed,

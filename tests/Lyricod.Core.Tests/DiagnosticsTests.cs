@@ -91,6 +91,20 @@ public class DiagnosticsTests
             """.Replace("\r\n", "\n"), text);
     }
 
+    [Fact]
+    public void CountsTranslationsAndWherePronunciationsCameFrom()
+    {
+        var lyrics = new Lyrics([
+            new LyricLine { Text = "a", Translation = "甲", Pronunciation = new("a", LyricLanguage.Japanese) },
+            new LyricLine { Text = "b", Translation = "乙", Pronunciation = new("b", LyricLanguage.Japanese, PronunciationOrigin.SourceByWord) },
+            new LyricLine { Text = "c", Pronunciation = new("c", LyricLanguage.Japanese, PronunciationOrigin.SourceByWord) },
+            new LyricLine { Text = "d", Pronunciation = new("d", LyricLanguage.Japanese, PronunciationOrigin.Lyricod) },
+            new LyricLine { Text = "e" },
+        ], "QQ Music");
+        string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, new Track { Title = "t", Artist = "a" }, lyrics, false, false, 0, 0);
+        Assert.Contains("\nTranslation: 2 of 5 lines\nPronunciation: 4 of 5 lines (source's as given 1, source's by word 2, Lyricod's 1)\n", text);
+    }
+
     [Theory]
     [InlineData(InstallKind.Installer, "installer")]
     [InlineData(InstallKind.Portable, "portable")]

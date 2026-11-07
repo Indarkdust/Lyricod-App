@@ -68,6 +68,18 @@ public static class Diagnostics
             string line = $"Lyrics: {source}, {kind}, {lyrics.Lines.Count} line{(lyrics.Lines.Count == 1 ? "" : "s")}";
             if (lyrics.Ref is { } reference) line += $" ({reference.Source.ToString().ToLowerInvariant()}:{reference.Id})";
             words.Add(line);
+            int count = lyrics.Lines.Count;
+            int translated = lyrics.Lines.Count(l => !string.IsNullOrWhiteSpace(l.Translation));
+            if (translated > 0) words.Add($"Translation: {translated} of {count} lines");
+            // Where each pronunciation came from: the source's romaji as given, the source's grouped by
+            // word (Windows read the line the same), or Lyricod's own.
+            var said = lyrics.Lines.Select(l => l.Pronunciation).OfType<Pronunciation>().Where(p => !string.IsNullOrWhiteSpace(p.Text)).ToList();
+            if (said.Count > 0)
+            {
+                var origins = new[] { (PronunciationOrigin.Source, "source's as given"), (PronunciationOrigin.SourceByWord, "source's by word"), (PronunciationOrigin.Lyricod, "Lyricod's") }
+                    .Select(o => (o.Item2, Lines: said.Count(p => p.Origin == o.Item1))).Where(o => o.Lines > 0).Select(o => $"{o.Item1} {o.Lines}");
+                words.Add($"Pronunciation: {said.Count} of {count} lines ({string.Join(", ", origins)})");
+            }
             words.Add($"Picked by hand: {(pinned ? "yes" : "no")}");
         }
         else if (track != null) words.Add(searching ? "Lyrics: searching" : "Lyrics: none");
