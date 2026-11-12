@@ -132,8 +132,9 @@ public sealed partial class IslandWindow
     /// <summary>
     /// Windows ended the liquid glass's capture (the screen slept or went away), which left the island
     /// on clear glass until something else (a new song, a hover) built the glass again. So it's built
-    /// again a few seconds later, and if that fails too (the screen isn't back yet), again less and less
-    /// often, up to every 30 seconds, until it runs or isn't wanted.
+    /// again a few seconds later, and if that fails too, however it fails (the screen may not be back
+    /// yet), again less and less often, up to every 30 seconds, until it runs or isn't wanted. A
+    /// failure with no capture ended before it isn't tried again.
     /// </summary>
     void RetryLiquidLater()
     {

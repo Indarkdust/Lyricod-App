@@ -102,9 +102,9 @@ sealed class LiquidGlass : IDisposable
     public bool Ended { get; private set; }
     /// <summary>
     /// Windows ended a capture and no glass has run since: the island tries again (see
-    /// <c>IslandWindow.RetryLiquidLater</c>), and what happens meanwhile isn't logged again.
+    /// <c>IslandWindow.RetryLiquidLater</c>), and meanwhile only the first error is logged.
     /// </summary>
-    static bool _sinceEnded;
+    static bool _sinceEnded, _erredSinceEnded;
 
     /// <summary>Only our monitor session excludes the island; other recorders can see it live.</summary>
     public bool SessionExclusion { get; private set; }
@@ -523,7 +523,7 @@ sealed class LiquidGlass : IDisposable
                 Settled = true;
                 if (_sinceEnded)
                 {
-                    _sinceEnded = false;
+                    _sinceEnded = _erredSinceEnded = false;
                     Log.Write("liquid glass: following the screen again");
                 }
                 _changed();
@@ -592,8 +592,9 @@ sealed class LiquidGlass : IDisposable
         Failed = true;
         // With no exception, Windows ended the capture: the screen went away, or went to sleep.
         Ended = e == null;
-        if (!_sinceEnded)
+        if (!_sinceEnded || e != null && !_erredSinceEnded)
             try { Log.Write(e != null ? "liquid glass: " + e : "liquid glass: the screen's capture ended"); } catch (Exception) { }
+        if (e != null && _sinceEnded) _erredSinceEnded = true;
         if (Ended) _sinceEnded = true;
         try { Stop(); } catch (Exception) { }
         try { _changed(); } catch (Exception) { }
