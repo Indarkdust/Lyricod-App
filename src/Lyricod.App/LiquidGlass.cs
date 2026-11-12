@@ -98,6 +98,13 @@ sealed class LiquidGlass : IDisposable
 
     /// <summary>Capturing or drawing failed (the graphics card reset, the screen went away): the island falls back.</summary>
     public bool Failed { get; private set; }
+    /// <summary>It failed because Windows ended the capture (the screen went away, or to sleep), not on an error.</summary>
+    public bool Ended { get; private set; }
+    /// <summary>
+    /// Windows ended a capture and no glass has run since: the island tries again (see
+    /// <c>IslandWindow.RetryLiquidLater</c>), and what happens meanwhile isn't logged again.
+    /// </summary>
+    static bool _sinceEnded;
 
     /// <summary>Only our monitor session excludes the island; other recorders can see it live.</summary>
     public bool SessionExclusion { get; private set; }
@@ -514,6 +521,11 @@ sealed class LiquidGlass : IDisposable
                 if (_disposed) return;
                 _visual.Opacity = 1;
                 Settled = true;
+                if (_sinceEnded)
+                {
+                    _sinceEnded = false;
+                    Log.Write("liquid glass: following the screen again");
+                }
                 _changed();
             }
             catch (Exception) { }
@@ -579,7 +591,10 @@ sealed class LiquidGlass : IDisposable
         if (_disposed || Failed) return;
         Failed = true;
         // With no exception, Windows ended the capture: the screen went away, or went to sleep.
-        try { Log.Write(e != null ? "liquid glass: " + e : "liquid glass: the screen's capture ended"); } catch (Exception) { }
+        Ended = e == null;
+        if (!_sinceEnded)
+            try { Log.Write(e != null ? "liquid glass: " + e : "liquid glass: the screen's capture ended"); } catch (Exception) { }
+        if (Ended) _sinceEnded = true;
         try { Stop(); } catch (Exception) { }
         try { _changed(); } catch (Exception) { }
     }

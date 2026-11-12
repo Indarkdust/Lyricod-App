@@ -20,6 +20,10 @@ public sealed partial class IslandWindow
 
     LiquidGlass? _liquid;
     DispatcherQueueTimer? _screenshotTimer;
+    /// <summary>Tries the liquid glass again after Windows ended its capture (see <see cref="RetryLiquidLater"/>).</summary>
+    DispatcherQueueTimer? _liquidRetry;
+    /// <summary>Tries since the capture ended; back to 0 once the glass runs again.</summary>
+    int _liquidRetries;
 
     internal string LiquidCaptureStatus => _liquid == null ? "inactive" : _liquid.Failed ? "failed"
         : (_liquid.SessionExclusion ? $"session-only exclusion, island stays in recordings ({_liquid.ExclusionDetail})"
@@ -36,6 +40,7 @@ public sealed partial class IslandWindow
             bool on = WantsLiquid && _shown && !(_hovered && _hoverAction == IslandHover.Hide) && _liquid?.Failed != true;
             if (!on)
             {
+                if (_liquid is { Failed: true } failed && (failed.Ended || _liquidRetries > 0) && WantsLiquid) RetryLiquidLater();
                 StopLiquid();
                 return false;
             }
@@ -51,7 +56,12 @@ public sealed partial class IslandWindow
                         {
                             DispatcherQueue.TryEnqueue(() =>
                             {
-                                try { if (!_closed && ReferenceEquals(_liquid, created)) ApplyTheme(); }
+                                try
+                                {
+                                    if (_closed || !ReferenceEquals(_liquid, created)) return;
+                                    if (created.Settled) _liquidRetries = 0;
+                                    ApplyTheme();
+                                }
                                 catch (Exception) { StopLiquid(); }
                             });
                         }
@@ -63,6 +73,7 @@ public sealed partial class IslandWindow
             }
             UpdateLiquid();
             if (!_liquid.Failed) return true;
+            if (_liquid.Ended || _liquidRetries > 0) RetryLiquidLater();
             StopLiquid();
             return false;
         }
@@ -116,6 +127,35 @@ public sealed partial class IslandWindow
             _liquid.EndScreenshot();
         }
         catch (Exception e) { _liquid?.Fail(e); }
+    }
+
+    /// <summary>
+    /// Windows ended the liquid glass's capture (the screen slept or went away), which left the island
+    /// on clear glass until something else (a new song, a hover) built the glass again. So it's built
+    /// again a few seconds later, and if that fails too (the screen isn't back yet), again less and less
+    /// often, up to every 30 seconds, until it runs or isn't wanted.
+    /// </summary>
+    void RetryLiquidLater()
+    {
+        if (_liquidRetry == null)
+        {
+            _liquidRetry = DispatcherQueue.CreateTimer();
+            _liquidRetry.IsRepeating = false;
+            _liquidRetry.Tick += (_, _) =>
+            {
+                try
+                {
+                    if (_closed) return;
+                    if (!WantsLiquid) { _liquidRetries = 0; return; }
+                    if (_liquid == null) ApplyTheme();
+                }
+                catch (Exception e) { Log.Write(e); }
+            };
+        }
+        _liquidRetry.Interval = TimeSpan.FromSeconds(Math.Min(3 << Math.Min(_liquidRetries, 4), 30));
+        _liquidRetries++;
+        _liquidRetry.Stop();
+        _liquidRetry.Start();
     }
 
     void StopLiquid()
