@@ -216,8 +216,14 @@ public sealed partial class SettingsWindow
         return button;
     }
 
-    ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set) => Choice(property, get, set,
-        (SungEffect.Sweep, L.Get("EffectSweep")), (SungEffect.Glow, L.Get("EffectGlow")), (SungEffect.Line, L.Get("EffectLine")));
+    /// <param name="lift">Whether words that rise as they're sung are among the choices: that's the lyrics window's, where the text is large enough to show it.</param>
+    ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set, bool lift = false)
+    {
+        List<(SungEffect, string)> options = [(SungEffect.Sweep, L.Get("EffectSweep")), (SungEffect.Glow, L.Get("EffectGlow"))];
+        if (lift) options.Add((SungEffect.Lift, L.Get("EffectLift")));
+        options.Add((SungEffect.Line, L.Get("EffectLine")));
+        return Choice(property, get, set, [.. options]);
+    }
 
     /// <summary>"Lyricod needs to restart to change language", and the button.</summary>
     Grid RestartRow(Button restart)
@@ -250,7 +256,7 @@ public sealed partial class SettingsWindow
         Card(L.Get("ShowPronunciation"), null, Toggle(nameof(Settings.ShowPronunciation), () => _settings.ShowPronunciation, v => _settings.ShowPronunciation = v));
         Card(L.Get("CentreLines"), null, Toggle(nameof(Settings.LyricsCentered), () => _settings.LyricsCentered, v => _settings.LyricsCentered = v));
         Card(L.Get("BlurDistant"), null, Toggle(nameof(Settings.LyricsBlurDistant), () => _settings.LyricsBlurDistant, v => _settings.LyricsBlurDistant = v));
-        Card(L.Get("SungLyrics"), null, Effect(nameof(Settings.LyricsEffect), () => _settings.LyricsEffect, v => _settings.LyricsEffect = v));
+        Card(L.Get("SungLyrics"), null, Effect(nameof(Settings.LyricsEffect), () => _settings.LyricsEffect, v => _settings.LyricsEffect = v, lift: true));
         Card(L.Get("AutoHideControls"), L.Get("AutoHideControlsDetail"), Toggle(nameof(Settings.LyricsAutoHide), () => _settings.LyricsAutoHide, v => _settings.LyricsAutoHide = v));
     }
 

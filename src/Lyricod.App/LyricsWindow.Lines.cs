@@ -82,6 +82,9 @@ public sealed partial class LyricsWindow
         MoveToCurrent(animate: false);
     }
 
+    /// <summary>How bright the part of the sung line still to come is.</summary>
+    const double Unsung = 0.35;
+
     /// <summary>
     /// Draws a line plain (faded) or, while it's being sung, as rows that sweep. Both break into the
     /// same rows (LinePieces: even, at spaces, punctuation and between words), so a line doesn't
@@ -114,13 +117,17 @@ public sealed partial class LyricsWindow
                 };
                 // The unsung text is dimmed by a wrapper: the sweep takes the text's shape, which
                 // would be dim too if the text itself were.
-                var dim = new Grid { Opacity = 0.35 };
+                var dim = new Grid { Opacity = Unsung };
                 dim.Children.Add(text);
                 var host = new Grid { IsHitTestVisible = false };
                 var row = new Grid { HorizontalAlignment = _settings.LyricsCentered ? HorizontalAlignment.Center : HorizontalAlignment.Left };
                 row.Children.Add(dim);
                 row.Children.Add(host);
                 var sweep = new SweepPainter(text, host) { Color = Colors.White, Effect = _settings.LyricsEffect };
+                // Words that rise as they're sung are drawn by the sweep, the unsung part too: the
+                // text only gives them its shape (it can't be fully transparent and still have one).
+                if (_settings.LyricsEffect == SungEffect.Lift && sweep.Lift(piece, Measure(font), Unsung, _fontSize * 0.075))
+                    dim.Opacity = 0.01;
                 view.Rows.Add((piece, Math.Ceiling(Measure(font)(piece.Text)) + 1, sweep));
                 view.Panel.Children.Add(row);
             }

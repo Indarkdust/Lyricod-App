@@ -270,6 +270,7 @@
   <data name="SungLyrics" xml:space="preserve"><value>Sung lyrics</value></data>
   <data name="EffectSweep" xml:space="preserve"><value>Colour sweep</value></data>
   <data name="EffectGlow" xml:space="preserve"><value>Glowing sweep</value></data>
+  <data name="EffectLift" xml:space="preserve"><value>Sweep with a lift</value></data>
   <data name="EffectLine" xml:space="preserve"><value>Whole line</value></data>
   <data name="NextLine" xml:space="preserve"><value>Next line</value></data>
   <data name="TransitionInstant" xml:space="preserve"><value>Instant</value></data>

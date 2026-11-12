@@ -270,6 +270,7 @@
   <data name="SungLyrics" xml:space="preserve"><value>已唱歌词</value></data>
   <data name="EffectSweep" xml:space="preserve"><value>颜色扫过</value></data>
   <data name="EffectGlow" xml:space="preserve"><value>发光扫过</value></data>
+  <data name="EffectLift" xml:space="preserve"><value>扫过并浮起</value></data>
   <data name="EffectLine" xml:space="preserve"><value>整行亮起</value></data>
   <data name="NextLine" xml:space="preserve"><value>换行</value></data>
   <data name="TransitionInstant" xml:space="preserve"><value>立即</value></data>

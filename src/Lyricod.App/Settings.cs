@@ -30,7 +30,7 @@ public enum IslandWeight { Regular, Medium, Semibold, Bold, Heavy }
 public enum IslandSize { Small, Medium, Large, ExtraLarge }
 
 /// <summary>How the sung part of a line shows (the island and the lyrics window).</summary>
-public enum SungEffect { Sweep, Glow, Line }
+public enum SungEffect { Sweep, Glow, Line, Lift }
 
 /// <summary>How the island moves from one line to the next.</summary>
 public enum LineTransition { Instant, Slide, Fade }
