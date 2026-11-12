@@ -48,7 +48,7 @@
 
                     <!-- Translation, pronunciation or the next line, as the island's layout asks. Dimmed by
                          a wrapper, like the lyric: a pronunciation the source timed is lit as it's sung. -->
-                    <Grid x:Name="Second" Grid.Row="1" HorizontalAlignment="Center" Margin="38,-4,38,4" Visibility="Collapsed">
+                    <Grid x:Name="Second" Grid.Row="1" HorizontalAlignment="Center" Margin="28,-4,28,4" Visibility="Collapsed">
                         <Grid x:Name="SecondDim" Opacity="0.6">
                             <TextBlock x:Name="SecondText" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" />
                         </Grid>

@@ -33,7 +33,9 @@ public sealed partial class IslandWindow
             _barVisuals[i].CenterPoint = new Vector3((float)s, (float)BarHeight / 2, 0);
         }
         SecondText.FontSize = 11 * s;
-        Second.Margin = new Thickness(SideWidth, -4 * s, SideWidth, 4 * s);
+        // No cover beside the row under the lyric: it's kept to the text's width by its MaxWidth
+        // (see FitText), and may use the gaps beside the covers while the pill widens, as the lyric does.
+        Second.Margin = new Thickness((CoverInset + CoverSize) * s, -4 * s, (CoverInset + CoverSize) * s, 4 * s);
         Expanded.Padding = new Thickness(18 * s, 6 * s, 18 * s, 10 * s);
         Expanded.Spacing = 6 * s;
         PlayerRow.ColumnSpacing = 10 * s;
@@ -172,10 +174,10 @@ public sealed partial class IslandWindow
     /// <summary>
     /// Whether the pill is wide enough to show its text between the covers on either side. The
     /// gaps beside the covers may still be closing: the widening pill gets there within the first
-    /// tenth of a second, well before it settles, so the text comes in then. (An animation's end
-    /// can land a hair short of its target, so allow half a pixel.)
+    /// tenth of a second, well before it settles, so the text comes in then. The row under the
+    /// lyric has the same room (see ApplyLayout), so it comes in whole too, not cut short with "…".
     /// </summary>
-    bool TextFits(double pillWidth) => pillWidth - 2 * (CoverInset + CoverSize) * LayoutScale >= _textWidth - 0.5;
+    bool TextFits(double pillWidth) => pillWidth - 2 * (CoverInset + CoverSize) * LayoutScale >= _textWidth;
 
     /// <summary>Shows text hidden while the pill widened as soon as it fits (called as the pill grows).</summary>
     void RevealWhenItFits()
