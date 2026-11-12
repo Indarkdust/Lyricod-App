@@ -31,7 +31,7 @@ sealed class SweepPainter
     readonly List<Lifted> _lifted = [];
     /// <summary>How far a word that's up is raised (view pixels), how much one grows as it's sung, and how strongly one that's up glows.</summary>
     double _rise;
-    const double Growth = 0.04;
+    const double Growth = 0.03;
     const double Glow = 0.45;
     /// <summary>Where the song was when the words were last set moving, when that was, and whether it was playing: where they are now.</summary>
     double _liftedAt;
@@ -40,9 +40,9 @@ sealed class SweepPainter
 
     /// <summary>
     /// One word of the row: the row drawn again, cut down to that word, so it can move by itself.
-    /// <c>Halo</c> is the soft light around its sung part while it's up.
+    /// <c>Light</c> draws nothing itself: its shadow, <c>Halo</c>, is the soft light around the word while it's up.
     /// </summary>
-    sealed record Lifted(LiftWord Word, ContainerVisual Holder, SpriteVisual Unsung, SpriteVisual Sung, DropShadow Halo, double Centre);
+    sealed record Lifted(LiftWord Word, ContainerVisual Holder, SpriteVisual Light, SpriteVisual Unsung, SpriteVisual Sung, DropShadow Halo, double Centre);
 
     /// <param name="text">The line, drawn in the unsung colour.</param>
     /// <param name="host">An empty panel laid over <paramref name="text"/> at the same origin.</param>
@@ -72,7 +72,7 @@ sealed class SweepPainter
         _sprite.Size = size;
         foreach (var word in _lifted)
         {
-            word.Unsung.Size = word.Sung.Size = size;
+            word.Light.Size = word.Unsung.Size = word.Sung.Size = size;
             // A word grows from the middle of its letters, at about the line they stand on.
             word.Holder.CenterPoint = new Vector3((float)word.Centre, size.Y * 0.78f, 0);
         }
@@ -95,9 +95,10 @@ sealed class SweepPainter
         if (words.Count == 0) return false;
         var spans = WordLift.Spans(words, piece.Text, measure);
         _rise = rise;
+        var shape = _text.GetAlphaMask();
         var unsung = _compositor.CreateMaskBrush();
         unsung.Source = _compositor.CreateColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(dim * 255), 255, 255, 255));
-        unsung.Mask = _text.GetAlphaMask();
+        unsung.Mask = shape;
         var root = _compositor.CreateContainerVisual();
         for (int k = 0; k < words.Count; k++)
         {
@@ -109,18 +110,22 @@ sealed class SweepPainter
             under.Brush = unsung;
             var over = _compositor.CreateSpriteVisual();
             over.Brush = _masked;
-            // The light around a word that's up: a shadow of its sung part, in the sung colour.
+            // The light around a word that's up: a shadow of the text's shape, in the sung colour.
+            // Of the shape rather than of the sung part, which moves: this one is blurred once, and
+            // only fades in and out after (as the blur of the other lines is).
             var halo = _compositor.CreateDropShadow();
+            halo.Mask = shape;
             halo.Color = _color;
             halo.BlurRadius = (float)Math.Clamp(rise * 3.5, 6, 14);
             halo.Opacity = 0;
             halo.Offset = Vector3.Zero;
-            halo.SourcePolicy = CompositionDropShadowSourcePolicy.InheritFromVisualContent;
-            over.Shadow = halo;
+            var light = _compositor.CreateSpriteVisual();
+            light.Shadow = halo;
+            holder.Children.InsertAtTop(light);
             holder.Children.InsertAtTop(under);
             holder.Children.InsertAtTop(over);
             root.Children.InsertAtTop(holder);
-            _lifted.Add(new Lifted(words[k], holder, under, over, halo, spans[k].Centre));
+            _lifted.Add(new Lifted(words[k], holder, light, under, over, halo, spans[k].Centre));
         }
         ElementCompositionPreview.SetElementChildVisual(_host, root);
         Resize(new Vector2((float)_text.ActualWidth, (float)_text.ActualHeight));

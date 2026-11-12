@@ -18,7 +18,7 @@ public readonly record struct LiftSpan(double Left, double Right, double Centre)
 public static class WordLift
 {
     /// <summary>How long words take to come back down, and a word to ease back to its size (seconds).</summary>
-    public const double Settle = 0.5;
+    public const double Settle = 0.6;
 
     /// <summary>
     /// The row's words that rise, covering its whole text between them. A source may time a word a
@@ -87,15 +87,12 @@ public static class WordLift
 
     /// <summary>
     /// How far up <paramref name="word"/> is at <paramref name="t"/>, from 0 (at rest) to 1. It rises
-    /// as it's sung, quickly at first, and then stays up: a line's words come back down together,
-    /// when the line is over (<see cref="Release"/>).
+    /// from when it starts to be sung, setting off and arriving gently, and takes a little longer
+    /// than the word does: one is still rising as the next sets off, so a line's words go up as a
+    /// wave rather than one by one. Then it stays up: a line's words come back down together, when
+    /// the line is over (<see cref="Release"/>).
     /// </summary>
-    public static double Up(LiftWord word, double t)
-    {
-        if (t <= word.Start) return 0;
-        double x = 1 - Math.Min((t - word.Start) / Rise(word), 1);
-        return 1 - x * x * x;
-    }
+    public static double Up(LiftWord word, double t) => Glide((t - word.Start) / Rise(word));
 
     /// <summary>
     /// How much <paramref name="word"/> has grown at <paramref name="t"/>, from 0 (its own size) to 1
@@ -108,11 +105,7 @@ public static class WordLift
         double rise = Rise(word), top = Top(word);
         if (t <= word.Start || t >= top + Settle) return 0;
         double height = Height(word);
-        if (t < word.Start + rise)
-        {
-            double x = 1 - (t - word.Start) / rise;
-            return height * (1 - x * x * x);
-        }
+        if (t < word.Start + rise) return height * Glide((t - word.Start) / rise);
         if (t <= top) return height;
         return height * (1 - Ease((t - top) / Settle));
     }
@@ -161,10 +154,28 @@ public static class WordLift
     /// <summary>Gently away and gently home: 0 to 1 over <paramref name="y"/> from 0 to 1.</summary>
     static double Ease(double y) => y < 0.5 ? 4 * y * y * y : 1 - Math.Pow(-2 * y + 2, 3) / 2;
 
-    const int RiseSteps = 6, SettleSteps = 10;
+    /// <summary>
+    /// A word's way up, 0 to 1 over <paramref name="x"/> from 0 to 1: a soft start, most of the way
+    /// by the middle, and a long soft arrival. It's cubic-bezier(0.3, 0, 0.2, 1).
+    /// </summary>
+    static double Glide(double x)
+    {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        static double Curve(double s, double p1, double p2) => 3 * (1 - s) * (1 - s) * s * p1 + 3 * (1 - s) * s * s * p2 + s * s * s;
+        double lo = 0, hi = 1, at = x;
+        for (int k = 0; k < 30; k++)
+        {
+            at = (lo + hi) / 2;
+            if (Curve(at, 0.3, 0.2) < x) lo = at; else hi = at;
+        }
+        return Curve(at, 0, 1);
+    }
 
-    /// <summary>How long the word takes to reach its top: as long as it's sung, within reason.</summary>
-    static double Rise(LiftWord word) => Math.Clamp(word.End - word.Start, 0.16, 0.45);
+    const int RiseSteps = 16, SettleSteps = 12;
+
+    /// <summary>How long the word takes to reach its top: half as long again as it's sung, within reason.</summary>
+    static double Rise(LiftWord word) => Math.Clamp((word.End - word.Start) * 1.5, 0.45, 0.8);
 
     /// <summary>When the word starts easing back to its size: when it's been sung (or has reached its top, if that's later).</summary>
     static double Top(LiftWord word) => Math.Max(word.End, word.Start + Rise(word));

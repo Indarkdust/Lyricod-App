@@ -71,21 +71,30 @@ public class WordLiftTests
     [Fact]
     public void AWordRisesAsItsSungAndStaysUp()
     {
+        // Sung for a second: 0.8 s on its way up.
         var word = new LiftWord(0, 5, 10, 11);
         Assert.Equal(0, WordLift.Up(word, 9.9));
         Assert.Equal(0, WordLift.Up(word, 10));
-        // Up quickly at first, at its top well before the word ends.
-        Assert.InRange(WordLift.Up(word, 10.1), 0.4, 0.9);
-        Assert.Equal(1, WordLift.Up(word, 10.45), 9);
+        // A soft start, most of the way by the middle, a long soft arrival.
+        Assert.InRange(WordLift.Up(word, 10.08), 0.001, 0.08);
+        Assert.InRange(WordLift.Up(word, 10.4), 0.7, 0.85);
+        Assert.InRange(WordLift.Up(word, 10.72), 0.985, 0.9999);
+        Assert.Equal(1, WordLift.Up(word, 10.8), 9);
         // And there it stays, however long the rest of the line takes.
         Assert.Equal(1, WordLift.Up(word, 11));
-        Assert.Equal(1, WordLift.Up(word, 11.6));
         Assert.Equal(1, WordLift.Up(word, 60));
-        for (double t = 10; t < 10.6; t += 0.01) Assert.True(WordLift.Up(word, t + 0.01) >= WordLift.Up(word, t));
-        // A quick syllable goes all the way up too, taking its time.
+        // Never lower as it rises, and never by much at a time.
+        for (double t = 9.9; t < 11; t += 0.01)
+        {
+            double step = WordLift.Up(word, t + 0.01) - WordLift.Up(word, t);
+            Assert.InRange(step, 0, 0.035);
+        }
+        // A quick syllable goes all the way up too, and takes longer over it than it's sung:
+        // it's still rising when the next one sets off.
         var quick = new LiftWord(0, 1, 10, 10.1);
-        Assert.InRange(WordLift.Up(quick, 10.1), 0.5, 0.99);
-        Assert.Equal(1, WordLift.Up(quick, 10.16), 9);
+        Assert.InRange(WordLift.Up(quick, 10.1), 0.1, 0.5);
+        Assert.InRange(WordLift.Up(quick, 10.3), 0.85, 0.999);
+        Assert.Equal(1, WordLift.Up(quick, 10.45), 9);
     }
 
     [Fact]
@@ -94,16 +103,17 @@ public class WordLiftTests
         var word = new LiftWord(0, 5, 10, 11);
         Assert.Equal(0, WordLift.Swell(word, 9.9));
         Assert.Equal(0, WordLift.Swell(word, 10));
-        Assert.InRange(WordLift.Swell(word, 10.1), 0.4, 0.9);
-        Assert.Equal(1, WordLift.Swell(word, 10.45), 9);
+        // As it rises.
+        Assert.Equal(WordLift.Up(word, 10.3), WordLift.Swell(word, 10.3), 9);
+        Assert.Equal(1, WordLift.Swell(word, 10.8), 9);
         Assert.Equal(1, WordLift.Swell(word, 11), 9);
         // Then back to its size, gently at both ends.
         Assert.InRange(WordLift.Swell(word, 11.05), 0.98, 1);
         Assert.Equal(0.5, WordLift.Swell(word, 11 + WordLift.Settle / 2), 9);
         Assert.InRange(WordLift.Swell(word, 11 + WordLift.Settle - 0.05), 0, 0.02);
         Assert.Equal(0, WordLift.Swell(word, 11 + WordLift.Settle));
-        for (double t = 10; t < 10.45; t += 0.01) Assert.True(WordLift.Swell(word, t + 0.01) >= WordLift.Swell(word, t));
-        for (double t = 11; t < 11.6; t += 0.01) Assert.True(WordLift.Swell(word, t + 0.01) <= WordLift.Swell(word, t));
+        for (double t = 10; t < 10.8; t += 0.01) Assert.True(WordLift.Swell(word, t + 0.01) >= WordLift.Swell(word, t));
+        for (double t = 11; t < 11.7; t += 0.01) Assert.True(WordLift.Swell(word, t + 0.01) <= WordLift.Swell(word, t));
     }
 
     [Fact]
@@ -113,8 +123,8 @@ public class WordLiftTests
         double top = Enumerable.Range(0, 100).Max(k => WordLift.Swell(quick, 10 + k * 0.01));
         Assert.InRange(top, 0.6, 0.75);
         // It still takes its time growing and easing back.
-        Assert.True(WordLift.Swell(quick, 10.15) > WordLift.Swell(quick, 10.05));
-        Assert.True(WordLift.Swell(quick, 10.4) > 0);
+        Assert.True(WordLift.Swell(quick, 10.25) > WordLift.Swell(quick, 10.1));
+        Assert.True(WordLift.Swell(quick, 10.9) > 0);
     }
 
     [Fact]
@@ -137,13 +147,15 @@ public class WordLiftTests
         {
             Assert.True(times[k] > times[k - 1]);
             Assert.True(up[k] >= up[k - 1]);
+            // Close enough to the curve for straight lines between them: no step is a big one.
+            Assert.InRange(up[k] - up[k - 1], 0, 0.17);
         }
 
         // From the middle of the word: starts where the word is now.
-        (times, up, swell) = WordLift.Plan(word, position: 10.7);
-        Assert.Equal(1, up[0], 9);
-        Assert.Equal(1, swell[0], 9);
-        Assert.Equal(0.3 + WordLift.Settle, times[^1], 9);
+        (times, up, swell) = WordLift.Plan(word, position: 10.4);
+        Assert.Equal(WordLift.Up(word, 10.4), up[0], 9);
+        Assert.Equal(WordLift.Swell(word, 10.4), swell[0], 9);
+        Assert.Equal(0.6 + WordLift.Settle, times[^1], 9);
         // Long after it: up, and nothing left to do.
         (times, up, swell) = WordLift.Plan(word, position: 12);
         Assert.Equal([0.0], times);
