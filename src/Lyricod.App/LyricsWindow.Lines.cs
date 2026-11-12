@@ -6,12 +6,28 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Foundation;
 
 namespace Lyricod;
 
 public sealed partial class LyricsWindow
 {
+    /// <summary>What the window last showed: a song's lyrics, or the message in their place.</summary>
+    object? _builtFor;
+
+    /// <summary>
+    /// What's new (another song's lyrics, or word that there are none) fades in, rather than replacing
+    /// what was there all at once. The same lyrics laid out again (a resize, a setting) don't.
+    /// </summary>
+    static void FadeIn(UIElement element)
+    {
+        var fade = new DoubleAnimation { From = 0, To = 1, Duration = TimeSpan.FromSeconds(0.35), EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+        Storyboard.SetTarget(fade, element);
+        Storyboard.SetTargetProperty(fade, "Opacity");
+        new Storyboard { Children = { fade } }.Begin();
+    }
+
     void BuildLines()
     {
         Lines.Children.Clear();
@@ -21,7 +37,10 @@ public sealed partial class LyricsWindow
         MessageButton.Visibility = MessageDetail.Visibility = Visibility.Collapsed;
         if (_model.Track == null || _model.IsSearching || lyrics == null)
         {
-            MessageText.Text = _model.Track == null ? L.Get("NothingPlaying") : _model.IsSearching ? L.Get("Searching") : _model.IsNotSong ? L.Get("NotASong") : L.Get("NoLyrics");
+            string message = _model.Track == null ? L.Get("NothingPlaying") : _model.IsSearching ? L.Get("Searching") : _model.IsNotSong ? L.Get("NotASong") : L.Get("NoLyrics");
+            if (!Equals(_builtFor, message)) FadeIn(Message);
+            _builtFor = message;
+            MessageText.Text = message;
             if (_model.Track != null && !_model.IsSearching)
             {
                 // As on the Mac: search for them yourself and pick the right song.
@@ -34,6 +53,8 @@ public sealed partial class LyricsWindow
             return;
         }
         Message.Visibility = Visibility.Collapsed;
+        if (!ReferenceEquals(_builtFor, lyrics)) FadeIn(Lines);
+        _builtFor = lyrics;
         UpdatePadding();
         _linesWidth = TextWidth;
         foreach (var line in lyrics.Lines)
