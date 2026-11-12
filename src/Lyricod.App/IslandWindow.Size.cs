@@ -32,7 +32,7 @@ public sealed partial class IslandWindow
             _bars[i].RadiusX = _bars[i].RadiusY = s;
             _barVisuals[i].CenterPoint = new Vector3((float)s, (float)BarHeight / 2, 0);
         }
-        Second.FontSize = 11 * s;
+        SecondText.FontSize = 11 * s;
         Second.Margin = new Thickness(SideWidth, -4 * s, SideWidth, 4 * s);
         Expanded.Padding = new Thickness(18 * s, 6 * s, 18 * s, 10 * s);
         Expanded.Spacing = 6 * s;
@@ -165,7 +165,7 @@ public sealed partial class IslandWindow
     void FitText()
     {
         _textWidth = Math.Clamp(Math.Ceiling(Math.Max(_pieceWidth, _secondWidth)), MinText, MaxText);
-        Second.MaxWidth = _textWidth;
+        SecondText.MaxWidth = _textWidth;
         Resize();
     }
 
@@ -189,7 +189,7 @@ public sealed partial class IslandWindow
     void RevealText()
     {
         LyricBox.Opacity = 1;
-        Second.Opacity = _secondOpacity;
+        Second.Opacity = 1;
         if (_transitionPending)
         {
             _transitionPending = false;
@@ -212,4 +212,6 @@ public sealed partial class IslandWindow
     }
 
     double MeasureLyric(string text) => Measure(text, Lyric.FontFamily, Lyric.FontSize, Lyric.FontWeight);
+
+    double MeasureSecond(string text) => Measure(text, SecondText.FontFamily, SecondText.FontSize, SecondText.FontWeight);
 }

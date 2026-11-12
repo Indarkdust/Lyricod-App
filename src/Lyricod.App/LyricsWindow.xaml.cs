@@ -47,6 +47,8 @@ public sealed partial class LyricsWindow : Window
         public LyricLine Line { get; } = line;
         public StackPanel Panel { get; } = panel;
         public List<(LyricLine Piece, double Width, SweepPainter Sweep)> Rows { get; } = [];
+        /// <summary>While it's being sung: the rows of a pronunciation the source timed, and their sweeps.</summary>
+        public List<(LyricLine Piece, double Width, SweepPainter Sweep, FontFamily Font)> ExtraRows { get; } = [];
         /// <summary>The line's texts that soften with distance (none while it's being sung).</summary>
         public List<SoftText> Soft { get; } = [];
     }
@@ -74,6 +76,7 @@ public sealed partial class LyricsWindow : Window
         AppWindow.Changed += (_, e) => { if (e.DidPresenterChange) UpdateFullScreenIcon(); };
 
         _drift = new ArtworkDrift(ArtHost);
+        _extraRuler = new TextRuler(ExtraMeasurer);
         _transport = new TransportButtons(model);
         _progress = new ProgressLine(model);
         ToolTipService.SetToolTip(TranslationButton, L.Get("TranslationsTip"));

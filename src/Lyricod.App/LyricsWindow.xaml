@@ -100,5 +100,8 @@
         <!-- Measures text in the lyric font. Invisible but laid out. -->
         <TextBlock x:Name="Measurer" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left"
                    VerticalAlignment="Top" TextWrapping="NoWrap" />
+        <!-- The same for a pronunciation's rows, in their font. -->
+        <TextBlock x:Name="ExtraMeasurer" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left"
+                   VerticalAlignment="Top" TextWrapping="NoWrap" />
     </Grid>
 </Window>

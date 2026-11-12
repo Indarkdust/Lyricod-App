@@ -36,6 +36,11 @@ public sealed partial class DesktopLyricsWindow : Window
     readonly nint _hwnd;
     readonly Compositor _compositor;
     readonly SweepPainter _sung;
+    /// <summary>The sung colour over the row under the line, when that's a pronunciation the source timed.</summary>
+    readonly SweepPainter _sungUnder;
+    readonly TextRuler _underRuler;
+    /// <summary>That pronunciation as a line to light (null for any other row).</summary>
+    LyricLine? _under;
     readonly DispatcherQueueTimer _pieceTimer;
     readonly Dictionary<string, double> _widths = [];
 
@@ -60,6 +65,8 @@ public sealed partial class DesktopLyricsWindow : Window
 
         _compositor = ElementCompositionPreview.GetElementVisual(Root).Compositor;
         _sung = new SweepPainter(Dim, LitHost);
+        _sungUnder = new SweepPainter(Second, SecondLit);
+        _underRuler = new TextRuler(UnderMeasurer);
         AttachShadow(Dim, LineShadow);
         AttachShadow(Second, SecondShadow);
         AttachShadow(Third, ThirdShadow);
@@ -186,7 +193,7 @@ public sealed partial class DesktopLyricsWindow : Window
         Third.FontSize = Math.Round(f * UnderScale);
         Second.FontWeight = Third.FontWeight = Fonts.SemiboldWeight;
         Second.MaxWidth = Third.MaxWidth = StripWidth - 2 * SidePadding;
-        _sung.Color = ParseColor(_settings.SungColor);
+        _sung.Color = _sungUnder.Color = ParseColor(_settings.SungColor);
         _widths.Clear();
     }
 
@@ -291,6 +298,8 @@ public sealed partial class DesktopLyricsWindow : Window
             Dim.MaxWidth = StripWidth - 2 * SidePadding;
             _widths.Clear();
             _sung.Set(0, 1);
+            _under = null;
+            _sungUnder.Set(0, 1);
             LineScale.ScaleX = LineScale.ScaleY = 1;
             Second.Visibility = Third.Visibility = Visibility.Collapsed;
             return;
@@ -312,6 +321,8 @@ public sealed partial class DesktopLyricsWindow : Window
         List<(string Text, bool IsExtra)> rows = _model.CurrentIndex is int i && lyrics != null ? _settings.SecondLine.RowsUnder(i, lyrics) : [];
         ShowUnder(Second, rows.Count > 0 ? rows[0] : null, song);
         ShowUnder(Third, rows.Count > 1 ? rows[1] : null, song);
+        // The pronunciation is always the first row under the line.
+        _under = rows.Count > 0 ? SecondLineExtensions.SungRow(rows[0].Text, line) : null;
         ShowPiece();
     }
 
@@ -349,5 +360,15 @@ public sealed partial class DesktopLyricsWindow : Window
         }
     }
 
-    void Animate(LyricLine piece, double position) => _sung.Animate(piece, _textWidth, position, _model.IsPlaying, Measure);
+    void Animate(LyricLine piece, double position)
+    {
+        _sung.Animate(piece, _textWidth, position, _model.IsPlaying, Measure);
+        // The row under it, through the whole line (it isn't in pieces). One too wide for the
+        // strip ends in "…": it stays as it is rather than be lit out of step.
+        if (_under is not { } under) { _sungUnder.Set(0, 1); return; }
+        _underRuler.Use(Second.FontFamily, Second.FontSize, Second.FontWeight);
+        double width = Math.Ceiling(_underRuler.Measure(under.Text)) + 1;
+        if (width > Second.MaxWidth) { _sungUnder.Set(0, 1); return; }
+        _sungUnder.Animate(under, width, position, _model.IsPlaying, _underRuler.Measure);
+    }
 }

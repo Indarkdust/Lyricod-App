@@ -34,6 +34,13 @@ public static class SecondLineExtensions
         return rows;
     }
 
+    /// <summary>
+    /// A row under <paramref name="line"/> as a line to light as it's sung: when the row is the
+    /// line's pronunciation and the source timed it. Null for any other row.
+    /// </summary>
+    public static LyricLine? SungRow(string? row, LyricLine? line) =>
+        line?.Pronunciation is { } p && p.Text == row ? p.Sung(line) : null;
+
     /// <summary>How many rows <paramref name="mode"/> can put under a line.</summary>
     public static int MaxRows(this SecondLine mode) => mode switch
     {

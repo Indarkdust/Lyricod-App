@@ -32,6 +32,8 @@
                 <Grid x:Name="SecondShadow" />
                 <TextBlock x:Name="Second" Foreground="White" TextWrapping="NoWrap"
                            TextTrimming="CharacterEllipsis" HorizontalAlignment="Center" IsHitTestVisible="False" />
+                <!-- A pronunciation the source timed is lit as it's sung, like the line. -->
+                <Grid x:Name="SecondLit" IsHitTestVisible="False" />
             </Grid>
             <!-- The translation, under the pronunciation, when both are chosen. -->
             <Grid HorizontalAlignment="Center">
@@ -43,6 +45,9 @@
 
         <!-- Measures text in the lyric font. Invisible but laid out: a collapsed element measures as zero. -->
         <TextBlock x:Name="Measurer" Opacity="0" IsHitTestVisible="False"
+                   HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="NoWrap" />
+        <!-- The same for the row under the line, in its font. -->
+        <TextBlock x:Name="UnderMeasurer" Opacity="0" IsHitTestVisible="False"
                    HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="NoWrap" />
     </Grid>
 </Window>

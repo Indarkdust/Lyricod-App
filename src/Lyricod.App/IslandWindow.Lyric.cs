@@ -20,14 +20,16 @@ public sealed partial class IslandWindow
         HasSecondRow = under != null;
         SecondRow.Height = new GridLength(HasSecondRow ? SecondHeight : 0);
         Second.Visibility = HasSecondRow ? Visibility.Visible : Visibility.Collapsed;
-        Second.Text = under?.Text ?? "";
-        _secondOpacity = under is { IsExtra: false } ? 0.4 : 0.6;
+        SecondText.Text = under?.Text ?? "";
+        SecondDim.Opacity = under is { IsExtra: false } ? 0.4 : 0.6;
         if (under is { } u)
         {
-            Second.FontFamily = Fonts.For(u.Text, song);
-            Second.FontWeight = Fonts.SemiboldWeight;
+            SecondText.FontFamily = Fonts.For(u.Text, song);
+            SecondText.FontWeight = Fonts.SemiboldWeight;
         }
-        _secondWidth = under is { } extra ? Measure(extra.Text, Second.FontFamily, Second.FontSize, Second.FontWeight) : 0;
+        _secondWidth = under is { } extra ? MeasureSecond(extra.Text) : 0;
+        _secondLine = SecondLineExtensions.SungRow(under?.Text, line);
+        if (_secondLine == null) _secondSweep.Set(0, 1);
 
         if (line == null)
         {
@@ -91,6 +93,13 @@ public sealed partial class IslandWindow
             FitText();
         }
         _sweep.Animate(piece, _pieceWidth, now, _model.IsPlaying, MeasureLyric);
+        // The pronunciation under it, through the whole line (it isn't in pieces). One too wide
+        // for the island ends in "…": it stays as it is rather than be lit out of step.
+        if (_secondLine is { } second)
+        {
+            if (_secondWidth > MaxText) _secondSweep.Set(0, 1);
+            else _secondSweep.Animate(second, Math.Ceiling(_secondWidth) + 1, now, _model.IsPlaying, MeasureSecond);
+        }
         int index = _pieces.IndexOf(piece);
         if (_model.IsPlaying && index + 1 < _pieces.Count)
         {

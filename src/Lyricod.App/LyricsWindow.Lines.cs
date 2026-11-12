@@ -15,6 +15,8 @@ public sealed partial class LyricsWindow
 {
     /// <summary>What the window last showed: a song's lyrics, or the message in their place.</summary>
     object? _builtFor;
+    /// <summary>Measures a pronunciation's rows, in their font.</summary>
+    readonly TextRuler _extraRuler;
 
     /// <summary>
     /// What's new (another song's lyrics, or word that there are none) fades in, rather than replacing
@@ -95,6 +97,7 @@ public sealed partial class LyricsWindow
         var font = Fonts.For(line.Text, song);
         view.Panel.Children.Clear();
         view.Rows.Clear();
+        view.ExtraRows.Clear();
         view.Soft.Clear();
 
         if (current && lyrics.IsSynced)
@@ -133,10 +136,61 @@ public sealed partial class LyricsWindow
                 }, soft: true);
         }
         if (_settings.ShowPronunciation && line.Pronunciation is { } p)
-            Add(view, Extra(p.Text, Math.Round(_fontSize * 0.5), current ? 0.7 : 0.3, song, align), soft: !current);
+            AddPronunciation(view, p, current, song, align);
         if (_settings.ShowTranslations && line.Translation is { } tr)
             Add(view, Extra(tr, Math.Round(_fontSize * 0.6), current ? 0.75 : 0.3, song, align), soft: !current);
         ApplyDistance(view);
+    }
+
+    /// <summary>
+    /// The pronunciation under a line. One the source timed is lit as it's sung, like the line: in
+    /// rows of its own, broken as the line's are and the same whether it's being sung or not, so it
+    /// doesn't rewrap when it lights up. Any other is one text that wraps.
+    /// </summary>
+    void AddPronunciation(LineView view, Pronunciation p, bool current, LyricLanguage? song, TextAlignment align)
+    {
+        double size = Math.Round(_fontSize * 0.5);
+        if (_model.Lyrics is not { IsSynced: true } || p.Sung(view.Line) is not { } sung)
+        {
+            Add(view, Extra(p.Text, size, current ? 0.7 : 0.3, song, align), soft: !current);
+            return;
+        }
+        var font = Fonts.For(p.Text, song);
+        _extraRuler.Use(font, size, Fonts.SemiboldWeight);
+        var side = _settings.LyricsCentered ? HorizontalAlignment.Center : HorizontalAlignment.Left;
+        var rows = new StackPanel { HorizontalAlignment = side };
+        foreach (var piece in LinePieces.Split(sung, TextWidth, _extraRuler.Measure))
+        {
+            var text = new TextBlock
+            {
+                Text = piece.Text, FontFamily = font, FontSize = size, FontWeight = Fonts.SemiboldWeight, TextWrapping = TextWrapping.NoWrap,
+                HorizontalAlignment = side,
+                Foreground = new SolidColorBrush(current ? Colors.White : Windows.UI.Color.FromArgb((byte)(0.3 * 255), 255, 255, 255)),
+            };
+            if (!current)
+            {
+                var soft = new SoftText(text);
+                view.Soft.Add(soft);
+                rows.Children.Add(soft.Element);
+                continue;
+            }
+            // As the line's rows: dimmed by a wrapper, the sung part over it (a little under the line's white).
+            var dim = new Grid { Opacity = 0.4 };
+            dim.Children.Add(text);
+            var host = new Grid { IsHitTestVisible = false };
+            var row = new Grid { HorizontalAlignment = side };
+            row.Children.Add(dim);
+            row.Children.Add(host);
+            var sweep = new SweepPainter(text, host)
+            {
+                Color = Windows.UI.Color.FromArgb(217, 255, 255, 255),
+                // No glow: that's too much on small text.
+                Effect = _settings.LyricsEffect == SungEffect.Line ? SungEffect.Line : SungEffect.Sweep,
+            };
+            view.ExtraRows.Add((piece, Math.Ceiling(_extraRuler.Measure(piece.Text)) + 1, sweep, font));
+            rows.Children.Add(row);
+        }
+        view.Panel.Children.Add(rows);
     }
 
     /// <summary>Adds a text to a line, able to soften (blur) unless the line is being sung.</summary>
@@ -315,6 +369,11 @@ public sealed partial class LyricsWindow
         var measure = Measure(font);
         foreach (var (piece, width, sweep) in _views[i].Rows)
             sweep.Animate(piece, width, now, _model.IsPlaying, measure);
+        foreach (var (piece, width, sweep, extraFont) in _views[i].ExtraRows)
+        {
+            _extraRuler.Use(extraFont, Math.Round(_fontSize * 0.5), Fonts.SemiboldWeight);
+            sweep.Animate(piece, width, now, _model.IsPlaying, _extraRuler.Measure);
+        }
     }
 
     /// <summary>

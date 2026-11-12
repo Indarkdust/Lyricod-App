@@ -52,6 +52,10 @@ public sealed partial class IslandWindow : Window
     readonly Settings _settings;
     readonly Overlay _overlay;
     readonly SweepPainter _sweep;
+    /// <summary>The same over the row under the lyric, when that's a pronunciation the source timed.</summary>
+    readonly SweepPainter _secondSweep;
+    /// <summary>That pronunciation as a line to light (null for any other row).</summary>
+    LyricLine? _secondLine;
     readonly TransportButtons _transport;
     readonly ProgressLine _progress;
     readonly DispatcherQueueTimer _pieceTimer, _pointerTimer, _progressTimer, _barTimer, _revealTimer, _pauseTimer;
@@ -65,7 +69,7 @@ public sealed partial class IslandWindow : Window
     List<LyricLine> _pieces = [];
     LyricLine? _piece;
     double _pieceWidth;
-    double _textWidth = 80, _secondWidth, _secondOpacity = 0.6;
+    double _textWidth = 80, _secondWidth;
     double _widthTarget = double.NaN, _heightTarget = double.NaN;
     Storyboard? _widthAnimation, _heightAnimation, _lineAnimation;
     bool _waitingForWidth, _widthAnimating, _transitionPending;
@@ -90,6 +94,7 @@ public sealed partial class IslandWindow : Window
         _overlay = new Overlay(this);
         _overlay.SetClickThrough(true);
         _sweep = new SweepPainter(Lyric, LyricSweep) { Effect = settings.IslandEffect };
+        _secondSweep = new SweepPainter(SecondText, SecondSweep) { Effect = SecondEffect };
         _transport = new TransportButtons(model, 13);
         TransportHost.Children.Add(_transport);
         _progress = new ProgressLine(model);
@@ -280,6 +285,7 @@ public sealed partial class IslandWindow : Window
                     break;
                 case nameof(Settings.IslandEffect):
                     _sweep.Effect = _settings.IslandEffect;
+                    _secondSweep.Effect = SecondEffect;
                     ShowPiece();
                     break;
                 case nameof(Settings.IslandAudioBars) or nameof(Settings.FrameRate):
@@ -314,6 +320,9 @@ public sealed partial class IslandWindow : Window
         ApplyColour();
     }
 
+    /// <summary>The row under the lyric is lit as the lyric is, without the glow: that's too much on small text.</summary>
+    SungEffect SecondEffect => _settings.IslandEffect == SungEffect.Line ? SungEffect.Line : SungEffect.Sweep;
+
     /// <summary>The album's colour, or the island's chosen colour.</summary>
     Windows.UI.Color LyricColour =>
         _settings.IslandAlbumColour && _model.ArtworkColor is { } c ? c : DesktopLyricsWindow.ParseColor(_settings.IslandColor);
@@ -321,7 +330,7 @@ public sealed partial class IslandWindow : Window
     void ApplyColour()
     {
         var colour = LyricColour;
-        _sweep.Color = colour;
+        _sweep.Color = _secondSweep.Color = colour;
         var brush = new SolidColorBrush(colour);
         foreach (var bar in _bars) bar.Fill = brush;
         _progress.BarBrush = brush;
