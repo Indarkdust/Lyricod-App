@@ -26,7 +26,8 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
     /// Fills in every sung line's pronunciation. A source's own romaji is kept for Japanese
     /// (people typed it, so kanji readings are right); Korean and Chinese are always worked
     /// out here, since sources spell those inconsistently. Romaji by word (experimental) is in
-    /// Romanizer.ByWord.cs.
+    /// Romanizer.ByWord.cs. A pronunciation worked out here is timed from the line's own words,
+    /// where it has them, so it can be lit as it's sung (Romanizer.Timing.cs).
     /// </summary>
     public void Fill(Lyrics lyrics)
     {
@@ -41,26 +42,60 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
             }
             Pronunciation? p = language == LyricLanguage.Japanese && line.Pronunciation is { Text.Length: > 0 } given
                 ? (GroupJapaneseByWord ? ByWord(given, line) : null) ?? given with { Language = language }
-                : Romanize(line.Text, language) is { } text ? new Pronunciation(text, language, PronunciationOrigin.Lyricod) : null;
+                : Read(line.Text, language) is { } read
+                    ? new Pronunciation(read.Text, language, PronunciationOrigin.Lyricod) { Words = Sung(read.Text, [.. read.Words.Select(w => w.At)], read.Words, line) }
+                    : null;
             lyrics.Lines[i] = line with { Pronunciation = p };
         }
     }
 
-    public string? Romanize(string text, LyricLanguage language)
+    public string? Romanize(string text, LyricLanguage language) => Read(text, language)?.Text;
+
+    /// <summary>
+    /// <paramref name="text"/> in Latin letters, and where each of its words is: in the result and
+    /// in <paramref name="text"/>. Null when there's nothing to add.
+    /// </summary>
+    (string Text, List<Placed> Words)? Read(string text, LyricLanguage language)
     {
+        var words = new List<Placed>();
         string? output = language switch
         {
-            LyricLanguage.Chinese => Chinese(text),
-            LyricLanguage.Japanese => japanese == null ? null : Japanese(text, japanese, GroupJapaneseByWord),
-            _ => Korean(text),
+            LyricLanguage.Chinese => Join(ChineseParts(text), words),
+            LyricLanguage.Japanese => japanese == null ? null
+                : Join(JapaneseParts(text, japanese, GroupJapaneseByWord).Where(p => !p.IsWord || p.Text.Length > 0), words),
+            _ => Korean(text, words),
         };
         if (output == null) return null;
-        var tidy = Tidy(output);
+        var tidy = Tidy(output, words);
         // Nothing to add if it reads the same (the line was already in Latin letters).
-        return tidy.Length == 0 || tidy == Tidy(text) ? null : tidy;
+        return tidy.Length == 0 || tidy == Tidy(text) ? null : (tidy, words);
     }
 
     static string Tidy(string s) => string.Join(' ', s.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+
+    /// <summary><see cref="Tidy(string)"/>, moving <paramref name="words"/> to where they are in the result.</summary>
+    static string Tidy(string s, List<Placed> words)
+    {
+        var sb = new StringBuilder(s.Length);
+        var at = new int[s.Length + 1];
+        bool gap = false;
+        for (int i = 0; i < s.Length; i++)
+        {
+            if (char.IsWhiteSpace(s[i]))
+            {
+                gap = sb.Length > 0;
+                at[i] = sb.Length;
+                continue;
+            }
+            if (gap) sb.Append(' ');
+            gap = false;
+            at[i] = sb.Length;
+            sb.Append(s[i]);
+        }
+        at[s.Length] = sb.Length;
+        for (int k = 0; k < words.Count; k++) words[k] = words[k] with { At = at[Math.Clamp(words[k].At, 0, s.Length)] };
+        return sb.ToString();
+    }
 
     // ---- Which language ----
 
@@ -118,9 +153,10 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
     /// <summary>
     /// Joins the pieces into a line. Words that came from Chinese, Japanese or Korean get
     /// spaces between them (those scripts don't use any); words that were Latin keep their own
-    /// spacing ("Soi.Co.Ltd"); punctuation sits against the word before.
+    /// spacing ("Soi.Co.Ltd"); punctuation sits against the word before. <paramref name="placed"/>
+    /// is given where each word went.
     /// </summary>
-    static string Join(IEnumerable<Part> parts)
+    static string Join(IEnumerable<Part> parts, List<Placed>? placed = null)
     {
         var sb = new StringBuilder();
         bool lastWasLatin = false, spaceSinceWord = true;
@@ -131,6 +167,7 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
             {
                 if (Last() is { } last && !char.IsWhiteSpace(last) && !"(“‘".Contains(last) && !(lastWasLatin && part.WasLatin && !spaceSinceWord))
                     sb.Append(' ');
+                if (part.Text.Length > 0) placed?.Add(new Placed(sb.Length, part.From, part.To));
                 sb.Append(part.Text);
                 lastWasLatin = part.WasLatin;
                 spaceSinceWord = false;
@@ -178,12 +215,19 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
     /// <summary>还 is huán only in "give back"; as "still / also" before these it's hái.</summary>
     static readonly HashSet<char> HaiFollowers = [.. "要是有在会没能想不很可记得好差算真行再从已也"];
 
-    public static string Chinese(string text)
+    public static string Chinese(string text) => Join(ChineseParts(text));
+
+    /// <summary>The line's syllables and what's between them, each syllable with the character it reads in <paramref name="text"/>.</summary>
+    static List<Part> ChineseParts(string text)
     {
         // Simplified first: the pinyin dictionary has phrases there.
         var simplified = WordsHelper.ToSimplifiedChinese(text);
         var parts = new List<Part>();
         var runes = simplified.EnumerateRunes().ToList();
+        // Where each rune is in the text (not known if simplifying changed its length).
+        var places = new int[runes.Count + 1];
+        for (int r = 0; r < runes.Count; r++) places[r + 1] = places[r] + runes[r].Utf16SequenceLength;
+        bool known = simplified.Length == text.Length;
         int i = 0;
         while (i < runes.Count)
         {
@@ -197,12 +241,15 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
                 if (syllables.Length == run.Length)
                     for (int k = 0; k + 1 < run.Length; k++)
                         if (run[k] == '还' && syllables[k] == "huán" && HaiFollowers.Contains(run[k + 1])) syllables[k] = "hái";
-                parts.AddRange(syllables.Select(s => new Part(s, true)));
+                // A syllable for each character, or their places aren't known.
+                bool each = known && syllables.Length == i - start;
+                parts.AddRange(syllables.Select((s, k) => each ? new Part(s, true, From: places[start + k], To: places[start + k + 1]) : new Part(s, true)));
             }
             else if (IsLatinWord(runes[i]))
             {
                 while (i < runes.Count && IsLatinWord(runes[i])) i++;
-                parts.Add(new Part(string.Concat(runes.Skip(start).Take(i - start).Select(r => r.ToString())), true, WasLatin: true));
+                parts.Add(new Part(string.Concat(runes.Skip(start).Take(i - start).Select(r => r.ToString())), true, WasLatin: true,
+                    From: known ? places[start] : -1, To: known ? places[i] : -1));
             }
             else
             {
@@ -210,13 +257,10 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
                 parts.Add(new Part(string.Concat(runes.Skip(start).Take(i - start).Select(r => r.ToString())), false));
             }
         }
-        return Join(parts);
+        return parts;
     }
 
     // ---- Japanese ----
-
-    static string Japanese(string text, IJapaneseReader reader, bool byWord) =>
-        Join(JapaneseParts(text, reader, byWord).Where(p => !p.IsWord || p.Text.Length > 0));
 
     /// <summary>The line's words in romaji and what's between them, each word with where it is in <paramref name="text"/>.</summary>
     static List<Part> JapaneseParts(string text, IJapaneseReader reader, bool byWord)
@@ -313,16 +357,27 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
         _ => "",
     };
 
-    public static string Korean(string text)
+    public static string Korean(string text) => Korean(text, null);
+
+    /// <param name="placed">Given where each word (a run of Hangul) went, and where it is in <paramref name="text"/>.</param>
+    static string Korean(string text, List<Placed>? placed)
     {
         var sb = new StringBuilder();
         var word = new List<(int L, int V, int T)>();
-        void Flush() { sb.Append(RomanizeWord(word)); word.Clear(); }
+        // Where the word started in the text, and how far into the text this is.
+        int from = 0, at = 0;
+        void Flush()
+        {
+            if (word.Count > 0) placed?.Add(new Placed(sb.Length, from, at));
+            sb.Append(RomanizeWord(word));
+            word.Clear();
+        }
         foreach (var r in text.EnumerateRunes())
         {
             if (r.Value is >= 0xAC00 and <= 0xD7A3)
             {
                 int i = r.Value - 0xAC00;
+                if (word.Count == 0) from = at;
                 word.Add((i / 588, i % 588 / 28, i % 28));
             }
             else
@@ -330,6 +385,7 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
                 Flush();
                 sb.Append(Punctuation(r.ToString()));
             }
+            at += r.Utf16SequenceLength;
         }
         Flush();
         return sb.ToString();

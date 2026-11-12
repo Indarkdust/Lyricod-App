@@ -11,7 +11,9 @@ namespace Lyricod.Core.Romanization;
 /// <para>
 /// Where the source timed its romaji and the line word by word (QQ Music), each syllable is put
 /// with the word being sung when it starts: exact, whatever the two readings are, and the timing
-/// stays with the syllables. Otherwise the two romaji are lined up by their letters.
+/// stays with the syllables. Otherwise the two romaji are lined up by their letters, and where the
+/// line is timed word by word each romaji word is sung when the characters it reads are
+/// (Romanizer.Timing.cs).
 /// </para>
 /// </summary>
 public sealed partial class Romanizer
@@ -28,8 +30,14 @@ public sealed partial class Romanizer
         if (Reader is { } reader && given.Words is { } syllables && line.Words is { } sung
             && WordSpans(line.Text, reader) is { } spans && BySungWord(syllables, line, sung, spans) is { } timed)
             return timed;
-        return Romanize(line.Text, LyricLanguage.Japanese) is { } ours && Regroup(given.Text, ours) is { } grouped
-            ? new Pronunciation(grouped, LyricLanguage.Japanese, PronunciationOrigin.SourceByWord) : null;
+        if (Read(line.Text, LyricLanguage.Japanese) is not { } ours || Regroup(given.Text, ours.Text) is not { } grouped) return null;
+        // Word for word with ours, it's sung when ours is: timed from the line's own words.
+        var starts = WordStarts(grouped);
+        bool same = starts.Count == ours.Words.Count && WordStarts(ours.Text).SequenceEqual(ours.Words.Select(w => w.At));
+        return new Pronunciation(grouped, LyricLanguage.Japanese, PronunciationOrigin.SourceByWord)
+        {
+            Words = same ? Sung(grouped, starts, ours.Words, line) : null,
+        };
     }
 
     /// <summary>How far a syllable may start before the sung word it belongs to: the two timings differ by a millisecond.</summary>

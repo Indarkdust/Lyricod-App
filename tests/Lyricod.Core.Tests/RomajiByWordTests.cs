@@ -116,12 +116,83 @@ public class RomajiByWordTests
     public void TimedRomajiThatIsntWithinTheLineIsLinedUpByLetters()
     {
         // A syllable timed before the line starts: the timing can't place it, the letters still can.
+        // Each word is then sung when the characters it reads are: 夢 from 1 to 2, に from 2 to 3.
         var reader = new FakeReader(("夢", "ゆめ"), ("に", "に"));
         var (line, _) = Timed("夢に", ("yu", 0.5), ("me", 1.4), ("ni", 2));
         var l = new Lyrics([line], "test");
         new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
         Assert.Equal("yume ni", l.Lines[0].Pronunciation!.Text);
-        Assert.Null(l.Lines[0].Pronunciation!.Words);
+        Assert.Equal([new LyricWord(1, 1, "yume"), new LyricWord(2, 1, " ni")], l.Lines[0].Pronunciation!.Words);
+    }
+
+    /// A line timed a character at a time from 1 s, a second each, as a source without romaji has it.
+    static LyricLine ByCharacter(string text, Pronunciation? romaji = null) => new()
+    {
+        Start = 1, End = 1 + text.Length, Text = text, Pronunciation = romaji,
+        Words = [.. text.Select((c, i) => new LyricWord(1 + i, 1, c.ToString()))],
+    };
+
+    [Fact]
+    public void RomajiWorkedOutHereIsSungWhenItsCharactersAre()
+    {
+        // No romaji from the source: each word of ours is lit while the characters it reads are sung.
+        var reader = new FakeReader(("|人里", "ひとざと"), ("|離れ", "はなれ"), ("て", "て"), ("|鳴", "な"), ("る", "る"), ("|音", "おと"), ("は", "は"));
+        var l = new Lyrics([ByCharacter("人里離れて鳴る音は")], "test");
+        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
+        var p = l.Lines[0].Pronunciation!;
+        Assert.Equal("hitozato hanare te naru oto wa", p.Text);
+        Assert.Equal(PronunciationOrigin.Lyricod, p.Origin);
+        Assert.Equal(p.Text, string.Concat(p.Words!.Select(w => w.Text)));
+        Assert.Equal([new LyricWord(1, 2, "hitozato"), new LyricWord(3, 2, " hanare"), new LyricWord(5, 1, " te"), new LyricWord(6, 2, " naru"),
+            new LyricWord(8, 1, " oto"), new LyricWord(9, 1, " wa")], p.Words);
+        // It's a line of its own to light, over the line's own time.
+        var sung = p.Sung(l.Lines[0])!;
+        Assert.Equal((1, 10, p.Text), (sung.Start, sung.End, sung.Text));
+
+        // The same with romaji by word off: Windows' words as it gives them.
+        var plain = new Lyrics([ByCharacter("人里離れて鳴る音は")], "test");
+        new Romanizer(reader).Fill(plain);
+        Assert.Equal(["hitozato", " hanare", " te", " na", " ru", " oto", " wa"], plain.Lines[0].Pronunciation!.Words!.Select(w => w.Text));
+        Assert.Equal(new LyricWord(7, 1, " ru"), plain.Lines[0].Pronunciation!.Words![4]);
+
+        // A line the source didn't time by word has nothing to time its romaji with.
+        var untimed = new Lyrics([new LyricLine { Start = 1, End = 10, Text = "人里離れて鳴る音は" }], "test");
+        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(untimed);
+        Assert.Equal("hitozato hanare te naru oto wa", untimed.Lines[0].Pronunciation!.Text);
+        Assert.Null(untimed.Lines[0].Pronunciation!.Words);
+    }
+
+    [Fact]
+    public void ASourcesUntimedRomajiSpacedByWordIsSungWithOurs()
+    {
+        // NetEase's romaji has no timing; its line does. 明日 is read "asu" there, "ashita" here:
+        // the source's letters, our words, the line's timing.
+        var reader = new FakeReader(("明日", "あした"), ("から", "から"), ("、", null), ("向こう", "むこう"), ("まで", "まで"));
+        var l = new Lyrics([ByCharacter("明日から、向こうまで", new("a su ka ra, mu ko u ma de"))], "test");
+        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
+        var p = l.Lines[0].Pronunciation!;
+        Assert.Equal("asu kara, mukou made", p.Text);
+        Assert.Equal(PronunciationOrigin.SourceByWord, p.Origin);
+        // The comma goes with the word before it, and is lit with it.
+        Assert.Equal([new LyricWord(1, 2, "asu"), new LyricWord(3, 2, " kara,"), new LyricWord(6, 3, " mukou"), new LyricWord(9, 2, " made")], p.Words);
+
+        // Off, the source's romaji shows as it came, and plain: it isn't lined up with anything.
+        var plain = new Lyrics([ByCharacter("明日から、向こうまで", new("a su ka ra, mu ko u ma de"))], "test");
+        new Romanizer(reader).Fill(plain);
+        Assert.Equal("a su ka ra, mu ko u ma de", plain.Lines[0].Pronunciation!.Text);
+        Assert.Null(plain.Lines[0].Pronunciation!.Words);
+    }
+
+    [Fact]
+    public void AWordTimedAsOneSharesItsTimeAmongItsCharacters()
+    {
+        // The source timed 明日から as one word (1 to 5 s) and まで as another (5 to 7 s): 明日 has
+        // the first half of the first, から the second.
+        var reader = new FakeReader(("明日", "あした"), ("から", "から"), (" ", null), ("まで", "まで"));
+        var line = new LyricLine { Start = 1, End = 7, Text = "明日から まで", Words = [new(1, 4, "明日から "), new(5, 2, "まで")] };
+        var l = new Lyrics([line], "test");
+        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
+        Assert.Equal([new LyricWord(1, 2, "ashita"), new LyricWord(3, 2, " kara"), new LyricWord(5, 2, " made")], l.Lines[0].Pronunciation!.Words);
     }
 
     [Fact]

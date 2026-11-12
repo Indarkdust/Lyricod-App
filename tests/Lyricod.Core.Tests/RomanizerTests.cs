@@ -115,4 +115,34 @@ public class RomanizerTests
         new Romanizer().Fill(k);
         Assert.Equal("saranghaeyo", k.Lines[0].Pronunciation?.Text);
     }
+
+    [Fact]
+    public void PinyinAndRomanisedKoreanAreSungWhenTheirCharactersAre()
+    {
+        static LyricLine ByCharacter(string text) => new()
+        {
+            Start = 1, End = 1 + text.Length, Text = text,
+            Words = [.. text.Select((c, i) => new LyricWord(1 + i, 1, c.ToString()))],
+        };
+        // Pinyin: a syllable for each character, a mark with the syllable before it.
+        var chinese = new Lyrics([ByCharacter("重新来过，我")], "test");
+        new Romanizer().Fill(chinese);
+        var pinyin = chinese.Lines[0].Pronunciation!;
+        Assert.Equal("chóng xīn lái guò, wǒ", pinyin.Text);
+        Assert.Equal([new LyricWord(1, 1, "chóng"), new LyricWord(2, 1, " xīn"), new LyricWord(3, 1, " lái"), new LyricWord(4, 1, " guò,"), new LyricWord(6, 1, " wǒ")],
+            pinyin.Words);
+
+        // Korean: a word for each run of Hangul, over all of its syllables.
+        var korean = new Lyrics([ByCharacter("같이 가요")], "test");
+        new Romanizer().Fill(korean);
+        var roman = korean.Lines[0].Pronunciation!;
+        Assert.Equal("gachi gayo", roman.Text);
+        Assert.Equal([new LyricWord(1, 2, "gachi"), new LyricWord(4, 2, " gayo")], roman.Words);
+
+        // Without word timing: as before, plain.
+        var plain = new Lyrics([new LyricLine { Start = 1, End = 5, Text = "重新来过" }], "test");
+        new Romanizer().Fill(plain);
+        Assert.Equal("chóng xīn lái guò", plain.Lines[0].Pronunciation!.Text);
+        Assert.Null(plain.Lines[0].Pronunciation!.Words);
+    }
 }
