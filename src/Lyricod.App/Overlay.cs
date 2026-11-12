@@ -144,6 +144,26 @@ sealed class Overlay
 
     public nint Handle => _hwnd;
 
+    /// <summary>
+    /// The screens changed (a resolution, their arrangement, one plugged in or out) or the window's
+    /// scale did: whoever placed the window by the screen's size places it again. Raised on the UI
+    /// thread, after the message that said so has been dealt with.
+    /// </summary>
+    public event Action? DisplayChanged;
+
+    void OnDisplayChanged()
+    {
+        try
+        {
+            _window.DispatcherQueue.TryEnqueue(() =>
+            {
+                try { DisplayChanged?.Invoke(); }
+                catch (Exception e) { Log.Write("display change: " + e); }
+            });
+        }
+        catch (Exception e) { Log.Write("display change: " + e); }
+    }
+
     /// <summary>No DWM border colour or rounded corners (Windows 11 draws both round every window).
     /// Run again after showing: Windows resets them.</summary>
     public void StripFrame() => Win32.RemoveFrame(_hwnd);
@@ -176,6 +196,9 @@ sealed class Overlay
                 case 0x0112 when ((long)e.Message.WParam & 0xFFF0) == 0xF020: // WM_SYSCOMMAND SC_MINIMIZE: an overlay doesn't minimise
                     e.Result = 0;
                     e.Handled = true;
+                    break;
+                case 0x007E or 0x02E0: // WM_DISPLAYCHANGE, WM_DPICHANGED: left to Windows and WinUI, and passed on
+                    OnDisplayChanged();
                     break;
                 case 0x007C when (long)e.Message.WParam == -16: // WM_STYLECHANGING for GWL_STYLE
                     const int frame = 0x00C00000 | 0x00040000 | 0x00080000 | 0x00020000 | 0x00010000; // CAPTION THICKFRAME SYSMENU MINIMIZEBOX MAXIMIZEBOX

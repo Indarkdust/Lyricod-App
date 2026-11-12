@@ -152,6 +152,14 @@ public sealed partial class IslandWindow : Window
         _settings.PropertyChanged += OnSettingChanged;
         // Dragged while floating and unlocked.
         Pill.PointerPressed += OnPillPressed;
+        // The island is placed by the screen's size and scale: when those change, it's placed again
+        // (and its line fitted to the new width) at once, not when the next line happens to come.
+        _overlay.DisplayChanged += () =>
+        {
+            if (_closed) return;
+            Place();
+            Render();
+        };
         // Lyricod Glass's shadow and frosted shape keep the pill's size as it grows and shrinks.
         Pill.SizeChanged += (_, _) =>
         {
