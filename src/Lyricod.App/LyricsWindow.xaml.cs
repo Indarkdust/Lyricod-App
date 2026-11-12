@@ -83,18 +83,18 @@ public sealed partial class LyricsWindow : Window
 
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);
-        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception e) { Log.Write(e); } };
         // Rows depend on the width: rebuild the sung line once resizing settles.
         _relayout = DispatcherQueue.CreateTimer();
         _relayout.IsRepeating = false;
         _relayout.Interval = TimeSpan.FromMilliseconds(120);
-        _relayout.Tick += (_, _) => { try { Relayout(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _relayout.Tick += (_, _) => { try { Relayout(); } catch (Exception e) { Log.Write(e); } };
 
         Root.SizeChanged += (_, _) => _relayout.Start();
         _idle = DispatcherQueue.CreateTimer();
         _idle.IsRepeating = false;
         _idle.Interval = TimeSpan.FromSeconds(3);
-        _idle.Tick += (_, _) => { try { _pointerIdle = true; UpdateControls(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _idle.Tick += (_, _) => { try { _pointerIdle = true; UpdateControls(); } catch (Exception e) { Log.Write(e); } };
         Root.PointerMoved += (_, _) =>
         {
             _idle.Stop();
@@ -134,7 +134,7 @@ public sealed partial class LyricsWindow : Window
         {
             BuildLines();
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+        catch (Exception e) { Log.Write("font refresh: " + e); }
     }
 
     void OnModelChanged(PlaybackModel.Change change)

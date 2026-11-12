@@ -193,22 +193,22 @@ public sealed partial class SettingsWindow
             _fontDispatcher.TryEnqueue(() =>
             {
                 try { if (!_fontClosed || evenIfClosed) action(); }
-                catch (Exception e) { _fontError = e.Message; System.Diagnostics.Debug.WriteLine(e); }
+                catch (Exception e) { _fontError = e.Message; Log.Write(e); }
             });
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+        catch (Exception e) { Log.Write(e); }
     }
 
     void RefreshFontPane()
     {
         try { if (!_fontClosed) _fontRefresh?.Invoke(); }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+        catch (Exception e) { Log.Write(e); }
     }
 
     void OnFontsChanged()
     {
         try { RefreshFontPane(); Refresh(); }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+        catch (Exception e) { Log.Write(e); }
     }
 
     sealed class FontProgress(Action<FontDownloadProgress> report) : IProgress<FontDownloadProgress>

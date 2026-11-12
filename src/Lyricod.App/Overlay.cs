@@ -115,7 +115,7 @@ sealed class Overlay
                 Win32.GetWindowThreadProcessId(Win32.GetForegroundWindow(), out uint inUse);
                 GuardAll(inUse);
             }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine("keep on top: " + e); }
+            catch (Exception e) { Log.Write("keep on top: " + e); }
         };
         _check.Start();
     }
@@ -139,7 +139,7 @@ sealed class Overlay
             if (process == OwnProcess) return;
             GuardAll(process);
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("keep on top: " + e); }
+        catch (Exception e) { Log.Write("keep on top: " + e); }
     }
 
     public nint Handle => _hwnd;

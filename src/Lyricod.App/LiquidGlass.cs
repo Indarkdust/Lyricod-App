@@ -425,7 +425,8 @@ sealed class LiquidGlass : IDisposable
     {
         if (_disposed || Failed) return;
         Failed = true;
-        try { if (e != null) System.Diagnostics.Debug.WriteLine("liquid glass: " + e); } catch (Exception) { }
+        // With no exception, Windows ended the capture: the screen went away, or went to sleep.
+        try { Log.Write(e != null ? "liquid glass: " + e : "liquid glass: the screen's capture ended"); } catch (Exception) { }
         try { Stop(); } catch (Exception) { }
         try { _failed(); } catch (Exception) { }
     }

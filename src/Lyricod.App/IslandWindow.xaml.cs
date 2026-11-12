@@ -110,16 +110,16 @@ public sealed partial class IslandWindow : Window
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
-        _pieceTimer.Tick += (_, _) => { try { ShowPiece(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _pieceTimer.Tick += (_, _) => { try { ShowPiece(); } catch (Exception e) { Log.Write(e); } };
         // The pointer is checked often only near the island; a few times a second otherwise.
         _pointerTimer = DispatcherQueue.CreateTimer();
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(250);
-        _pointerTimer.Tick += (_, _) => { try { CheckPointer(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _pointerTimer.Tick += (_, _) => { try { CheckPointer(); } catch (Exception e) { Log.Write(e); } };
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);
-        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception e) { Log.Write(e); } };
         _barTimer = DispatcherQueue.CreateTimer();
-        _barTimer.Tick += (_, _) => { try { DrawBars(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _barTimer.Tick += (_, _) => { try { DrawBars(); } catch (Exception e) { Log.Write(e); } };
         // Text hidden while the pill widens shows again by this at the latest.
         _revealTimer = DispatcherQueue.CreateTimer();
         _revealTimer.IsRepeating = false;
@@ -127,7 +127,7 @@ public sealed partial class IslandWindow : Window
         _revealTimer.Tick += (_, _) =>
         {
             try { if (_waitingForWidth && !_closed) { _waitingForWidth = false; RevealText(); } }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            catch (Exception e) { Log.Write(e); }
         };
 
         // Hide when paused: only once the music has stayed stopped a moment, so the gap players
@@ -144,7 +144,7 @@ public sealed partial class IslandWindow : Window
                 _pausedAway = true;
                 UpdateVisibility();
             }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            catch (Exception e) { Log.Write(e); }
         };
 
         _model.Changed += OnModelChanged;
@@ -161,7 +161,7 @@ public sealed partial class IslandWindow : Window
                 if (_shaped) Shape();
                 UpdateLiquid();
             }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            catch (Exception e) { Log.Write(e); }
         };
         // Nothing may touch the window once it's gone (the pointer check reads its position).
         Closed += (_, _) =>
@@ -200,7 +200,7 @@ public sealed partial class IslandWindow : Window
             _widths.Clear();
             Render();
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+        catch (Exception e) { Log.Write("font refresh: " + e); }
     }
 
     void OnModelChanged(PlaybackModel.Change change)

@@ -35,8 +35,16 @@ public sealed partial class PlaybackModel
     public bool IsPlaying => _playhead.IsPlaying;
     /// <summary>Changes whenever the playhead re-anchors; animations re-plan on it.</summary>
     public int ClockVersion => _playhead.Version;
-    /// <summary>The last thing that went wrong, for the debug state file.</summary>
-    public string? LastError { get; private set; }
+    /// <summary>The last thing that went wrong, for diagnostics and the debug state file; each is logged too.</summary>
+    public string? LastError
+    {
+        get;
+        private set
+        {
+            field = value;
+            if (value != null) Log.Write(value);
+        }
+    }
     /// <summary>This song's own offset, on top of the global one.</summary>
     public double SongOffset { get; private set; }
     /// <summary>The cover art (encoded image bytes), once the player hands it over.</summary>

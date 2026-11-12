@@ -80,7 +80,7 @@ public sealed partial class IslandWindow
                     RevealText();
                     Place();
                 }
-                catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+                catch (Exception e) { Log.Write(e); }
             };
             story.Begin();
         }
@@ -106,7 +106,7 @@ public sealed partial class IslandWindow
             story.Completed += (_, _) =>
             {
                 try { if (!_closed && ReferenceEquals(_heightAnimation, story)) Place(); }
-                catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+                catch (Exception e) { Log.Write(e); }
             };
             story.Begin();
         }

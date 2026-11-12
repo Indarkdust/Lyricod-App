@@ -27,14 +27,21 @@ public partial class App : Application
     GlobalShortcuts? _shortcuts;
     bool _quitting;
 
-    public App() => InitializeComponent();
+    public App()
+    {
+        // Whatever ends Lyricod unexpectedly is written down first (see Log). Nothing here changes what happens next.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Write("unhandled: " + e.ExceptionObject);
+        TaskScheduler.UnobservedTaskException += (_, e) => Log.Write("unobserved task: " + e.Exception);
+        UnhandledException += (_, e) => Log.Write("unhandled (XAML): " + e.Exception);
+        InitializeComponent();
+    }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         try { await LaunchAsync(); }
         catch (Exception e)
         {
-            System.Diagnostics.Debug.WriteLine(e);
+            Log.Write(e);
             Quit();
         }
     }
@@ -51,6 +58,9 @@ public partial class App : Application
         // Closing a window mustn't quit a tray app.
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
 
+        // The log's errors read against this: which Lyricod, on which Windows.
+        Log.Write($"Lyricod {UpdateChecker.Version}{(UpdateChecker.TestBuild is { } build ? $" (test build {build})" : "")} started on Windows {Environment.OSVersion.Version}, "
+            + System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant());
         _settings = Settings.Load();
         // A first run gets Lyricod Glass where its liquid effect can run (Windows 11); elsewhere the classic island.
         if (_settings.IsNew && LiquidGlass.IsSupported) _settings.IslandTheme = IslandTheme.Glass;

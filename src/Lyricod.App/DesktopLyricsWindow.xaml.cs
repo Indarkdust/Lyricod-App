@@ -68,7 +68,7 @@ public sealed partial class DesktopLyricsWindow : Window
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
-        _pieceTimer.Tick += (_, _) => { try { ShowPiece(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _pieceTimer.Tick += (_, _) => { try { ShowPiece(); } catch (Exception e) { Log.Write(e); } };
 
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
@@ -234,7 +234,7 @@ public sealed partial class DesktopLyricsWindow : Window
             Place();
             Render();
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+        catch (Exception e) { Log.Write("font refresh: " + e); }
     }
 
     void OnModelChanged(PlaybackModel.Change change)

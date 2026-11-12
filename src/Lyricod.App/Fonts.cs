@@ -90,7 +90,7 @@ static class Fonts
         foreach (Action listener in Changed.GetInvocationList())
         {
             try { listener(); }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+            catch (Exception e) { Log.Write("font refresh: " + e); }
         }
     }
 

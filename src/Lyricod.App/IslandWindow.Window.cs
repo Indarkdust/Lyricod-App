@@ -112,7 +112,7 @@ public sealed partial class IslandWindow
         Storyboard.SetTarget(animation, element);
         Storyboard.SetTargetProperty(animation, "Opacity");
         var story = new Storyboard { Children = { animation } };
-        if (done != null) story.Completed += (_, _) => { try { done(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        if (done != null) story.Completed += (_, _) => { try { done(); } catch (Exception e) { Log.Write(e); } };
         story.Begin();
     }
 }
