@@ -236,7 +236,7 @@
   <data name="LyricsLaterBy" xml:space="preserve"><value>歌词延后 {0} 秒</value></data>
   <data name="MatchesTheSong" xml:space="preserve"><value>与歌曲同步</value></data>
   <data name="AnimationLabel" xml:space="preserve"><value>动画</value></data>
-  <data name="AnimationDetail" xml:space="preserve"><value>调整歌词岛音量条的动画帧率。帧率越高通常越流畅，也可能更耗电。</value></data>
+  <data name="AnimationDetail" xml:space="preserve"><value>调整歌词岛音量条和 Lyricod Glass 液态玻璃效果的帧率。帧率越高通常越流畅，也可能更耗电。</value></data>
   <data name="FrameRateLow" xml:space="preserve"><value>省电（15 fps）</value></data>
   <data name="FrameRateBalanced" xml:space="preserve"><value>均衡（30 fps）</value></data>
   <data name="FrameRateSmooth" xml:space="preserve"><value>流畅（60 fps）</value></data>

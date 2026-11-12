@@ -236,7 +236,7 @@
   <data name="LyricsLaterBy" xml:space="preserve"><value>Lyrics {0} s later</value></data>
   <data name="MatchesTheSong" xml:space="preserve"><value>Matches the song</value></data>
   <data name="AnimationLabel" xml:space="preserve"><value>Animation</value></data>
-  <data name="AnimationDetail" xml:space="preserve"><value>Sets the frame rate of the island's audio bars. Higher rates are usually smoother but may use more power.</value></data>
+  <data name="AnimationDetail" xml:space="preserve"><value>Sets the frame rate of the island's audio bars and of Lyricod Glass's liquid effect. Higher rates are usually smoother but may use more power.</value></data>
   <data name="FrameRateLow" xml:space="preserve"><value>Battery saver (15 fps)</value></data>
   <data name="FrameRateBalanced" xml:space="preserve"><value>Balanced (30 fps)</value></data>
   <data name="FrameRateSmooth" xml:space="preserve"><value>Smooth (60 fps)</value></data>

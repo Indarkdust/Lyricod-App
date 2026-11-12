@@ -36,8 +36,9 @@ public sealed partial class IslandWindow
         UpdateShadow();
         if (Movable) { Pill.Background = new SolidColorBrush(MovingColour); return; }
         if (!Glass) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Black); return; }
-        // The liquid layer draws the glass, tint and all.
-        if (liquid) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent); return; }
+        // The liquid layer draws the glass, tint and all, once it has faded in. Its first frame comes a
+        // moment after the island shows: until then the island is clear glass, not lyrics over nothing.
+        if (liquid && _liquid!.Settled) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent); return; }
         var tint = GlassColour();
         double clear = _settings.GlassTransparency / 100.0;
         byte alpha = (byte)Math.Round(255 * (1 - clear));

@@ -22,8 +22,9 @@ public sealed partial class IslandWindow
     DispatcherQueueTimer? _screenshotTimer;
 
     internal string LiquidCaptureStatus => _liquid == null ? "inactive" : _liquid.Failed ? "failed"
-        : _liquid.SessionExclusion ? $"session-only exclusion, island stays in recordings ({_liquid.ExclusionDetail})"
-        : _liquid.Frozen ? "global exclusion fallback, frozen for a screenshot" : "global exclusion fallback";
+        : (_liquid.SessionExclusion ? $"session-only exclusion, island stays in recordings ({_liquid.ExclusionDetail})"
+            : _liquid.Frozen ? "global exclusion fallback, frozen for a screenshot" : "global exclusion fallback")
+        + "; " + _liquid.FrameDetail;
 
     bool WantsLiquid => Glass && _settings.GlassEffect == GlassEffect.Liquid && LiquidGlass.IsSupported && !Movable;
 
@@ -40,7 +41,8 @@ public sealed partial class IslandWindow
             }
             if (_liquid == null)
             {
-                // If it fails later (the graphics card reset, the screen went away), fall back to clear glass.
+                // If it fails later (the graphics card reset, the screen went away), fall back to clear glass;
+                // once it has faded in, the pill's own fill underneath goes (see ApplyTheme).
                 LiquidGlass? created = null;
                 created = new LiquidGlass(ElementCompositionPreview.GetElementVisual(LiquidHost).Compositor, DispatcherQueue, _overlay.Handle,
                     () =>
@@ -49,12 +51,13 @@ public sealed partial class IslandWindow
                         {
                             DispatcherQueue.TryEnqueue(() =>
                             {
-                                try { if (!_closed && ReferenceEquals(_liquid, created) && created?.Failed == true) ApplyTheme(); }
+                                try { if (!_closed && ReferenceEquals(_liquid, created)) ApplyTheme(); }
                                 catch (Exception) { StopLiquid(); }
                             });
                         }
                         catch (Exception) { StopLiquid(); }
                     });
+                created.FramesPerSecond = (int)_settings.FrameRate;
                 _liquid = created;
                 ElementCompositionPreview.SetElementChildVisual(LiquidHost, _liquid.Visual);
             }

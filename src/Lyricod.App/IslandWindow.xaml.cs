@@ -279,6 +279,7 @@ public sealed partial class IslandWindow : Window
         }
         catch (Exception) { StopLiquid(); }
     }
+                    if (_liquid != null) _liquid.FramesPerSecond = (int)_settings.FrameRate;
 
     void UpdateSong()
     {
