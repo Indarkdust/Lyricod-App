@@ -40,6 +40,12 @@ public sealed partial class LyricsWindow : Window
     double _linesWidth;
     /// <summary>Set while the next scroll is the move to the next line, which the lines below follow.</summary>
     bool _stagger;
+    /// <summary>
+    /// Set while the user is scrolling through the lyrics, and for a few seconds after: the lines are
+    /// all sharp and readable, and the window doesn't pull back to the line being sung.
+    /// </summary>
+    bool _browsing;
+    readonly DispatcherQueueTimer _browse;
 
     /// <summary>One lyric line on screen; while it's being sung, its rows and their sweeps.</summary>
     sealed class LineView(LyricLine line, StackPanel panel)
@@ -94,6 +100,27 @@ public sealed partial class LyricsWindow : Window
         _relayout.Tick += (_, _) => { try { Relayout(); } catch (Exception e) { Log.Write(e); } };
 
         Root.SizeChanged += (_, _) => _relayout.Start();
+        _browse = DispatcherQueue.CreateTimer();
+        _browse.IsRepeating = false;
+        _browse.Interval = TimeSpan.FromSeconds(3);
+        _browse.Tick += (_, _) =>
+        {
+            try
+            {
+                // A finger still on the lyrics: not done yet.
+                if (Scroller.State == ScrollingInteractionState.Interaction) _browse.Start(); else Browse(false);
+            }
+            catch (Exception e) { Log.Write(e); }
+        };
+        // The wheel or a touchpad (the scroller has handled those by the time they get here), or a finger.
+        Scroller.AddHandler(UIElement.PointerWheelChangedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) =>
+        {
+            try { Browse(true); } catch (Exception e) { Log.Write(e); }
+        }), true);
+        Scroller.StateChanged += (scroller, _) =>
+        {
+            try { if (scroller.State == ScrollingInteractionState.Interaction) Browse(true); } catch (Exception e) { Log.Write(e); }
+        };
         _idle = DispatcherQueue.CreateTimer();
         _idle.IsRepeating = false;
         _idle.Interval = TimeSpan.FromSeconds(3);
@@ -120,6 +147,7 @@ public sealed partial class LyricsWindow : Window
             _progressTimer.Stop();
             _relayout.Stop();
             _idle.Stop();
+            _browse.Stop();
         };
 
         SyncButtons();

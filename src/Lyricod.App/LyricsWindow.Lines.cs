@@ -35,6 +35,8 @@ public sealed partial class LyricsWindow
         Lines.Children.Clear();
         _views.Clear();
         _current = null;
+        _browsing = false;
+        _browse.Stop();
         var lyrics = _model.Lyrics;
         MessageButton.Visibility = MessageDetail.Visibility = Visibility.Collapsed;
         if (_model.Track == null || _model.IsSearching || lyrics == null)
@@ -74,7 +76,13 @@ public sealed partial class LyricsWindow
             panel.SizeChanged += (_, e) => panel.CenterPoint =
                 new Vector3(_settings.LyricsCentered ? (float)e.NewSize.Width / 2 : 0, (float)e.NewSize.Height / 2, 0);
             var view = new LineView(line, panel);
-            panel.Tapped += (_, _) => { if (lyrics.IsSynced) _model.Seek(line); };
+            panel.Tapped += (_, _) =>
+            {
+                if (!lyrics.IsSynced) return;
+                // Picking a line ends the look around: the window goes there.
+                Browse(false);
+                _model.Seek(line);
+            };
             _views.Add(view);
             RenderLine(view, current: false);
             Lines.Children.Add(panel);
@@ -223,15 +231,17 @@ public sealed partial class LyricsWindow
     /// <summary>
     /// The line being sung is full size and sharp; the others shrink a little, and fade and blur more
     /// the further they are (as on the Mac: up to 8 points of blur). Unsynced lyrics are all plain.
+    /// While the user scrolls through the lyrics the others are all sharp and a little brighter, to
+    /// be read.
     /// </summary>
     void ApplyDistance(LineView view)
     {
         bool synced = _model.Lyrics is { IsSynced: true };
         bool current = synced && view.Line.Id == _current;
         int distance = Math.Abs(view.Line.Id - (_current ?? -1));
-        view.Panel.Opacity = !synced ? 0.85 : current ? 1 : 0.35 * Math.Max(0.45, 1 - (distance - 1) * 0.12);
+        view.Panel.Opacity = !synced ? 0.85 : current ? 1 : _browsing ? 0.5 : 0.35 * Math.Max(0.45, 1 - (distance - 1) * 0.12);
         view.Panel.Scale = current || !synced ? Vector3.One : new Vector3(0.96f, 0.96f, 1);
-        double blur = !synced || current || _current == null || !_settings.LyricsBlurDistant ? 0 : Math.Min(distance * 1.2, 8);
+        double blur = !synced || current || _current == null || _browsing || !_settings.LyricsBlurDistant ? 0 : Math.Min(distance * 1.2, 8);
         foreach (var soft in view.Soft) soft.Blur(blur);
     }
 
@@ -268,7 +278,25 @@ public sealed partial class LyricsWindow
         if (index is int i) RenderLine(_views[i], current: true);
         foreach (var view in _views) ApplyDistance(view);
         AnimateCurrent();
-        ScrollToCurrent(animate);
+        // Not while the user is looking around: the window goes back when they've stopped.
+        if (!_browsing) ScrollToCurrent(animate);
+    }
+
+    /// <summary>
+    /// The user is scrolling through the lyrics (<paramref name="on"/>), or has stopped: a few seconds
+    /// after their last scroll, or on picking a line. Meanwhile every line is sharp and readable and
+    /// the window stays where they put it; afterwards the blur comes back and it glides to the line
+    /// being sung. Unsynced lyrics have neither, so nothing changes for them.
+    /// </summary>
+    void Browse(bool on)
+    {
+        on &= _model.Lyrics is { IsSynced: true };
+        _browse.Stop();
+        if (on) _browse.Start();
+        if (on == _browsing) return;
+        _browsing = on;
+        foreach (var view in _views) ApplyDistance(view);
+        if (!on) ScrollToCurrent(animate: true);
     }
 
     /// <summary>Puts the sung line a third of the way down.</summary>
