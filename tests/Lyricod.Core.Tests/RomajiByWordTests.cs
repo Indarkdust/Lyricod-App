@@ -6,22 +6,27 @@ namespace Lyricod.Core.Tests;
 /// ending kept with it (Romanizer.ByWord.cs). Off, romaji is as RomanizerTests expects.
 public class RomajiByWordTests
 {
+    static Lyrics Filled(FakeReader reader, LyricLine line, bool byWord = true)
+    {
+        var lyrics = new Lyrics([line], "test");
+        new Romanizer(reader) { GroupJapaneseByWord = byWord }.Fill(lyrics);
+        return lyrics;
+    }
+
+    /// Romaji by word on: the line's romaji as Windows' words spaced it.
+    static string? ByWord(FakeReader reader, string text) =>
+        new Romanizer(reader) { GroupJapaneseByWord = true }.Romanize(text, LyricLanguage.Japanese);
+
     [Fact]
     public void SourceRomajiReadingTheSameIsGroupedByWord()
     {
         // QQ Music's romaji, a syllable at a time, reads the same as Windows' words: shown by word.
         var reader = new FakeReader(("惹かれ", "ひかれ"), ("合う", "あう"), ("の", "の"), ("は", "は"), (" ", null), ("なぜ", "なぜ"));
-        var l = new Lyrics([new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na ze") }], "test");
-        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
+        var l = Filled(reader, new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na ze") });
         Assert.Equal(new Pronunciation("hikare au no wa naze", LyricLanguage.Japanese, PronunciationOrigin.SourceByWord), l.Lines[0].Pronunciation);
 
         // A reading that differs here and there keeps the source's letters, spaced by our words.
-        var other = new Lyrics([new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na n de") }], "test");
-        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(other);
-        // Off (the default), the source's romaji shows as it came.
-        var plain = new Lyrics([new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na ze") }], "test");
-        new Romanizer(reader).Fill(plain);
-        Assert.Equal(new Pronunciation("hi ka re a u no wa na ze", LyricLanguage.Japanese), plain.Lines[0].Pronunciation);
+        var other = Filled(reader, new LyricLine { Text = "惹かれ合うのは なぜ", Pronunciation = new("hi ka re a u no wa na n de") });
         Assert.Equal("hikare au no wa nande", other.Lines[0].Pronunciation?.Text);
     }
 
@@ -56,9 +61,7 @@ public class RomajiByWordTests
         var reader = new FakeReader(("どれほど", "どれほど"), ("よかっ", "よかっ"), ("た", "た"), ("でしょう", "でしょう"));
         var (line, _) = Timed("どれほどよかったでしょう", ("do", 1), ("re", 2), ("ho", 3), ("do", 4), ("yo", 5), ("ka", 6), ("'t", 7), ("ta", 8),
             ("de", 9), ("sho", 10), ("u", 12));
-        var l = new Lyrics([line], "test");
-        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
-        var p = l.Lines[0].Pronunciation!;
+        var p = Filled(reader, line).Lines[0].Pronunciation!;
         Assert.Equal("dorehodo yokatta deshou", p.Text);
         Assert.Equal(PronunciationOrigin.SourceByWord, p.Origin);
         // The timing stays with the syllables, whose texts make up the line.
@@ -69,22 +72,17 @@ public class RomajiByWordTests
         // A kanji's syllables all start within it: 未だに "imadani", 夢に "yume ni".
         var kanji = new FakeReader(("未だに", "いまだに"), ("夢", "ゆめ"), ("に", "に"));
         var (dream, _) = Timed("未だに夢に", ("i", 1), ("ma", 1.5), ("da", 2), ("ni", 3), ("yu", 4), ("me", 4.4), ("ni", 5));
-        var d = new Lyrics([dream], "test");
-        new Romanizer(kanji) { GroupJapaneseByWord = true }.Fill(d);
-        Assert.Equal("imadani yume ni", d.Lines[0].Pronunciation!.Text);
+        Assert.Equal("imadani yume ni", Filled(kanji, dream).Lines[0].Pronunciation!.Text);
 
         // The readings needn't agree: 明日 sung "asu" where the analyser says "ashita" (lining the
         // letters up only gets this right while they're alike).
         var tomorrow = new FakeReader(("明日", "あした"), ("から", "から"));
         var (asu, _) = Timed("明日から", ("a", 1), ("su", 1.5), ("ka", 3), ("ra", 4));
-        var a = new Lyrics([asu], "test");
-        new Romanizer(tomorrow) { GroupJapaneseByWord = true }.Fill(a);
-        Assert.Equal("asu kara", a.Lines[0].Pronunciation!.Text);
+        Assert.Equal("asu kara", Filled(tomorrow, asu).Lines[0].Pronunciation!.Text);
 
         // Off (the default), the romaji shows as it came, and keeps its timing.
         var (plain, _) = Timed("明日から", ("a", 1), ("su", 1.5), ("ka", 3), ("ra", 4));
-        var off = new Lyrics([plain], "test");
-        new Romanizer(tomorrow).Fill(off);
+        var off = Filled(tomorrow, plain, byWord: false);
         Assert.Equal("a su ka ra", off.Lines[0].Pronunciation!.Text);
         Assert.Equal(LyricLanguage.Japanese, off.Lines[0].Pronunciation!.Language);
         Assert.Equal(4, off.Lines[0].Pronunciation!.Words!.Count);
@@ -99,15 +97,13 @@ public class RomajiByWordTests
             ("|向かい", "むかい"), ("波", "なみ"));
         var (line, _) = Timed("人里離れて鳴る音は向かい波", ("hi", 1), ("to", 1.3), ("za", 2), ("to", 2.5), ("ha", 3), ("na", 3.5), ("re", 4), ("te", 5),
             ("na", 6), ("ru", 7), ("o", 8), ("to", 8.5), ("wa", 9), ("mu", 10), ("ka", 11), ("i", 12), ("na", 13), ("mi", 13.5));
-        var l = new Lyrics([line], "test");
-        new Romanizer(waves) { GroupJapaneseByWord = true }.Fill(l);
+        var l = Filled(waves, line);
         Assert.Equal("hitozato hanare te naru oto wa mukai nami", l.Lines[0].Pronunciation!.Text);
         Assert.NotNull(l.Lines[0].Pronunciation!.Words);
 
         var waiting = new FakeReader(("|待", "ま"), ("っ", "っ"), ("て", "て"), ("|泣", "な"), ("く", "く"), ("ん", "ん"), ("だ", "だ"), ("ね", "ね"));
         var (wait, _) = Timed("待って泣くんだね", ("ma", 1), ("'t", 2), ("te", 3), ("na", 4), ("ku", 5), ("n", 6), ("da", 7), ("ne", 8));
-        var w = new Lyrics([wait], "test");
-        new Romanizer(waiting) { GroupJapaneseByWord = true }.Fill(w);
+        var w = Filled(waiting, wait);
         Assert.Equal("matte naku n da ne", w.Lines[0].Pronunciation!.Text);
         Assert.NotNull(w.Lines[0].Pronunciation!.Words);
     }
@@ -200,9 +196,7 @@ public class RomajiByWordTests
     {
         var reader = new FakeReader(("何", "なに"), ("？", null), ("夢", "ゆめ"), ("だ", "だ"));
         var (line, _) = Timed("何？夢だ", ("na", 1), ("ni", 1.5), ("?", 2), ("yu", 3), ("me", 3.5), ("da", 4));
-        var l = new Lyrics([line], "test");
-        new Romanizer(reader) { GroupJapaneseByWord = true }.Fill(l);
-        Assert.Equal("nani? yume da", l.Lines[0].Pronunciation!.Text);
+        Assert.Equal("nani? yume da", Filled(reader, line).Lines[0].Pronunciation!.Text);
     }
 
     [Fact]
@@ -214,18 +208,18 @@ public class RomajiByWordTests
     {
         // Windows' analyser gives some endings apart: 泣|く, 鳴|る, 遠|く, 飛|ぶ.
         var crying = new FakeReader(("|貴方", "あなた"), ("も", "も"), ("|泣", "な"), ("く", "く"), ("ん", "ん"), ("だ", "だ"), ("ね", "ね"));
-        Assert.Equal("anata mo naku n da ne", new Romanizer(crying) { GroupJapaneseByWord = true }.Romanize("貴方も泣くんだね", LyricLanguage.Japanese));
+        Assert.Equal("anata mo naku n da ne", ByWord(crying, "貴方も泣くんだね"));
         var waves = new FakeReader(("|人里", "ひとざと"), ("|離れ", "はなれ"), ("て", "て"), ("|鳴", "な"), ("る", "る"), ("|音", "おと"), ("は", "は"),
             ("|向かい", "むかい"), ("波", "なみ"));
-        Assert.Equal("hitozato hanare te naru oto wa mukai nami", new Romanizer(waves) { GroupJapaneseByWord = true }.Romanize("人里離れて鳴る音は向かい波", LyricLanguage.Japanese));
+        Assert.Equal("hitozato hanare te naru oto wa mukai nami", ByWord(waves, "人里離れて鳴る音は向かい波"));
         var birds = new FakeReader(("|飛", "と"), ("ぶ", "ぶ"), ("|鳥", "とり"), ("は", "は"), ("|遠", "とお"), ("く", "く"), ("へ", "へ"));
-        Assert.Equal("tobu tori wa tooku e", new Romanizer(birds) { GroupJapaneseByWord = true }.Romanize("飛ぶ鳥は遠くへ", LyricLanguage.Japanese));
+        Assert.Equal("tobu tori wa tooku e", ByWord(birds, "飛ぶ鳥は遠くへ"));
         // A small っ ending still goes with what follows.
         var waiting = new FakeReader(("|待", "ま"), ("っ", "っ"), ("て", "て"));
-        Assert.Equal("matte", new Romanizer(waiting) { GroupJapaneseByWord = true }.Romanize("待って", LyricLanguage.Japanese));
+        Assert.Equal("matte", ByWord(waiting, "待って"));
         // A new phrase isn't an ending.
         var phrase = new FakeReader(("|空", "そら"), ("|い", "い"));
-        Assert.Equal("sora i", new Romanizer(phrase) { GroupJapaneseByWord = true }.Romanize("空い", LyricLanguage.Japanese));
+        Assert.Equal("sora i", ByWord(phrase, "空い"));
         // Off (the default), Windows' words stay as it gives them.
         Assert.Equal("anata mo na ku n da ne", new Romanizer(crying).Romanize("貴方も泣くんだね", LyricLanguage.Japanese));
     }

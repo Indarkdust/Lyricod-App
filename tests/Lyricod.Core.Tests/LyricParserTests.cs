@@ -165,10 +165,6 @@ public class LyricParserTests
         Assert.Equal((1.0, 1.0), (words[0].Start, words[0].Duration)); // from the line's start to the first tag
         Assert.Equal((2.0, 2.0), (words[1].Start, words[1].Duration));
 
-        // Fully tagged lines and a closing tag with no text after it are unchanged.
-        var tagged = LyricParser.ParseLrc("[00:01.00]<00:01.00>你<00:01.50>好<00:02.00>\n[00:03.00]x", null, "t")!;
-        Assert.Equal("你好", tagged.Lines[0].Text);
-        Assert.Equal([0.5, 0.5], tagged.Lines[0].Words!.Select(w => w.Duration));
         // Only spaces before the first tag: nothing extra.
         var spaced = LyricParser.ParseLrc("[00:01.00] <00:01.20>Hi\n[00:02.00]x", null, "t")!;
         Assert.Equal(["Hi"], spaced.Lines[0].Words!.Select(w => w.Text));

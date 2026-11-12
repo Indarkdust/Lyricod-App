@@ -211,6 +211,23 @@ public class LyricsProviderTests
     const string NeteaseLyrics = """{"lrc":{"lyric":"[00:01.00]Hello"}}""";
     const string LrclibSong = """{"id":9,"trackName":"Hello","artistName":"Singer","duration":120,"syncedLyrics":"[00:01.00]Hello"}""";
 
+    /// <summary>Only this one source knows Hello; every other request gets an empty reply.</summary>
+    static Fixture OnlyFrom(string source, Action? onRequest = null) => new(request =>
+    {
+        onRequest?.Invoke();
+        var uri = request.RequestUri!;
+        return Response(source switch
+        {
+            "netease" when uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") => NeteaseSong,
+            "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
+            "qq" when uri.Host == "u.y.qq.com" => ModernJson,
+            "qq" when uri.AbsolutePath.Contains("fcg_query_lyric") => LineJson,
+            "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
+            "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
+            _ => "{}",
+        });
+    });
+
     [Theory]
     [InlineData("netease")]
     [InlineData("qq")]
@@ -219,21 +236,7 @@ public class LyricsProviderTests
     public async Task ConfidentMusicVideoIsScoredCachedAndReused(string source)
     {
         int requests = 0;
-        using var fixture = new Fixture(request =>
-        {
-            requests++;
-            var uri = request.RequestUri!;
-            return Response(source switch
-            {
-                "netease" when uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") => NeteaseSong,
-                "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
-                "qq" when uri.Host == "u.y.qq.com" => ModernJson,
-                "qq" when uri.AbsolutePath.Contains("fcg_query_lyric") => LineJson,
-                "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
-                "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
-                _ => "{}",
-            });
-        });
+        using var fixture = OnlyFrom(source, () => requests++);
         var track = new Track { Title = "Singer - Hello (Official Video)", Artist = "Singer", Duration = 120 };
         // Even an old, unscored entry is searched again and replaced with evidence.
         var file = fixture.Seed(track);
@@ -255,18 +258,7 @@ public class LyricsProviderTests
     [InlineData("lrclib-search")]
     public async Task TitleOnlyMatchesAreNotCachedForBrowsers(string source)
     {
-        using var fixture = new Fixture(request =>
-        {
-            var uri = request.RequestUri!;
-            return Response(source switch
-            {
-                "netease" when uri.AbsolutePath.Contains("cloudsearch") => NeteaseSong,
-                "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
-                "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
-                "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
-                _ => "{}",
-            });
-        });
+        using var fixture = OnlyFrom(source);
         var search = new LyricsSearch(false);
         Assert.Null(await fixture.Provider.GetLyrics(new Track { Title = "Hello" }, search: search, ct: TestContext.Current.CancellationToken));
         Assert.Equal(3, search.BestScore);

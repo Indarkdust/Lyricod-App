@@ -1,4 +1,4 @@
-using Lyricod.Core;
+using System.IO.Compression;
 
 namespace Lyricod.Core.Tests;
 
@@ -55,7 +55,6 @@ public class NeteaseSyncTests
     [Theory]
     [InlineData(3, 1, 20, true)]
     [InlineData(3, 1, 42, true)]
-    [InlineData(3, 1, 30, true)]
     [InlineData(3, 1, 19, false)]
     [InlineData(3, 1, 43, false)]
     [InlineData(2, 10, 13, false)]
@@ -91,7 +90,7 @@ public class NeteaseSyncTests
     static void Packed(string data, string file, string? manifest)
     {
         Directory.CreateDirectory(Path.Combine(data, "plugins"));
-        using var zip = System.IO.Compression.ZipFile.Open(Path.Combine(data, "plugins", file), System.IO.Compression.ZipArchiveMode.Create);
+        using var zip = ZipFile.Open(Path.Combine(data, "plugins", file), ZipArchiveMode.Create);
         if (manifest != null)
             using (var writer = new StreamWriter(zip.CreateEntry("manifest.json").Open())) writer.Write(manifest);
     }

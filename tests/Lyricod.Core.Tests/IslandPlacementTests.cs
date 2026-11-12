@@ -69,10 +69,9 @@ public class IslandPlacementTests
         var spot = IslandPlacement.Spot(pill, display, MaxWidth, MaxHeight);
         Assert.Equal((edgeX, edgeY), spot);
         var lookup = IslandPlacement.DisplayPoint(pill, display);
+        // Adjacent displays start at the right or bottom edge.
         Assert.InRange(lookup.X, display.Left, display.Right - 1);
         Assert.InRange(lookup.Y, display.Top, display.Bottom - 1);
-        // Adjacent displays start at the right or bottom edge.
-        Assert.True(lookup.X < display.Right && lookup.Y < display.Bottom);
         var anchors = IslandPlacement.Anchors(spot.X, spot.Y, display, MaxWidth, MaxHeight);
         Assert.Equal((pill.Left, pill.Top), IslandPlacement.Origin(spot.X, spot.Y, anchors, pill.Width, pill.Height));
     }

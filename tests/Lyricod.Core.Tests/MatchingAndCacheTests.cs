@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Lyricod.Core.Tests;
 
 public class MatchingAndCacheTests
@@ -155,10 +157,10 @@ public class MatchingAndCacheTests
     public void ReadsMacCacheFormat()
     {
         const string json = """{"source":"QQ Music","lrc":"[00:01.00]晴天","ref":{"source":"qq","id":"abc","qqID":5}}""";
-        var raw = System.Text.Json.JsonSerializer.Deserialize<RawLyrics>(json)!;
+        var raw = JsonSerializer.Deserialize<RawLyrics>(json)!;
         Assert.Equal(new LyricsRef(LyricsSource.Qq, "abc", 5), raw.SongRef);
         Assert.Equal("晴天", raw.Parse()!.Lines[0].Text);
-        var legacy = System.Text.Json.JsonSerializer.Deserialize<RawLyrics>("""{"source":"NetEase","lrc":"[00:01.00]x","neteaseID":186001}""")!;
+        var legacy = JsonSerializer.Deserialize<RawLyrics>("""{"source":"NetEase","lrc":"[00:01.00]x","neteaseID":186001}""")!;
         Assert.Equal(LyricsRef.Netease(186001), legacy.SongRef);
     }
 }

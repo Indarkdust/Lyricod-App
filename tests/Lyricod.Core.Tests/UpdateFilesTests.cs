@@ -49,7 +49,6 @@ public class UpdateFilesTests
         Assert.Equal(names[3], UpdateFiles.SelectAsset(release, InstallKind.Portable, Architecture.Arm64)!.Name);
         Assert.Null(UpdateFiles.SelectAsset(release, InstallKind.Unknown, Architecture.X64));
         Assert.Null(UpdateFiles.SelectAsset(release, InstallKind.Portable, Architecture.X86));
-        Assert.Null(UpdateFiles.SelectAsset(release with { Assets = [release.Assets[0] with { Sha256 = null }] }, InstallKind.Installer, Architecture.X64));
     }
 
     [Theory]

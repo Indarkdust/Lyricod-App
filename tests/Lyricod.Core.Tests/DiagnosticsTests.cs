@@ -4,13 +4,12 @@ namespace Lyricod.Core.Tests;
 
 public class DiagnosticsTests
 {
-    [Theory]
-    [InlineData(false, "blocked")]
-    public void ReportsAutomaticLookupPermission(bool allowed, string label)
+    [Fact]
+    public void ReportsBlockedAutomaticLookup()
     {
         string text = Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0,
-            automaticLookupAllowed: allowed);
-        Assert.Contains($"Automatic lyric lookup: {label}\n", text);
+            automaticLookupAllowed: false);
+        Assert.Contains("Automatic lyric lookup: blocked\n", text);
     }
 
     [Fact]

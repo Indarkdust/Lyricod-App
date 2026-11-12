@@ -109,6 +109,9 @@ public class IslandSettingsTests
         settings.GlassTransparency = 100;
         Assert.Equal(90, settings.GlassTransparency);
         Assert.Equal(90, JsonSerializer.Deserialize<Settings>("{\"GlassTransparency\":120}", Json)!.GlassTransparency);
+        var saved = JsonSerializer.Deserialize<Settings>("{\"LiquidBlur\":150,\"LiquidRefraction\":-5}", Json)!;
+        Assert.Equal(100, saved.LiquidBlur);
+        Assert.Equal(0, saved.LiquidRefraction);
     }
 
     [Theory]
@@ -119,9 +122,6 @@ public class IslandSettingsTests
     {
         Assert.Equal(number, (int)expected);
         Assert.Equal(expected, JsonSerializer.Deserialize<Settings>("{\"GlassEffect\":" + json + "}", Json)!.GlassEffect);
-        var settings = JsonSerializer.Deserialize<Settings>("{\"LiquidBlur\":150,\"LiquidRefraction\":-5}", Json)!;
-        Assert.Equal(100, settings.LiquidBlur);
-        Assert.Equal(0, settings.LiquidRefraction);
     }
 
     [Theory]

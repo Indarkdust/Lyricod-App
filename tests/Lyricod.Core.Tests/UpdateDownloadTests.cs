@@ -11,6 +11,11 @@ public sealed class UpdateDownloadTests : IDisposable
         new("https://github.com/Indarkdust/Lyricod-App/releases/download/v1.2.3/Lyricod-1.2.3-windows-x64.zip"),
         Convert.ToHexString(SHA256.HashData(Payload)));
 
+    static Task<HttpResponseMessage> Ok() =>
+        Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) });
+
+    string In(params string[] parts) => Path.Combine([_directory, .. parts]);
+
     [Fact]
     public async Task DownloadsChecksAndReusesOnlyVerifiedFiles()
     {
@@ -20,7 +25,7 @@ public sealed class UpdateDownloadTests : IDisposable
             calls++;
             Assert.Equal(Asset.Url, request.RequestUri);
             Assert.Equal(UpdateCheck.UserAgent("1.0.0"), request.Headers.UserAgent.ToString());
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) });
+            return Ok();
         }));
         var progress = new ProgressLog();
         string path = await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", progress, TestContext.Current.CancellationToken);
@@ -59,7 +64,7 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task CancelDuringDownloadDeletesPart()
     {
         using var stop = new CancellationTokenSource();
-        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) })));
+        using var client = new HttpClient(new Handler((_, _) => Ok()));
         var progress = new ProgressLog(p => { if (p.Completed > 0) stop.Cancel(); });
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", progress, stop.Token));
         Assert.Empty(Directory.GetFiles(_directory));
@@ -86,7 +91,7 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task TestFeedCanDownloadOverHttp()
     {
         var asset = Asset with { Url = new("http://vm.test:8000/update.zip") };
-        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Payload) })));
+        using var client = new HttpClient(new Handler((_, _) => Ok()));
         string path = await UpdateDownload.DownloadAsync(client, asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken,
             new("http://vm.test:8000/releases.json"));
         Assert.True(await UpdateDownload.VerifyAsync(path, asset, TestContext.Current.CancellationToken));
@@ -106,40 +111,37 @@ public sealed class UpdateDownloadTests : IDisposable
     [Fact]
     public void CleanupKeepsFutureUpdatesAndUnrelatedFiles()
     {
-        foreach (string name in new[] { "1.0.0", "1.2.3", "2.0.0", "other" }) Directory.CreateDirectory(Path.Combine(_directory, "Updates", name));
-        Directory.CreateDirectory(Path.Combine(_directory, "app.new"));
-        Directory.CreateDirectory(Path.Combine(_directory, "app.old"));
-        Directory.CreateDirectory(Path.Combine(_directory, "app.old-12345", "x"));
-        Directory.CreateDirectory(Path.Combine(_directory, "app"));
-        File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.new"), "stale");
-        File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.old-12345"), "old launcher");
-        File.WriteAllText(Path.Combine(_directory, "settings.json"), "keep");
-        PortableUpdate.Cleanup(_directory, Path.Combine(_directory, "Updates"), new(1, 2, 3));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "Updates", "1.0.0")));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "Updates", "1.2.3")));
-        Assert.True(Directory.Exists(Path.Combine(_directory, "Updates", "2.0.0")));
-        Assert.True(Directory.Exists(Path.Combine(_directory, "Updates", "other")));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "app.new")));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "app.old")));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "app.old-12345")));
-        Assert.False(File.Exists(Path.Combine(_directory, "Lyricod.exe.old-12345")));
-        Assert.True(Directory.Exists(Path.Combine(_directory, "app")));
-        Assert.True(File.Exists(Path.Combine(_directory, "settings.json")));
+        foreach (string name in new[] { "1.0.0", "1.2.3", "2.0.0", "other" }) Directory.CreateDirectory(In("Updates", name));
+        Directory.CreateDirectory(In("app.new"));
+        Directory.CreateDirectory(In("app.old"));
+        Directory.CreateDirectory(In("app.old-12345", "x"));
+        Directory.CreateDirectory(In("app"));
+        File.WriteAllText(In("Lyricod.exe.new"), "stale");
+        File.WriteAllText(In("Lyricod.exe.old-12345"), "old launcher");
+        File.WriteAllText(In("settings.json"), "keep");
+        PortableUpdate.Cleanup(_directory, In("Updates"), new(1, 2, 3));
+        Assert.False(Directory.Exists(In("Updates", "1.0.0")));
+        Assert.False(Directory.Exists(In("Updates", "1.2.3")));
+        Assert.True(Directory.Exists(In("Updates", "2.0.0")));
+        Assert.True(Directory.Exists(In("Updates", "other")));
+        Assert.False(Directory.Exists(In("app.new")));
+        Assert.False(Directory.Exists(In("app.old")));
+        Assert.False(Directory.Exists(In("app.old-12345")));
+        Assert.False(File.Exists(In("Lyricod.exe.old-12345")));
+        Assert.True(Directory.Exists(In("app")));
+        Assert.True(File.Exists(In("settings.json")));
     }
 
     [Fact]
     public void CleanupRightAfterAnUpdateLeavesTheOldCopyToTheLauncher()
     {
-        Directory.CreateDirectory(Path.Combine(_directory, "app.old-777", "x"));
-        File.WriteAllText(Path.Combine(_directory, "Lyricod.exe.old-777"), "old launcher");
-        Directory.CreateDirectory(Path.Combine(_directory, "app.new"));
-        PortableUpdate.Cleanup(_directory, Path.Combine(_directory, "Updates"), new(1, 2, 3), keepOldCopies: true);
-        Assert.True(Directory.Exists(Path.Combine(_directory, "app.old-777")));
-        Assert.True(File.Exists(Path.Combine(_directory, "Lyricod.exe.old-777")));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "app.new")));
-        PortableUpdate.Cleanup(_directory, Path.Combine(_directory, "Updates"), new(1, 2, 3));
-        Assert.False(Directory.Exists(Path.Combine(_directory, "app.old-777")));
-        Assert.False(File.Exists(Path.Combine(_directory, "Lyricod.exe.old-777")));
+        Directory.CreateDirectory(In("app.old-777", "x"));
+        File.WriteAllText(In("Lyricod.exe.old-777"), "old launcher");
+        Directory.CreateDirectory(In("app.new"));
+        PortableUpdate.Cleanup(_directory, In("Updates"), new(1, 2, 3), keepOldCopies: true);
+        Assert.True(Directory.Exists(In("app.old-777")));
+        Assert.True(File.Exists(In("Lyricod.exe.old-777")));
+        Assert.False(Directory.Exists(In("app.new")));
     }
 
     public void Dispose() { if (Directory.Exists(_directory)) Directory.Delete(_directory, true); }

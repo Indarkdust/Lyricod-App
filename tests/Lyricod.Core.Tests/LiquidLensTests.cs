@@ -4,13 +4,16 @@ public class LiquidLensTests
 {
     const int Width = 300, Height = 60;
 
+    static byte[] Map(bool squareTop = false) => LiquidLens.Map(Width, Height, 12, squareTop);
+    static byte[] Light(bool squareTop = false) => LiquidLens.Light(Width, Height, 12, squareTop, rim: 1.5);
+
     static (int Across, int Down) At(byte[] map, int x, int y) =>
         (map[(y * Width + x) * 4 + 2] - 128, map[(y * Width + x) * 4 + 1] - 128);
 
     [Fact]
     public void TheMiddleIsLeftAlone()
     {
-        var map = LiquidLens.Map(Width, Height, 12, squareTop: false);
+        var map = Map();
         Assert.Equal((0, 0), At(map, 150, 30));
         Assert.Equal(Width * Height * 4, map.Length);
         Assert.All(Enumerable.Range(0, Width * Height), i => Assert.Equal(255, map[i * 4 + 3]));
@@ -19,7 +22,7 @@ public class LiquidLensTests
     [Fact]
     public void EdgesBendInward()
     {
-        var map = LiquidLens.Map(Width, Height, 12, squareTop: false);
+        var map = Map();
         Assert.True(At(map, 1, 30).Across > 60);    // left edge: look further right
         Assert.True(At(map, 298, 30).Across < -60); // right edge: look further left
         Assert.True(At(map, 150, 1).Down > 60);     // top: look further down
@@ -31,7 +34,7 @@ public class LiquidLensTests
     [Fact]
     public void CornersBendTowardTheMiddle()
     {
-        var map = LiquidLens.Map(Width, Height, 12, squareTop: false);
+        var map = Map();
         // Just inside the rounded corner: in and down.
         var (across, down) = At(map, 5, 5);
         Assert.True(across > 30 && down > 30);
@@ -42,7 +45,7 @@ public class LiquidLensTests
     [Fact]
     public void BendingFadesAwayFromTheEdge()
     {
-        var map = LiquidLens.Map(Width, Height, 12, squareTop: false);
+        var map = Map();
         int edge = At(map, 1, 30).Across, near = At(map, 6, 30).Across, inside = At(map, 25, 30).Across;
         Assert.True(edge > near && near > inside);
         Assert.Equal(0, inside);
@@ -51,7 +54,7 @@ public class LiquidLensTests
     [Fact]
     public void ASquareTopIsLeftStraight()
     {
-        var map = LiquidLens.Map(Width, Height, 12, squareTop: true);
+        var map = Map(squareTop: true);
         Assert.Equal(0, At(map, 150, 1).Down);
         Assert.True(At(map, 150, 58).Down < -60);
         Assert.True(At(map, 1, 5).Across > 60);
@@ -62,7 +65,7 @@ public class LiquidLensTests
     [Fact]
     public void LightCatchesTheEdgeNotTheMiddle()
     {
-        var light = LiquidLens.Light(Width, Height, 12, squareTop: false, rim: 1.5);
+        var light = Light();
         Assert.Equal(Width * Height * 4, light.Length);
         Assert.Equal(0, Lit(light, 150, 30));
         Assert.True(Lit(light, 150, 0) > 100);
@@ -75,7 +78,7 @@ public class LiquidLensTests
     [Fact]
     public void TheTopFacesTheLightAndTheFarSideGlints()
     {
-        var light = LiquidLens.Light(Width, Height, 12, squareTop: false, rim: 1.5);
+        var light = Light();
         Assert.True(Lit(light, 150, 0) > Lit(light, 150, 59));
         Assert.True(Lit(light, 150, 59) > Lit(light, 299, 30));
     }
@@ -83,7 +86,7 @@ public class LiquidLensTests
     [Fact]
     public void TheLineAlongTheEdgeIsThin()
     {
-        var light = LiquidLens.Light(Width, Height, 12, squareTop: false, rim: 1.5);
+        var light = Light();
         // A few pixels in, only the faint glow is left.
         Assert.True(Lit(light, 150, 4) < Lit(light, 150, 0) / 4);
     }
@@ -91,7 +94,7 @@ public class LiquidLensTests
     [Fact]
     public void ASquareTopCatchesNoLightAlongTheScreensEdge()
     {
-        var light = LiquidLens.Light(Width, Height, 12, squareTop: true, rim: 1.5);
+        var light = Light(squareTop: true);
         Assert.Equal(0, Lit(light, 150, 0));
         Assert.True(Lit(light, 150, 59) > 50);
     }
