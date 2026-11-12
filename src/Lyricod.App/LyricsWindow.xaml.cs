@@ -46,6 +46,9 @@ public sealed partial class LyricsWindow : Window
     /// </summary>
     bool _browsing;
     readonly DispatcherQueueTimer _browse;
+    /// <summary>The line sung before this one, while its words come back down (the lift); it's drawn plain when they have.</summary>
+    LineView? _settling;
+    readonly DispatcherQueueTimer _settle;
 
     /// <summary>One lyric line on screen; while it's being sung, its rows and their sweeps.</summary>
     sealed class LineView(LyricLine line, StackPanel panel)
@@ -118,6 +121,10 @@ public sealed partial class LyricsWindow : Window
         {
             try { if (UserScrolling(scroller)) Browse(true); } catch (Exception e) { Log.Write(e); }
         };
+        _settle = DispatcherQueue.CreateTimer();
+        _settle.IsRepeating = false;
+        _settle.Interval = TimeSpan.FromSeconds(WordLift.Settle + 0.05);
+        _settle.Tick += (_, _) => { try { Settled(); } catch (Exception e) { Log.Write(e); } };
         _idle = DispatcherQueue.CreateTimer();
         _idle.IsRepeating = false;
         _idle.Interval = TimeSpan.FromSeconds(3);
@@ -145,6 +152,7 @@ public sealed partial class LyricsWindow : Window
             _relayout.Stop();
             _idle.Stop();
             _browse.Stop();
+            _settle.Stop();
         };
 
         SyncButtons();

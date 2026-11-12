@@ -69,57 +69,108 @@ public class WordLiftTests
     }
 
     [Fact]
-    public void AWordRisesAsItsSungAndSettlesAfter()
+    public void AWordRisesAsItsSungAndStaysUp()
     {
         var word = new LiftWord(0, 5, 10, 11);
-        Assert.Equal(0, WordLift.At(word, 9.9));
-        Assert.Equal(0, WordLift.At(word, 10));
-        // Up quickly at first, at its top well before the word ends, and held there.
-        Assert.InRange(WordLift.At(word, 10.1), 0.4, 0.9);
-        Assert.Equal(1, WordLift.At(word, 10.45), 9);
-        Assert.Equal(1, WordLift.At(word, 11), 9);
-        // Then back down, gently at both ends.
-        Assert.InRange(WordLift.At(word, 11.05), 0.98, 1);
-        Assert.Equal(0.5, WordLift.At(word, 11 + WordLift.Settle / 2), 9);
-        Assert.InRange(WordLift.At(word, 11 + WordLift.Settle - 0.05), 0, 0.02);
-        Assert.Equal(0, WordLift.At(word, 11 + WordLift.Settle));
-        // Never lower as it rises, never higher as it settles.
-        for (double t = 10; t < 10.45; t += 0.01) Assert.True(WordLift.At(word, t + 0.01) >= WordLift.At(word, t));
-        for (double t = 11; t < 11.6; t += 0.01) Assert.True(WordLift.At(word, t + 0.01) <= WordLift.At(word, t));
+        Assert.Equal(0, WordLift.Up(word, 9.9));
+        Assert.Equal(0, WordLift.Up(word, 10));
+        // Up quickly at first, at its top well before the word ends.
+        Assert.InRange(WordLift.Up(word, 10.1), 0.4, 0.9);
+        Assert.Equal(1, WordLift.Up(word, 10.45), 9);
+        // And there it stays, however long the rest of the line takes.
+        Assert.Equal(1, WordLift.Up(word, 11));
+        Assert.Equal(1, WordLift.Up(word, 11.6));
+        Assert.Equal(1, WordLift.Up(word, 60));
+        for (double t = 10; t < 10.6; t += 0.01) Assert.True(WordLift.Up(word, t + 0.01) >= WordLift.Up(word, t));
+        // A quick syllable goes all the way up too, taking its time.
+        var quick = new LiftWord(0, 1, 10, 10.1);
+        Assert.InRange(WordLift.Up(quick, 10.1), 0.5, 0.99);
+        Assert.Equal(1, WordLift.Up(quick, 10.16), 9);
     }
 
     [Fact]
-    public void AQuickSyllableRisesLess()
+    public void AWordSwellsAsItsSungAndEasesBack()
+    {
+        var word = new LiftWord(0, 5, 10, 11);
+        Assert.Equal(0, WordLift.Swell(word, 9.9));
+        Assert.Equal(0, WordLift.Swell(word, 10));
+        Assert.InRange(WordLift.Swell(word, 10.1), 0.4, 0.9);
+        Assert.Equal(1, WordLift.Swell(word, 10.45), 9);
+        Assert.Equal(1, WordLift.Swell(word, 11), 9);
+        // Then back to its size, gently at both ends.
+        Assert.InRange(WordLift.Swell(word, 11.05), 0.98, 1);
+        Assert.Equal(0.5, WordLift.Swell(word, 11 + WordLift.Settle / 2), 9);
+        Assert.InRange(WordLift.Swell(word, 11 + WordLift.Settle - 0.05), 0, 0.02);
+        Assert.Equal(0, WordLift.Swell(word, 11 + WordLift.Settle));
+        for (double t = 10; t < 10.45; t += 0.01) Assert.True(WordLift.Swell(word, t + 0.01) >= WordLift.Swell(word, t));
+        for (double t = 11; t < 11.6; t += 0.01) Assert.True(WordLift.Swell(word, t + 0.01) <= WordLift.Swell(word, t));
+    }
+
+    [Fact]
+    public void AQuickSyllableSwellsLess()
     {
         var quick = new LiftWord(0, 1, 10, 10.1);
-        double top = Enumerable.Range(0, 100).Max(k => WordLift.At(quick, 10 + k * 0.01));
+        double top = Enumerable.Range(0, 100).Max(k => WordLift.Swell(quick, 10 + k * 0.01));
         Assert.InRange(top, 0.6, 0.75);
-        // It still takes its time going up and coming down.
-        Assert.True(WordLift.At(quick, 10.15) > WordLift.At(quick, 10.05));
-        Assert.True(WordLift.At(quick, 10.4) > 0);
+        // It still takes its time growing and easing back.
+        Assert.True(WordLift.Swell(quick, 10.15) > WordLift.Swell(quick, 10.05));
+        Assert.True(WordLift.Swell(quick, 10.4) > 0);
     }
 
     [Fact]
-    public void ThePlanRunsFromNowToRest()
+    public void ThePlanRunsFromNowUntilTheWordIsUpAndItsOwnSize()
     {
         var word = new LiftWord(0, 5, 10, 11);
-        var (times, values) = WordLift.Plan(word, position: 9);
+        var (times, up, swell) = WordLift.Plan(word, position: 9);
         Assert.Equal(0, times[0]);
-        Assert.Equal(0, values[0]);
+        Assert.Equal(0, up[0]);
+        Assert.Equal(0, swell[0]);
         Assert.Equal(1, times[1], 9); // waits at rest until the word starts
-        Assert.Equal(0, values[1]);
+        Assert.Equal(0, up[1]);
         Assert.Equal(2 + WordLift.Settle, times[^1], 9);
-        Assert.Equal(0, values[^1], 9);
-        Assert.Equal(1, values.Max(), 9);
-        for (int k = 1; k < times.Count; k++) Assert.True(times[k] > times[k - 1]);
+        Assert.Equal(1, up[^1], 9);   // still up
+        Assert.Equal(0, swell[^1], 9); // its own size again
+        Assert.Equal(1, swell.Max(), 9);
+        Assert.Equal(times.Count, up.Count);
+        Assert.Equal(times.Count, swell.Count);
+        for (int k = 1; k < times.Count; k++)
+        {
+            Assert.True(times[k] > times[k - 1]);
+            Assert.True(up[k] >= up[k - 1]);
+        }
 
         // From the middle of the word: starts where the word is now.
-        (times, values) = WordLift.Plan(word, position: 10.7);
-        Assert.Equal(1, values[0], 9);
+        (times, up, swell) = WordLift.Plan(word, position: 10.7);
+        Assert.Equal(1, up[0], 9);
+        Assert.Equal(1, swell[0], 9);
         Assert.Equal(0.3 + WordLift.Settle, times[^1], 9);
-        // After it: nothing left to do.
-        (times, values) = WordLift.Plan(word, position: 12);
+        // Long after it: up, and nothing left to do.
+        (times, up, swell) = WordLift.Plan(word, position: 12);
         Assert.Equal([0.0], times);
-        Assert.Equal([0.0], values);
+        Assert.Equal([1.0], up);
+        Assert.Equal([0.0], swell);
+    }
+
+    [Fact]
+    public void WhenTheLineIsOverItsWordsComeBackDown()
+    {
+        var (times, values) = WordLift.Release(1);
+        Assert.Equal(0, times[0]);
+        Assert.Equal(1, values[0]);
+        Assert.Equal(WordLift.Settle, times[^1], 9);
+        Assert.Equal(0, values[^1]);
+        // Gently at both ends, halfway at half time.
+        Assert.InRange(values[1], 0.97, 1);
+        Assert.Equal(0.5, values[values.Count / 2], 9);
+        Assert.InRange(values[^2], 0, 0.03);
+        for (int k = 1; k < times.Count; k++)
+        {
+            Assert.True(times[k] > times[k - 1]);
+            Assert.True(values[k] <= values[k - 1]);
+        }
+        // From partway up: the same way down, from there. From rest: stays there.
+        Assert.Equal(0.4, WordLift.Release(0.4).Values[0], 9);
+        Assert.Equal(0.2, WordLift.Release(0.4).Values[values.Count / 2], 9);
+        Assert.All(WordLift.Release(0).Values, v => Assert.Equal(0, v));
     }
 }

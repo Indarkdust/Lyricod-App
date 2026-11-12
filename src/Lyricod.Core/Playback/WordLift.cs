@@ -10,13 +10,14 @@ public readonly record struct LiftWord(int From, int To, double Start, double En
 public readonly record struct LiftSpan(double Left, double Right, double Centre);
 
 /// <summary>
-/// The lift: each word of the line being sung rises a little and grows as it's sung, then settles
-/// back. This says which stretches of a row move as one, where they are, and how far up each is at
-/// any moment; the lyrics window draws it.
+/// The lift: each word of the line being sung rises a little as it's sung and stays up, the line's
+/// words coming back down together when the next line starts. This says which stretches of a row
+/// move as one, where they are, and how far up (and how much grown) each is at any moment; the
+/// lyrics window draws it.
 /// </summary>
 public static class WordLift
 {
-    /// <summary>How long a word takes to come back down (seconds).</summary>
+    /// <summary>How long words take to come back down, and a word to ease back to its size (seconds).</summary>
     public const double Settle = 0.5;
 
     /// <summary>
@@ -85,11 +86,24 @@ public static class WordLift
     }
 
     /// <summary>
-    /// How far up <paramref name="word"/> is at <paramref name="t"/>, from 0 (at rest) to 1 (a long
-    /// word at its top). It rises as it's sung, quickly at first; stays up while it's held; then
-    /// eases back down. A quick syllable rises less, so fast passages ripple rather than jump.
+    /// How far up <paramref name="word"/> is at <paramref name="t"/>, from 0 (at rest) to 1. It rises
+    /// as it's sung, quickly at first, and then stays up: a line's words come back down together,
+    /// when the line is over (<see cref="Release"/>).
     /// </summary>
-    public static double At(LiftWord word, double t)
+    public static double Up(LiftWord word, double t)
+    {
+        if (t <= word.Start) return 0;
+        double x = 1 - Math.Min((t - word.Start) / Rise(word), 1);
+        return 1 - x * x * x;
+    }
+
+    /// <summary>
+    /// How much <paramref name="word"/> has grown at <paramref name="t"/>, from 0 (its own size) to 1
+    /// (a long word at its largest). It swells as it rises, stays so while it's held, and eases back
+    /// to its size once it's been sung: grown words would crowd each other if they stayed. A quick
+    /// syllable swells less, so fast passages ripple rather than jump.
+    /// </summary>
+    public static double Swell(LiftWord word, double t)
     {
         double rise = Rise(word), top = Top(word);
         if (t <= word.Start || t >= top + Settle) return 0;
@@ -100,39 +114,59 @@ public static class WordLift
             return height * (1 - x * x * x);
         }
         if (t <= top) return height;
-        double y = (t - top) / Settle;
-        return height * (1 - (y < 0.5 ? 4 * y * y * y : 1 - Math.Pow(-2 * y + 2, 3) / 2));
+        return height * (1 - Ease((t - top) / Settle));
     }
 
     /// <summary>
     /// The rest of <paramref name="word"/>'s lift from <paramref name="position"/>, as keyframes:
-    /// seconds from now and how far up it is at each (linear between them is close enough). The
-    /// first is now. Just that one when the word is already back down.
+    /// seconds from now, and how far up and how much grown it is at each (linear between them is
+    /// close enough). The first is now. Just that one when there's nothing left for it to do.
     /// </summary>
-    public static (List<double> Times, List<double> Values) Plan(LiftWord word, double position)
+    public static (List<double> Times, List<double> Up, List<double> Swell) Plan(LiftWord word, double position)
     {
         var times = new List<double> { 0 };
-        var values = new List<double> { At(word, position) };
+        var up = new List<double> { Up(word, position) };
+        var swell = new List<double> { Swell(word, position) };
         double rise = Rise(word), top = Top(word);
         void Add(double t)
         {
             if (t - position <= times[^1] + 0.001) return;
             times.Add(t - position);
-            values.Add(At(word, t));
+            up.Add(Up(word, t));
+            swell.Add(Swell(word, t));
         }
         Add(word.Start);
         for (int k = 1; k <= RiseSteps; k++) Add(word.Start + rise * k / RiseSteps);
         Add(top);
         for (int k = 1; k <= SettleSteps; k++) Add(top + Settle * k / SettleSteps);
+        return (times, up, swell);
+    }
+
+    /// <summary>
+    /// The way back to rest from <paramref name="from"/> when the line is over, as keyframes: seconds
+    /// from now and the value at each, gently at both ends, over <see cref="Settle"/>.
+    /// </summary>
+    public static (List<double> Times, List<double> Values) Release(double from)
+    {
+        var times = new List<double>();
+        var values = new List<double>();
+        for (int k = 0; k <= SettleSteps; k++)
+        {
+            times.Add(Settle * k / SettleSteps);
+            values.Add(k == SettleSteps ? 0 : from * (1 - Ease((double)k / SettleSteps)));
+        }
         return (times, values);
     }
+
+    /// <summary>Gently away and gently home: 0 to 1 over <paramref name="y"/> from 0 to 1.</summary>
+    static double Ease(double y) => y < 0.5 ? 4 * y * y * y : 1 - Math.Pow(-2 * y + 2, 3) / 2;
 
     const int RiseSteps = 6, SettleSteps = 10;
 
     /// <summary>How long the word takes to reach its top: as long as it's sung, within reason.</summary>
     static double Rise(LiftWord word) => Math.Clamp(word.End - word.Start, 0.16, 0.45);
 
-    /// <summary>When the word starts back down: when it's been sung (or has reached its top, if that's later).</summary>
+    /// <summary>When the word starts easing back to its size: when it's been sung (or has reached its top, if that's later).</summary>
     static double Top(LiftWord word) => Math.Max(word.End, word.Start + Rise(word));
 
     static double Height(LiftWord word) => 0.55 + 0.45 * Math.Clamp((word.End - word.Start) / 0.4, 0, 1);

@@ -37,6 +37,8 @@ public sealed partial class LyricsWindow
         _current = null;
         _browsing = false;
         _browse.Stop();
+        _settling = null;
+        _settle.Stop();
         var lyrics = _model.Lyrics;
         MessageButton.Visibility = MessageDetail.Visibility = Visibility.Collapsed;
         if (_model.Track == null || _model.IsSearching || lyrics == null)
@@ -92,13 +94,17 @@ public sealed partial class LyricsWindow
 
     /// <summary>How bright the part of the sung line still to come is.</summary>
     const double Unsung = 0.35;
+    /// <summary>How far a sung word is raised by the lift, of the text's size.</summary>
+    const double LiftRise = 0.075;
 
     /// <summary>
     /// Draws a line plain (faded) or, while it's being sung, as rows that sweep. Both break into the
     /// same rows (LinePieces: even, at spaces, punctuation and between words), so a line doesn't
-    /// move or rewrap when it lights up.
+    /// move or rewrap when it lights up. <paramref name="settling"/>: the line was just sung and
+    /// its words are still coming down (the lift), so its rows stay as they are for now and only
+    /// what's under them is drawn anew, plain.
     /// </summary>
-    void RenderLine(LineView view, bool current)
+    void RenderLine(LineView view, bool current, bool settling = false)
     {
         var lyrics = _model.Lyrics;
         if (lyrics == null) return;
@@ -106,12 +112,24 @@ public sealed partial class LyricsWindow
         var song = Romanizer.SongLanguage(lyrics);
         var align = _settings.LyricsCentered ? TextAlignment.Center : TextAlignment.Left;
         var font = Fonts.For(line.Text, song);
-        view.Panel.Children.Clear();
-        view.Rows.Clear();
+        // A line's rows come first in its panel, one each.
+        if (settling)
+        {
+            while (view.Panel.Children.Count > view.Rows.Count) view.Panel.Children.RemoveAt(view.Panel.Children.Count - 1);
+        }
+        else
+        {
+            view.Panel.Children.Clear();
+            view.Rows.Clear();
+        }
         view.ExtraRows.Clear();
         view.Soft.Clear();
 
-        if (current && lyrics.IsSynced)
+        if (settling)
+        {
+            // The rows stay, coming down.
+        }
+        else if (current && lyrics.IsSynced)
         {
             var pieces = LinePieces.Split(line, TextWidth, Measure(font));
             // Without word timing every row lights as the line starts, as on the Mac.
@@ -134,7 +152,7 @@ public sealed partial class LyricsWindow
                 var sweep = new SweepPainter(text, host) { Color = Colors.White, Effect = _settings.LyricsEffect };
                 // Words that rise as they're sung are drawn by the sweep, the unsung part too: the
                 // text only gives them its shape (it can't be fully transparent and still have one).
-                if (_settings.LyricsEffect == SungEffect.Lift && sweep.Lift(piece, Measure(font), Unsung, _fontSize * 0.075))
+                if (_settings.LyricsEffect == SungEffect.Lift && sweep.Lift(piece, Measure(font), Unsung, _fontSize * LiftRise))
                     dim.Opacity = 0.01;
                 view.Rows.Add((piece, Math.Ceiling(Measure(font)(piece.Text)) + 1, sweep));
                 view.Panel.Children.Add(row);
@@ -274,12 +292,37 @@ public sealed partial class LyricsWindow
         if (index == _current && animate) return;
         var old = _current;
         _current = index;
-        if (old is int o && o < _views.Count) RenderLine(_views[o], current: false);
+        Settled();
+        if (old is int o && o < _views.Count)
+        {
+            // Words that rose as they were sung come back down together first, as the line fades
+            // and the window moves on; the line is drawn plain once they have.
+            var view = _views[o];
+            bool down = false;
+            if (animate) foreach (var (_, _, sweep) in view.Rows) down |= sweep.Release();
+            RenderLine(view, current: false, settling: down);
+            if (down)
+            {
+                _settling = view;
+                _settle.Start();
+            }
+        }
         if (index is int i) RenderLine(_views[i], current: true);
         foreach (var view in _views) ApplyDistance(view);
         AnimateCurrent();
         // Not while the user is looking around: the window goes back when they've stopped.
         if (!_browsing) ScrollToCurrent(animate);
+    }
+
+    /// <summary>The words of the line sung before this one are down (or it's needed otherwise): it's drawn plain.</summary>
+    void Settled()
+    {
+        _settle.Stop();
+        var view = _settling;
+        _settling = null;
+        if (view == null) return;
+        int at = _views.IndexOf(view);
+        if (at >= 0 && at != _current) RenderLine(view, current: false);
     }
 
     /// <summary>
