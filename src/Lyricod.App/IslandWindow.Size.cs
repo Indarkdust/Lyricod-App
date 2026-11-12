@@ -76,8 +76,11 @@ public sealed partial class IslandWindow
                 {
                     if (_closed || !ReferenceEquals(_widthAnimation, story)) return;
                     _widthAnimating = false;
-                    _waitingForWidth = false;
-                    RevealText();
+                    if (_waitingForWidth)
+                    {
+                        _waitingForWidth = false;
+                        RevealText();
+                    }
                     Place();
                 }
                 catch (Exception e) { Log.Write(e); }
@@ -85,9 +88,9 @@ public sealed partial class IslandWindow
             story.Begin();
         }
         // Don't expose new text inside a pill that's still too narrow: hide it only while the pill
-        // is widening (an animation's end can land a hair short of its target, so allow half a
-        // pixel), and never for long. Shrinking is safe: the incoming text already fits.
-        _waitingForWidth = _widthAnimating && Pill.Width < required - 0.5;
+        // is widening and too narrow for it (see TextFits), and never for long. Shrinking is safe:
+        // the incoming text already fits.
+        _waitingForWidth = _widthAnimating && !TextFits(Pill.Width);
         if (_waitingForWidth)
         {
             _lineAnimation?.Stop();
@@ -164,6 +167,23 @@ public sealed partial class IslandWindow
         _textWidth = Math.Clamp(Math.Ceiling(Math.Max(_pieceWidth, _secondWidth)), MinText, MaxText);
         Second.MaxWidth = _textWidth;
         Resize();
+    }
+
+    /// <summary>
+    /// Whether the pill is wide enough to show its text between the covers on either side. The
+    /// gaps beside the covers may still be closing: the widening pill gets there within the first
+    /// tenth of a second, well before it settles, so the text comes in then. (An animation's end
+    /// can land a hair short of its target, so allow half a pixel.)
+    /// </summary>
+    bool TextFits(double pillWidth) => pillWidth - 2 * (CoverInset + CoverSize) * LayoutScale >= _textWidth - 0.5;
+
+    /// <summary>Shows text hidden while the pill widened as soon as it fits (called as the pill grows).</summary>
+    void RevealWhenItFits()
+    {
+        if (!_waitingForWidth || _closed || !TextFits(Pill.ActualWidth)) return;
+        _waitingForWidth = false;
+        _revealTimer.Stop();
+        RevealText();
     }
 
     void RevealText()

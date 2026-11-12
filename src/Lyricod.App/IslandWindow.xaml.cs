@@ -162,10 +162,15 @@ public sealed partial class IslandWindow : Window
         };
         // Dragged while floating and unlocked.
         Pill.PointerPressed += OnPillPressed;
-        // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and shrinks.
+        // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and
+        // shrinks; text hidden while it widens shows as soon as it fits.
         Pill.SizeChanged += (_, _) =>
         {
-            try { ApplyCorners(); }
+            try
+            {
+                ApplyCorners();
+                RevealWhenItFits();
+            }
             catch (Exception e) { Log.Write(e); }
         };
         // Nothing may touch the window once it's gone (the pointer check reads its position).
