@@ -29,10 +29,20 @@ sealed class SweepPainter
     Windows.UI.Color _color = Colors.White;
     /// <summary>The row's words while they're drawn one by one, to rise as they're sung; empty otherwise.</summary>
     readonly List<Lifted> _lifted = [];
-    /// <summary>How far a word that's up is raised (view pixels), how much one grows as it's sung, and how strongly one that's up glows.</summary>
+    /// <summary>How far a word that's up is raised (view pixels), how much one grows as it's sung, and how strong the light behind the sung part is.</summary>
     double _rise;
     const double Growth = 0.03;
     const double Glow = 0.45;
+    /// <summary>
+    /// The soft light behind the sung part of a row whose words rise: the text's blurred shape,
+    /// several times over, each shown up to a little further back from where the singing is, so the
+    /// light ends softly there rather than at an edge. It's blurred once; only how much of it shows moves.
+    /// </summary>
+    readonly List<(SpriteVisual Sprite, DropShadow Shadow, RectangleClip Shown)> _halo = [];
+    const int HaloLayers = 4;
+    /// <summary>How far back from the last each layer of the light ends, and how far the light spreads beyond the text (view pixels).</summary>
+    const float HaloStep = 7;
+    float _haloReach;
     /// <summary>Where the song was when the words were last set moving, when that was, and whether it was playing: where they are now.</summary>
     double _liftedAt;
     long _liftedWhen;
@@ -40,9 +50,8 @@ sealed class SweepPainter
 
     /// <summary>
     /// One word of the row: the row drawn again, cut down to that word, so it can move by itself.
-    /// <c>Light</c> draws nothing itself: its shadow, <c>Halo</c>, is the soft light around the word while it's up.
     /// </summary>
-    sealed record Lifted(LiftWord Word, ContainerVisual Holder, SpriteVisual Light, SpriteVisual Unsung, SpriteVisual Sung, DropShadow Halo, double Centre);
+    sealed record Lifted(LiftWord Word, ContainerVisual Holder, SpriteVisual Unsung, SpriteVisual Sung, double Centre);
 
     /// <param name="text">The line, drawn in the unsung colour.</param>
     /// <param name="host">An empty panel laid over <paramref name="text"/> at the same origin.</param>
@@ -70,11 +79,13 @@ sealed class SweepPainter
     void Resize(Vector2 size)
     {
         _sprite.Size = size;
+        foreach (var (sprite, _, _) in _halo) sprite.Size = size;
         foreach (var word in _lifted)
         {
-            word.Light.Size = word.Unsung.Size = word.Sung.Size = size;
-            // A word grows from the middle of its letters, at about the line they stand on.
-            word.Holder.CenterPoint = new Vector3((float)word.Centre, size.Y * 0.78f, 0);
+            word.Unsung.Size = word.Sung.Size = size;
+            // A word grows from the middle of its letters, across and up and down: growing doesn't
+            // carry it any higher, which it would then have to come back from.
+            word.Holder.CenterPoint = new Vector3((float)word.Centre, size.Y * 0.55f, 0);
         }
     }
 
@@ -100,6 +111,28 @@ sealed class SweepPainter
         unsung.Source = _compositor.CreateColorBrush(Windows.UI.Color.FromArgb((byte)Math.Round(dim * 255), 255, 255, 255));
         unsung.Mask = shape;
         var root = _compositor.CreateContainerVisual();
+        float blur = (float)Math.Clamp(rise * 3.5, 6, 14);
+        _haloReach = blur * 1.5f;
+        for (int k = 0; k < HaloLayers; k++)
+        {
+            // A shadow of the text's shape, in the sung colour, from a sprite that draws nothing itself.
+            var shadow = _compositor.CreateDropShadow();
+            shadow.Mask = shape;
+            shadow.Color = _color;
+            shadow.BlurRadius = blur;
+            shadow.Opacity = HaloOpacity;
+            shadow.Offset = Vector3.Zero;
+            var sprite = _compositor.CreateSpriteVisual();
+            sprite.Shadow = shadow;
+            // Where the sung words are: up.
+            var layer = _compositor.CreateContainerVisual();
+            layer.Offset = new Vector3(0, (float)-rise, 0);
+            var shown = _compositor.CreateRectangleClip(-Beyond, -Beyond, -Beyond, Beyond * 10);
+            layer.Clip = shown;
+            layer.Children.InsertAtTop(sprite);
+            root.Children.InsertAtTop(layer);
+            _halo.Add((sprite, shadow, shown));
+        }
         for (int k = 0; k < words.Count; k++)
         {
             var holder = _compositor.CreateContainerVisual();
@@ -110,22 +143,10 @@ sealed class SweepPainter
             under.Brush = unsung;
             var over = _compositor.CreateSpriteVisual();
             over.Brush = _masked;
-            // The light around a word that's up: a shadow of the text's shape, in the sung colour.
-            // Of the shape rather than of the sung part, which moves: this one is blurred once, and
-            // only fades in and out after (as the blur of the other lines is).
-            var halo = _compositor.CreateDropShadow();
-            halo.Mask = shape;
-            halo.Color = _color;
-            halo.BlurRadius = (float)Math.Clamp(rise * 3.5, 6, 14);
-            halo.Opacity = 0;
-            halo.Offset = Vector3.Zero;
-            var light = _compositor.CreateSpriteVisual();
-            light.Shadow = halo;
-            holder.Children.InsertAtTop(light);
             holder.Children.InsertAtTop(under);
             holder.Children.InsertAtTop(over);
             root.Children.InsertAtTop(holder);
-            _lifted.Add(new Lifted(words[k], holder, light, under, over, halo, spans[k].Centre));
+            _lifted.Add(new Lifted(words[k], holder, under, over, spans[k].Centre));
         }
         ElementCompositionPreview.SetElementChildVisual(_host, root);
         Resize(new Vector2((float)_text.ActualWidth, (float)_text.ActualHeight));
@@ -134,6 +155,16 @@ sealed class SweepPainter
 
     /// <summary>How far past the row's edges a word's cut reaches (view pixels).</summary>
     const float Beyond = 200;
+
+    /// <summary>Each layer of the light's share: together they're as strong as <see cref="Glow"/>.</summary>
+    static readonly float HaloOpacity = (float)(1 - Math.Pow(1 - Glow, 1.0 / HaloLayers));
+
+    /// <summary>
+    /// Where layer <paramref name="layer"/> of the light ends for <paramref name="sung"/> pixels sung:
+    /// before the text (and its own spread) when nothing is, past them when all of it is.
+    /// </summary>
+    float HaloEnd(int layer, double sung, double width) =>
+        (float)(-_haloReach + sung * (width + 2 * _haloReach + (HaloLayers - 1) * HaloStep) / Math.Max(width, 1) - layer * HaloStep);
 
     /// <summary>Puts each word where it is at <paramref name="position"/> and, while playing, moves it through the rest of its lift.</summary>
     void AnimateLift(double position, bool playing)
@@ -168,7 +199,17 @@ sealed class SweepPainter
             var (times, down) = WordLift.Release(up);
             Move(word, times, down, WordLift.Release(swell).Values);
         }
-        return any;
+        if (!any) return false;
+        var (fades, light) = WordLift.Release(HaloOpacity);
+        var linear = _compositor.CreateLinearEasingFunction();
+        foreach (var (_, shadow, _) in _halo)
+        {
+            var fade = _compositor.CreateScalarKeyFrameAnimation();
+            for (int k = 0; k < fades.Count; k++) fade.InsertKeyFrame((float)(fades[k] / fades[^1]), (float)light[k], linear);
+            fade.Duration = TimeSpan.FromSeconds(fades[^1]);
+            shadow.StartAnimation("Opacity", fade);
+        }
+        return true;
     }
 
     /// <summary>Stops <paramref name="word"/> where it's <paramref name="up"/> and has grown by <paramref name="swell"/>.</summary>
@@ -176,10 +217,8 @@ sealed class SweepPainter
     {
         word.Holder.StopAnimation("Offset");
         word.Holder.StopAnimation("Scale");
-        word.Halo.StopAnimation("Opacity");
         word.Holder.Offset = Raised(up);
         word.Holder.Scale = Grown(swell);
-        word.Halo.Opacity = (float)(up * Glow);
     }
 
     /// <summary>Moves <paramref name="word"/> through keyframes (seconds from now), straight from each to the next.</summary>
@@ -190,18 +229,15 @@ sealed class SweepPainter
         var linear = _compositor.CreateLinearEasingFunction();
         var offset = _compositor.CreateVector3KeyFrameAnimation();
         var scale = _compositor.CreateVector3KeyFrameAnimation();
-        var glow = _compositor.CreateScalarKeyFrameAnimation();
         for (int k = 0; k < times.Count; k++)
         {
             float at = (float)(times[k] / total);
             offset.InsertKeyFrame(at, Raised(up[k]), linear);
             scale.InsertKeyFrame(at, Grown(swell[k]), linear);
-            glow.InsertKeyFrame(at, (float)(up[k] * Glow), linear);
         }
-        offset.Duration = scale.Duration = glow.Duration = TimeSpan.FromSeconds(total);
+        offset.Duration = scale.Duration = TimeSpan.FromSeconds(total);
         word.Holder.StartAnimation("Offset", offset);
         word.Holder.StartAnimation("Scale", scale);
-        word.Halo.StartAnimation("Opacity", glow);
     }
 
     Vector3 Raised(double up) => new(0, (float)(-up * _rise), 0);
@@ -216,7 +252,7 @@ sealed class SweepPainter
             _gradient.ColorStops[0].Color = value;
             _gradient.ColorStops[1].Color = Windows.UI.Color.FromArgb(0, value.R, value.G, value.B);
             if (_sprite.Shadow is DropShadow glow) glow.Color = value;
-            foreach (var word in _lifted) word.Halo.Color = value;
+            foreach (var (_, shadow, _) in _halo) shadow.Color = value;
         }
     }
 
@@ -249,6 +285,11 @@ sealed class SweepPainter
     {
         _gradient.StopAnimation("Offset");
         _gradient.Offset = OffsetFor(sung, width);
+        for (int k = 0; k < _halo.Count; k++)
+        {
+            _halo[k].Shown.StopAnimation("Right");
+            _halo[k].Shown.Right = HaloEnd(k, sung, width);
+        }
     }
 
     /// <summary>
@@ -271,6 +312,15 @@ sealed class SweepPainter
             animation.InsertKeyFrame((float)(times[k] / total), OffsetFor(values[k], width), linear);
         animation.Duration = TimeSpan.FromSeconds(total);
         _gradient.StartAnimation("Offset", animation);
+        // The light follows, a little behind.
+        for (int layer = 0; layer < _halo.Count; layer++)
+        {
+            var shown = _compositor.CreateScalarKeyFrameAnimation();
+            for (int k = 0; k < times.Count; k++)
+                shown.InsertKeyFrame((float)(times[k] / total), HaloEnd(layer, values[k], width), linear);
+            shown.Duration = animation.Duration;
+            _halo[layer].Shown.StartAnimation("Right", shown);
+        }
     }
 
     /// <summary>
