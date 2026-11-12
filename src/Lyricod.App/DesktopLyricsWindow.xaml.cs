@@ -21,13 +21,13 @@ using WinUIEx.Messaging;
 namespace Lyricod;
 
 /// <summary>
-/// The floating lyric strip over every app. The sung part of the line is the sung colour in
-/// the text's shape, fading out over a soft edge like the macOS app's; that edge moves on the
-/// compositor (no per-frame work in the app), re-planned whenever the line or the clock changes.
+/// The floating lyric strip over every app. The sung part of the line is the sung colour in the
+/// text's shape, fading out over a soft edge; that edge moves on the compositor (no per-frame work
+/// in the app), re-planned whenever the line or the clock changes.
 /// </summary>
 public sealed partial class DesktopLyricsWindow : Window
 {
-    /// <summary>Strip width in view pixels, like the macOS app.</summary>
+    /// <summary>Strip width in view pixels.</summary>
     const double StripWidth = 900;
     const double SidePadding = 24;
 
@@ -287,7 +287,7 @@ public sealed partial class DesktopLyricsWindow : Window
         var line = lyrics is { IsSynced: true } ? _model.CurrentLine : null;
         if (line == null)
         {
-            // No line to sing: the song, as on the Mac.
+            // No line to sing: the song.
             _pieces = [];
             _piece = null;
             _pieceTimer.Stop();

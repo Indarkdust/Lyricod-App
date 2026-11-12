@@ -49,7 +49,7 @@ public sealed partial class LyricsWindow
             MessageText.Text = message;
             if (_model.Track != null && !_model.IsSearching)
             {
-                // As on the Mac: search for them yourself and pick the right song.
+                // Search for them yourself and pick the right song.
                 MessageDetail.Text = L.Get("NoLyricsDetail");
                 MessageButton.Content = L.Get("ChooseLyricsTip");
                 MessageDetail.Visibility = _model.IsNotSong ? Visibility.Collapsed : Visibility.Visible;
@@ -74,7 +74,7 @@ public sealed partial class LyricsWindow
                 OpacityTransition = new ScalarTransition { Duration = Transition },
                 ScaleTransition = new Vector3Transition { Duration = Transition },
             };
-            // Lines shrink towards their start (or middle, when centred), as on the Mac.
+            // Lines shrink towards their start (or middle, when centred).
             panel.SizeChanged += (_, e) => panel.CenterPoint =
                 new Vector3(_settings.LyricsCentered ? (float)e.NewSize.Width / 2 : 0, (float)e.NewSize.Height / 2, 0);
             var view = new LineView(line, panel);
@@ -131,7 +131,7 @@ public sealed partial class LyricsWindow
         else if (current && lyrics.IsSynced)
         {
             var pieces = LinePieces.Split(line, TextWidth, Measure(font));
-            // Without word timing every row lights as the line starts, as on the Mac.
+            // Without word timing every row lights as the line starts.
             if (line.Words == null) pieces = [.. pieces.Select(p => p with { Start = line.Start })];
             foreach (var piece in pieces)
             {
@@ -247,8 +247,8 @@ public sealed partial class LyricsWindow
 
     /// <summary>
     /// The line being sung is full size and sharp; the others shrink, and fade and blur more the
-    /// further they are (as on the Mac: up to 8 points of blur). Unsynced lyrics are all plain.
-    /// While the user scrolls the lyrics the others are sharp and a little brighter, to be read.
+    /// further they are (up to 8 points of blur). Unsynced lyrics are all plain. While the user
+    /// scrolls the lyrics the others are sharp and a little brighter, to be read.
     /// </summary>
     void ApplyDistance(LineView view)
     {
@@ -358,11 +358,10 @@ public sealed partial class LyricsWindow
     const double Glide = 0.6;
 
     /// <summary>
-    /// Scrolls to the next line with a soft, spring-like ease (the Mac's), not Windows' quick
-    /// default. Moving on a line, each line below the one just sung sets off a moment after the one
-    /// above (like Apple Music's lyrics), held back by a translation on the compositor that ends at
-    /// nothing. A line still catching up from the last move eases the rest of the way instead of
-    /// jumping.
+    /// Scrolls to the next line with a soft, spring-like ease, not Windows' quick default. Moving
+    /// on a line, each line below the one just sung sets off a moment after the one above (like
+    /// Apple Music's lyrics), held back by a translation on the compositor that ends at nothing. A
+    /// line still catching up from the last move eases the rest of the way instead of jumping.
     /// </summary>
     void OnScrollAnimationStarting(ScrollView sender, ScrollingScrollAnimationStartingEventArgs args)
     {
@@ -453,7 +452,7 @@ public sealed partial class LyricsWindow
 
     /// <summary>
     /// Where the lyrics are the point (wide windows and full screen, while playing), the controls
-    /// fade once the pointer rests, as on the Mac, and come back when it moves.
+    /// fade once the pointer rests, and come back when it moves.
     /// </summary>
     void UpdateControls()
     {

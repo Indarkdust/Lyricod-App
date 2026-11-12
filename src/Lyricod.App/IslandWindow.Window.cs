@@ -77,8 +77,8 @@ public sealed partial class IslandWindow
         UpdateBars();
     }
 
-    /// <summary>Comes and goes like the Mac's: a fade with a slight shrink toward the top edge
-    /// (floating: toward its middle).</summary>
+    /// <summary>Comes and goes with a fade and a slight shrink toward the top edge (floating:
+    /// toward its middle).</summary>
     void AnimateShown(bool show, Action? done = null)
     {
         double seconds = show ? 0.3 : 0.35;

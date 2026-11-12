@@ -15,13 +15,11 @@ using Microsoft.UI.Xaml.Shapes;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Island, like the macOS app's: a black pill at the top centre of the screen with the
-/// cover, the line being sung (sweeping in the album's colour) and six bars that move to the
-/// player's sound while music plays.
-/// The pill fits the current piece and its second row. While
-/// the pointer is over it, it takes clicks and (by default) grows into a mini player; otherwise
-/// it's click-through. The floating style (IslandWindow.Floating.cs) is rounded all round and sits
-/// wherever it was dragged.
+/// Lyricod Island: a black pill at the top centre of the screen with the cover, the line being sung
+/// (sweeping in the album's colour) and six bars that move to the player's sound while music plays.
+/// The pill fits the current piece and its second row. While the pointer is over it, it takes
+/// clicks and (by default) grows into a mini player; otherwise it's click-through. The floating
+/// style (IslandWindow.Floating.cs) is rounded all round and sits wherever it was dragged.
 /// </summary>
 public sealed partial class IslandWindow : Window
 {
@@ -33,7 +31,7 @@ public sealed partial class IslandWindow : Window
         _ => 1,
     };
     // The cover sits as far from the side as from the bottom, and its corner is the island's corner
-    // minus that gap, so the two corners share a centre (as on the Mac: 12 and 6).
+    // minus that gap, so the two corners share a centre (12 and 6).
     const double CoverInset = 6, CoverSize = 22, CoverRadius = 6, PillRadius = CoverInset + CoverRadius;
     double RowHeight => (CoverSize + 2 * CoverInset) * LayoutScale;
     double SecondHeight => 18 * LayoutScale;
@@ -103,7 +101,7 @@ public sealed partial class IslandWindow : Window
         SettingsButton.Click += (_, _) => openSettings();
         ToolTipService.SetToolTip(LyricsButton, L.Get("LyricsWindowTitle"));
         ToolTipService.SetToolTip(SettingsButton, L.Get("SettingsTitle"));
-        // One bar per band of the meter, sized as on the Mac (2 wide, 1.5 apart, 3 to 14 tall).
+        // One bar per band of the meter, 2 wide, 1.5 apart, 3 to 14 tall.
         for (int i = 0; i < AudioMeter.BandCount; i++)
         {
             var bar = new Rectangle { Width = 2, Height = BarHeight, RadiusX = 1, RadiusY = 1, Fill = new SolidColorBrush(Colors.White) };

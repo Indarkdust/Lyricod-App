@@ -7,9 +7,9 @@ using Microsoft.UI.Dispatching;
 namespace Lyricod;
 
 /// <summary>
-/// The one source of truth, like the macOS app's PlaybackModel: follows the player through SMTC,
-/// keeps the playhead between reports, loads lyrics when the song changes, and moves to each next
-/// line on a single timer. Lives on the UI thread; <see cref="Changed"/> fires there.
+/// The one source of truth: follows the player through SMTC, keeps the playhead between reports,
+/// loads lyrics when the song changes, and moves to each next line on a single timer. Lives on the
+/// UI thread; <see cref="Changed"/> fires there.
 /// </summary>
 public sealed partial class PlaybackModel
 {
@@ -271,8 +271,8 @@ public sealed partial class PlaybackModel
 
     public void Seek(LyricLine line) => SeekPlayer(line.Start - _playhead.Offset);
 
-    /// <summary>Moves the player to <paramref name="seconds"/> of its own time. Lyricod's clock moves
-    /// there at once, as on the Mac: some players report the new position only a second later.</summary>
+    /// <summary>Moves the player to <paramref name="seconds"/> of its own time. Lyricod's clock
+    /// moves there at once: some players report the new position only a second later.</summary>
     public async void SeekPlayer(double seconds)
     {
         try

@@ -3,9 +3,9 @@ using System.Text;
 namespace Lyricod.Core.Romanization;
 
 /// <summary>
-/// Kana → romaji, in the style the macOS app shows: Hepburn consonants ("shi", "chi", "tsu",
-/// "fu", "ji"), long vowels spelled out ("toukyou", "koohii"), small っ doubling the next
-/// consonant ("matte"). Anything that isn't kana passes through unchanged.
+/// Kana → romaji: Hepburn consonants ("shi", "chi", "tsu", "fu", "ji"), long vowels spelled out
+/// ("toukyou", "koohii"), small っ doubling the next consonant ("matte"). Anything that isn't kana
+/// passes through unchanged.
 /// </summary>
 public static class KanaRomaji
 {

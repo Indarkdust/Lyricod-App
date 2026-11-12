@@ -39,7 +39,7 @@ public static partial class LyricParser
             var text = rest.ToString().Trim();
             foreach (var t in times) entries.Add((t, text));
         }
-        return [.. entries.OrderBy(e => e.Item1)]; // stable, like the Mac version
+        return [.. entries.OrderBy(e => e.Item1)]; // stable
     }
 
     /// <summary>"mm:ss.xx", "mm:ss.xxx" or "mm:ss".</summary>

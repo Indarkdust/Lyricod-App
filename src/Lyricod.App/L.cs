@@ -3,8 +3,8 @@ using Microsoft.Windows.ApplicationModel.Resources;
 namespace Lyricod;
 
 /// <summary>
-/// UI strings from Strings/&lt;language&gt;/Resources.resw: in Windows' language, or the one chosen in
-/// Settings › General (read once at startup, so a change applies after a restart, as on the Mac).
+/// UI strings from Strings/&lt;language&gt;/Resources.resw: in Windows' language, or the one chosen
+/// in Settings › General (read once at startup, so a change applies after a restart).
 /// </summary>
 static class L
 {

@@ -21,9 +21,9 @@ public sealed partial class LyricsWindow
         _wide = wide;
         _fontSize = size;
 
-        // Wide, as on the Mac: the cover and the lyrics as one centred block, the lyrics set in from
-        // the cover, so the pair sits balanced instead of hugging the left edge in full screen; the
-        // cover, title and controls grow with the window. (Every resize: the block follows the width.)
+        // Wide: the cover and the lyrics as one centred block, the lyrics set in from the cover, so
+        // the pair sits balanced instead of hugging the left edge in full screen; the cover, title
+        // and controls grow with the window. (Every resize: the block follows the width.)
         double block = Math.Min(w, 1700), margin = wide ? (w - block) / 2 : 0;
         CoverColumn.Width = new GridLength(wide ? margin + Math.Min(block * 0.4, 600) : 0);
         CoverPanel.Margin = new Thickness(margin, 0, 0, 0);

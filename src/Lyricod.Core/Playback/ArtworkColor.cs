@@ -1,9 +1,9 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// Picks an album cover's dominant colour, tuned to stay readable on black (the macOS app's
-/// ArtworkColor): pixels are bucketed by hue, vivid ones weigh more, and greys, near-blacks and
-/// near-whites are ignored, so a dark cover with a neon sign picks the sign.
+/// Picks an album cover's dominant colour, tuned to stay readable on black: pixels are bucketed by
+/// hue, vivid ones weigh more, and greys, near-blacks and near-whites are ignored, so a dark cover
+/// with a neon sign picks the sign.
 /// </summary>
 public static class ArtworkColor
 {

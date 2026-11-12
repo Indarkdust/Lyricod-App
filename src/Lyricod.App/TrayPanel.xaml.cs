@@ -17,9 +17,9 @@ using WinUIEx;
 namespace Lyricod;
 
 /// <summary>
-/// The tray icon's panel, like the macOS app's menu-bar panel: now playing, the view tiles, this
-/// song's lyrics and timing, and buttons for the lyrics window, Settings and Quit. It sits above
-/// the notification area like Windows' own flyouts and goes away when it loses focus.
+/// The tray icon's panel: now playing, the view tiles, this song's lyrics and timing, and buttons
+/// for the lyrics window, Settings and Quit. It sits above the notification area like Windows' own
+/// flyouts and goes away when it loses focus.
 /// </summary>
 public sealed partial class TrayPanel : Window
 {

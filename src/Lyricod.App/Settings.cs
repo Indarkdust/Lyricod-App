@@ -38,7 +38,7 @@ public enum LyricsBackground { Artwork, StillArtwork, Colour, Dark }
 /// <summary>Automatic grows with the window.</summary>
 public enum LyricsTextSize { Automatic, Small, Medium, Large }
 
-/// <summary>The user's settings, saved as JSON next to the lyrics cache. Defaults follow the macOS app. PropertyChanged fires on the thread that made the change.</summary>
+/// <summary>The user's settings, saved as JSON next to the lyrics cache. PropertyChanged fires on the thread that made the change.</summary>
 public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 {
     public static readonly string DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lyricod");

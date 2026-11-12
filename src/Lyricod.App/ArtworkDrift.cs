@@ -11,11 +11,10 @@ using Windows.Storage.Streams;
 namespace Lyricod;
 
 /// <summary>
-/// The lyrics window's background, from the Mac's (ArtworkDrift.swift): the cover softened once at
-/// small size, then copies slowly turned and moved by the compositor: a big one, a smaller one
-/// fading out towards its edges that wanders around the middle, and a third that drifts the other
-/// way a little faster. The whole picture slowly breathes. Nothing runs in the app per frame; while
-/// the music is paused, all of it pauses.
+/// The lyrics window's background: the cover softened once at small size, then copies slowly turned
+/// and moved by the compositor: a big one, a smaller one fading out towards its edges that wanders
+/// around the middle, and a third that drifts the other way a little faster. The whole picture
+/// slowly breathes. Nothing runs in the app per frame; while the music is paused, all of it pauses.
 /// </summary>
 sealed class ArtworkDrift
 {
@@ -102,7 +101,7 @@ sealed class ArtworkDrift
         foreach (float opacity in new[] { 1f, 0.8f })
         {
             var mask = _compositor.CreateRadialGradientBrush();
-            mask.EllipseRadius = new Vector2(0.5f, 0.5f); // clear by the middle of each edge, as on the Mac
+            mask.EllipseRadius = new Vector2(0.5f, 0.5f); // clear by the middle of each edge
             mask.ColorStops.Add(_compositor.CreateColorGradientStop(0, Colors.Black));
             mask.ColorStops.Add(_compositor.CreateColorGradientStop(0.45f, Colors.Black));
             mask.ColorStops.Add(_compositor.CreateColorGradientStop(1, Colors.Transparent));

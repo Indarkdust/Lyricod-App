@@ -12,10 +12,10 @@ using WinUIEx;
 namespace Lyricod;
 
 /// <summary>
-/// The whole song, like the macOS app's lyrics window: the line being sung sweeps word by word
-/// (in rows that fit the width) and stays a third of the way down; the others shrink a little and
-/// fade and blur with distance, and scrolling eases like a spring. The softened cover drifts behind.
-/// Click a line to jump there. Wide windows and full screen put a large cover beside the lyrics.
+/// The whole song: the line being sung sweeps word by word (in rows that fit the width) and stays a
+/// third of the way down; the others shrink a little and fade and blur with distance, and scrolling
+/// eases like a spring. The softened cover drifts behind. Click a line to jump there. Wide windows
+/// and full screen put a large cover beside the lyrics.
 /// </summary>
 public sealed partial class LyricsWindow : Window
 {

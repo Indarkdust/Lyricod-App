@@ -5,11 +5,11 @@ namespace Lyricod;
 public sealed partial class IslandWindow
 {
     /// <summary>
-    /// As on the Mac: while the island shows and music plays, the bars are redrawn at the
-    /// animation rate from Settings, each frame gliding into the next on the compositor. They
-    /// follow the player's sound when "Bars follow the music" is on and Windows lets Lyricod
-    /// listen to it (Windows 11, or Server 2022), and bob on their own otherwise. Paused, they
-    /// settle low. The player is listened to only while the bars move.
+    /// While the island shows and music plays, the bars are redrawn at the animation rate from
+    /// Settings, each frame gliding into the next on the compositor. They follow the player's sound
+    /// when "Bars follow the music" is on and Windows lets Lyricod listen to it (Windows 11, or
+    /// Server 2022), and bob on their own otherwise. Paused, they settle low. The player is
+    /// listened to only while the bars move.
     /// </summary>
     void UpdateBars()
     {

@@ -29,7 +29,7 @@ public static partial class TrackMatcher
         return sb.ToString();
     }
 
-    /// <summary>Letters, marks and numbers, like Foundation's CharacterSet.alphanumerics.</summary>
+    /// <summary>Letters, marks and numbers.</summary>
     internal static bool IsAlphanumeric(Rune r) => Rune.GetUnicodeCategory(r) switch
     {
         UnicodeCategory.UppercaseLetter or UnicodeCategory.LowercaseLetter or UnicodeCategory.TitlecaseLetter

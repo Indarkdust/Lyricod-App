@@ -11,8 +11,8 @@ namespace Lyricod;
 public enum SettingsPane { General, Desktop, Island, LyricsWindow, Lyrics, Shortcuts, About }
 
 /// <summary>
-/// Lyricod's settings, like the macOS app's. Each control follows its setting while the page is up,
-/// so a change from the tray panel or a shortcut shows here too.
+/// Lyricod's settings. Each control follows its setting while the page is up, so a change from the
+/// tray panel or a shortcut shows here too.
 /// </summary>
 public sealed partial class SettingsWindow : Window
 {

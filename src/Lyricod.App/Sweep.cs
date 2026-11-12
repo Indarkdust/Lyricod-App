@@ -9,10 +9,10 @@ namespace Lyricod;
 
 /// <summary>
 /// The sung colour over a line of text, in the text's shape, fading out over a soft edge where the
-/// singing is (as on the Mac). It's a gradient masked by the text and slid across on the
-/// compositor, so there's no per-frame work in the app. Used by the desktop strip, the lyrics
-/// window and the island. The lyrics window can also draw the line as its words, each rising as
-/// it's sung and staying up, softly lit, until the line is over (see <see cref="Lift"/>).
+/// singing is. It's a gradient masked by the text and slid across on the compositor, so there's no
+/// per-frame work in the app. Used by the desktop strip, the lyrics window and the island. The
+/// lyrics window can also draw the line as its words, each rising as it's sung and staying up,
+/// softly lit, until the line is over (see <see cref="Lift"/>).
 /// </summary>
 sealed class SweepPainter
 {
@@ -265,8 +265,8 @@ sealed class SweepPainter
 
     /// <summary>
     /// Sweep: the colour moves word by word. Glow: the same, and the sung part glows in its colour.
-    /// Line: the whole line lights as it starts. As on the Mac. Lift: the sweep over words that
-    /// rise as they're sung (where <see cref="Lift"/> was asked for).
+    /// Line: the whole line lights as it starts. Lift: the sweep over words that rise as they're
+    /// sung (where <see cref="Lift"/> was asked for).
     /// </summary>
     public SungEffect Effect
     {
@@ -331,7 +331,7 @@ sealed class SweepPainter
 
     /// <summary>
     /// Where the fade ends for <paramref name="sung"/> pixels sung: at 0 when nothing is, just past
-    /// the text when all of it is, so both ends are crisp (as on the Mac).
+    /// the text when all of it is, so both ends are crisp.
     /// </summary>
     static Vector2 OffsetFor(double sung, double width) => new((float)(sung * (width + Edge) / Math.Max(width, 1)), 0);
 }

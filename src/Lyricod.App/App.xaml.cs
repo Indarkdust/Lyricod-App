@@ -9,8 +9,8 @@ using WinUIEx;
 namespace Lyricod;
 
 /// <summary>
-/// A tray app, like the Mac's menu-bar app: no main window. The tray icon's panel shows and hides
-/// the views and opens the lyrics window and Settings.
+/// A tray app: no main window. The tray icon's panel shows and hides the views and opens the lyrics
+/// window and Settings.
 /// </summary>
 public partial class App : Application
 {
@@ -63,7 +63,7 @@ public partial class App : Application
         _settings = Settings.Load();
         // A first run gets Lyricod Glass where its liquid effect can run (Windows 11); elsewhere the classic island.
         if (_settings.IsNew && LiquidGlass.IsSupported) _settings.IslandTheme = IslandTheme.Glass;
-        // The language chosen in Settings, read once: like the Mac, a change applies after a restart.
+        // The language chosen in Settings, read once: a change applies after a restart.
         L.Start(_settings.Language);
         Fonts.Start(_settings);
         Fonts.ApplyToApp(Resources); // before any window opens
@@ -79,7 +79,7 @@ public partial class App : Application
         _island = new IslandWindow(_model, _settings, OpenLyricsWindow, () => OpenSettings());
 
         _tray = new TrayIcon(1, Path.Combine(AppContext.BaseDirectory, "Assets", "Lyricod.ico"), "Lyricod");
-        // Either click opens the panel, as the Mac's menu-bar icon does.
+        // Either click opens the panel.
         _panel = new TrayPanel(_model, _settings, OpenLyricsWindow, () => OpenSettings(), OpenChooseLyrics, Quit, _updates)
         {
             OpenNeteaseSync = OpenNeteaseSync,

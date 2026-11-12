@@ -74,7 +74,7 @@ sealed partial class ProgressLine : Grid
     public ProgressLine(PlaybackModel model)
     {
         _model = model;
-        // As on the Mac: press or drag on the bar to pick a point, let go to move the player there.
+        // Press or drag on the bar to pick a point, let go to move the player there.
         Background = new SolidColorBrush(Colors.Transparent); // so the whole strip takes the pointer
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;

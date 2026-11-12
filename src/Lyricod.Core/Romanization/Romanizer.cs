@@ -14,9 +14,9 @@ public interface IJapaneseReader
 }
 
 /// <summary>
-/// Works out pronunciation lines. Chinese: pinyin by phrase (ToolGood.Words). Japanese: readings from
-/// the platform's analyser, then kana → romaji. Korean: the Revised Romanization rules. A port of the
-/// macOS app's Romanizer, with the same output style except that pinyin is spaced by syllable.
+/// Works out pronunciation lines. Chinese: pinyin by phrase (ToolGood.Words). Japanese: readings
+/// from the platform's analyser, then kana → romaji. Korean: the Revised Romanization rules. Pinyin
+/// is spaced by syllable.
 /// </summary>
 public sealed partial class Romanizer(IJapaneseReader? japanese = null)
 {

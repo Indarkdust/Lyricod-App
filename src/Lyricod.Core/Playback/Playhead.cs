@@ -51,9 +51,8 @@ public sealed class Playhead
 public readonly record struct SweepStop(double Start, double End, double From, double To);
 
 /// <summary>
-/// Plans the word-by-word colour sweep as keyframes, like the macOS app: positions come from
-/// measuring the line's text, and the plan runs from "now" to the end of the line so it can be
-/// re-planned.
+/// Plans the word-by-word colour sweep as keyframes: positions come from measuring the line's text,
+/// and the plan runs from "now" to the end of the line so it can be re-planned.
 /// </summary>
 public static class Sweep
 {

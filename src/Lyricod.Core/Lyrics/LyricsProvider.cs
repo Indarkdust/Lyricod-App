@@ -5,8 +5,7 @@ namespace Lyricod.Core;
 
 /// <summary>
 /// Finds lyrics for a track: the player's own platform first, then NetEase (best coverage for
-/// Chinese music, with translations and word timing), QQ Music and LRCLIB. Cached on disk. A port
-/// of the macOS app's LyricsProvider.
+/// Chinese music, with translations and word timing), QQ Music and LRCLIB. Cached on disk.
 /// </summary>
 public sealed partial class LyricsProvider
 {
