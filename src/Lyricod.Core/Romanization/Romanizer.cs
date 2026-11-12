@@ -39,8 +39,8 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
                 lyrics.Lines[i] = line with { Pronunciation = null };
                 continue;
             }
-            Pronunciation? p = language == LyricLanguage.Japanese && line.Pronunciation?.Text is { Length: > 0 } given
-                ? (GroupJapaneseByWord ? ByWord(given, line.Text) : null) ?? new Pronunciation(given, language)
+            Pronunciation? p = language == LyricLanguage.Japanese && line.Pronunciation is { Text.Length: > 0 } given
+                ? (GroupJapaneseByWord ? ByWord(given, line) : null) ?? given with { Language = language }
                 : Romanize(line.Text, language) is { } text ? new Pronunciation(text, language, PronunciationOrigin.Lyricod) : null;
             lyrics.Lines[i] = line with { Pronunciation = p };
         }
@@ -108,8 +108,12 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
 
     // ---- Joining ----
 
-    /// <summary>One piece of a romanised line: a word's reading, or what was between words.</summary>
-    record struct Part(string Text, bool IsWord, bool WasLatin = false);
+    /// <summary>One piece of a romanised line: a word's reading, or what was between words.
+    /// <c>From</c> and <c>To</c>: where a Japanese word is in the line's text (-1 when not known).</summary>
+    record struct Part(string Text, bool IsWord, bool WasLatin = false, int From = -1, int To = -1);
+
+    /// <summary>The Japanese analyser, if there is one here.</summary>
+    IJapaneseReader? Reader => japanese;
 
     /// <summary>
     /// Joins the pieces into a line. Words that came from Chinese, Japanese or Korean get
@@ -211,42 +215,69 @@ public sealed partial class Romanizer(IJapaneseReader? japanese = null)
 
     // ---- Japanese ----
 
-    static string Japanese(string text, IJapaneseReader reader, bool byWord)
+    static string Japanese(string text, IJapaneseReader reader, bool byWord) =>
+        Join(JapaneseParts(text, reader, byWord).Where(p => !p.IsWord || p.Text.Length > 0));
+
+    /// <summary>The line's words in romaji and what's between them, each word with where it is in <paramref name="text"/>.</summary>
+    static List<Part> JapaneseParts(string text, IJapaneseReader reader, bool byWord)
     {
         var parts = new List<Part>();
         string pending = "";
+        // Where the pending word starts in the text, and how far into the text the words have
+        // come (-1 once one of them can't be found there: places aren't known from then on).
+        int pendingFrom = -1, at = 0;
         // The last word, while a kana ending can still join it (by word).
         string? lastSurface = null, lastReading = null;
         foreach (var (surface, reading, phraseStart) in reader.Read(text))
         {
+            int from = at < 0 ? -1 : text.IndexOf(surface, at, StringComparison.Ordinal);
+            int to = at = from < 0 ? -1 : from + surface.Length;
             if (reading == null || !surface.Any(char.IsLetterOrDigit))
             {
-                if (pending.Length > 0) { parts.Add(new Part(KanaRomaji.Convert(pending), true)); pending = ""; }
+                if (pending.Length > 0) { parts.Add(new Part(KanaRomaji.Convert(pending), true, From: pendingFrom, To: from)); pending = ""; }
                 parts.Add(new Part(surface, false)); // the analyser returns brackets as words
                 lastSurface = null;
                 continue;
             }
-            if (byWord && JoinsEnding(parts, ref pending, ref lastSurface, ref lastReading, surface, reading, phraseStart)) continue;
+            if (byWord && JoinsEnding(parts, ref pending, ref pendingFrom, ref lastSurface, ref lastReading, surface, reading, phraseStart, to)) continue;
             string romaji, full = reading;
+            int start = from;
             // Particles are written as said.
             if (pending.Length == 0 && surface is "は" or "へ" or "を")
                 romaji = surface == "は" ? "wa" : surface == "へ" ? "e" : "o";
             else
             {
                 var r = pending + reading;
+                if (pending.Length > 0) start = pendingFrom;
                 // A small っ ending a word ("待っ|て") doubles the next word's first consonant,
                 // and the two belong together: "matte".
-                if (r.EndsWith('っ') || r.EndsWith('ッ')) { pending = r; continue; }
+                if (r.EndsWith('っ') || r.EndsWith('ッ')) { pending = r; pendingFrom = start; continue; }
                 pending = "";
                 full = r;
                 romaji = KanaRomaji.Convert(r);
             }
             bool wasLatin = !reading.Any(KanaRomaji.IsKana) && romaji == surface;
-            parts.Add(new Part(romaji, true, wasLatin));
+            parts.Add(new Part(romaji, true, wasLatin, start, to));
             (lastSurface, lastReading) = romaji.Length > 0 ? (surface, full) : (null, null);
         }
-        if (pending.Length > 0) parts.Add(new Part(KanaRomaji.Convert(pending), true));
-        return Join(parts.Where(p => !p.IsWord || p.Text.Length > 0));
+        if (pending.Length > 0) parts.Add(new Part(KanaRomaji.Convert(pending), true, From: pendingFrom, To: at));
+        return parts;
+    }
+
+    /// <summary>
+    /// Where each word of <paramref name="text"/> is, as romaji by word spaces them; null when a
+    /// word can't be found in the text.
+    /// </summary>
+    internal static List<(int From, int To)>? WordSpans(string text, IJapaneseReader reader)
+    {
+        var spans = new List<(int From, int To)>();
+        foreach (var part in JapaneseParts(text, reader, byWord: true))
+        {
+            if (!part.IsWord || part.Text.Length == 0) continue;
+            if (part.From < 0 || part.To <= part.From) return null;
+            spans.Add((part.From, part.To));
+        }
+        return spans;
     }
 
     // ---- Korean ----

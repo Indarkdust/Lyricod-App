@@ -8,6 +8,11 @@ namespace Lyricod.Core.Romanization;
 /// syllable. A source's romaji ("hi ka re a u no wa na ze", as QQ Music times it) is spaced by the
 /// words Windows' analyser finds ("hikare au no wa naze"), and a kanji's kana ending the analyser
 /// gives apart stays with it ("naku", not "na ku"). Off, Romanizer.cs works as it always has.
+/// <para>
+/// Where the source timed its romaji and the line word by word (QQ Music), each syllable is put
+/// with the word being sung when it starts: exact, whatever the two readings are, and the timing
+/// stays with the syllables. Otherwise the two romaji are lined up by their letters.
+/// </para>
 /// </summary>
 public sealed partial class Romanizer
 {
@@ -15,12 +20,64 @@ public sealed partial class Romanizer
     public bool GroupJapaneseByWord { get; set; }
 
     /// <summary>
-    /// A source's romaji for <paramref name="text"/> spaced by the words worked out here, or null
+    /// A source's romaji for <paramref name="line"/> spaced by the words worked out here, or null
     /// when there's no reading here or the two don't line up (the source's then shows as it came).
     /// </summary>
-    Pronunciation? ByWord(string given, string text) =>
-        Romanize(text, LyricLanguage.Japanese) is { } ours && Regroup(given, ours) is { } grouped
+    Pronunciation? ByWord(Pronunciation given, LyricLine line)
+    {
+        if (Reader is { } reader && given.Words is { } syllables && line.Words is { } sung
+            && WordSpans(line.Text, reader) is { } spans && BySungWord(syllables, line, sung, spans) is { } timed)
+            return timed;
+        return Romanize(line.Text, LyricLanguage.Japanese) is { } ours && Regroup(given.Text, ours) is { } grouped
             ? new Pronunciation(grouped, LyricLanguage.Japanese, PronunciationOrigin.SourceByWord) : null;
+    }
+
+    /// <summary>How far a syllable may start before the sung word it belongs to: the two timings differ by a millisecond.</summary>
+    const double Leeway = 0.003;
+
+    /// <summary>
+    /// The source's timed syllables spaced by the line's words (<paramref name="spans"/>: where each
+    /// is in the line's text): a syllable belongs to the word whose character is being sung when it
+    /// starts (<paramref name="sung"/>, the line word by word; a kanji's syllables all start within
+    /// it). A doubled consonant the source writes as a syllable of its own ("'t" before "ta") is
+    /// just the letter inside a word: "yokatta". Null when a syllable isn't within the line.
+    /// </summary>
+    internal static Pronunciation? BySungWord(IReadOnlyList<LyricWord> syllables, LyricLine line, IReadOnlyList<LyricWord> sung,
+        List<(int From, int To)> spans)
+    {
+        if (sung.Count == 0 || line.Text.Length == 0) return null;
+        // Where each sung word starts in the line's text (the text is the words, trimmed).
+        string all = string.Concat(sung.Select(w => w.Text));
+        if (all.Trim() != line.Text) return null;
+        var starts = new int[sung.Count];
+        for (int i = 0, at = all.TrimStart().Length - all.Length; i < sung.Count; at += sung[i++].Text.Length)
+            starts[i] = at + (sung[i].Text.Length - sung[i].Text.TrimStart().Length);
+
+        var words = new List<LyricWord>(syllables.Count);
+        // The word the syllable before was in (a place between words counts as one of its own),
+        // and whether the next syllable goes straight after an opening bracket.
+        int last = int.MinValue, k = 0;
+        bool glued = false;
+        foreach (var syllable in syllables)
+        {
+            while (k + 1 < sung.Count && sung[k + 1].Start <= syllable.Start + Leeway) k++;
+            if (syllable.Start + Leeway < sung[k].Start || syllable.Start > Math.Max(line.End, sung[k].End) + Leeway) return null;
+            int c = Math.Clamp(starts[k], 0, line.Text.Length - 1);
+            int word = spans.FindIndex(s => c >= s.From && c < s.To);
+            int group = word >= 0 ? word : -1 - c;
+            string text = syllable.Text.Trim();
+            if (text.Length == 0) continue;
+            bool mark = !text.Any(char.IsLetterOrDigit), opens = mark && "([{“‘\"".Contains(text[0]);
+            // A space between words; none before a closing mark, or after an opening one.
+            bool space = words.Count > 0 && !glued && (mark ? opens : group != last);
+            if (!mark && group == last && text.Length == 2 && text[0] == '\'' && char.IsLetter(text[1])) text = text[1..];
+            words.Add(syllable with { Text = space ? " " + text : text });
+            glued = opens;
+            last = group;
+        }
+        return words.Count == 0 ? null
+            : new Pronunciation(string.Concat(words.Select(w => w.Text)), LyricLanguage.Japanese, PronunciationOrigin.SourceByWord) { Words = words };
+    }
 
     /// <summary>
     /// <paramref name="source"/>'s romaji spaced by the words of <paramref name="ours"/>. Their letters
@@ -128,21 +185,22 @@ public sealed partial class Romanizer
     /// "naku"); a small っ ending goes on with the next word instead (待|っ|て "matte").
     /// Returns whether the word was taken.
     /// </summary>
-    static bool JoinsEnding(List<Part> parts, ref string pending, ref string? lastSurface, ref string? lastReading,
-        string surface, string reading, bool phraseStart)
+    static bool JoinsEnding(List<Part> parts, ref string pending, ref int pendingFrom, ref string? lastSurface, ref string? lastReading,
+        string surface, string reading, bool phraseStart, int to)
     {
         if (phraseStart || pending.Length > 0 || lastSurface is not { } before || lastReading is not { } said
             || !EndsWithKanji(before) || !IsEnding(surface)) return false;
         var joined = said + reading;
         if (joined.EndsWith('っ') || joined.EndsWith('ッ'))
         {
+            pendingFrom = parts[^1].From;
             parts.RemoveAt(parts.Count - 1);
             pending = joined;
             lastSurface = null;
             return true;
         }
         (lastSurface, lastReading) = (before + surface, joined);
-        parts[^1] = parts[^1] with { Text = KanaRomaji.Convert(joined) };
+        parts[^1] = parts[^1] with { Text = KanaRomaji.Convert(joined), To = to };
         return true;
     }
 }

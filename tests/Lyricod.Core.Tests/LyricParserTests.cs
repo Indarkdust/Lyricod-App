@@ -182,4 +182,21 @@ public class LyricParserTests
         Assert.Null(l.Lines[0].Pronunciation);
         Assert.Equal("i bam", l.Lines[1].Pronunciation?.Text);
     }
+
+    [Fact]
+    public void QqRomajiKeepsItsTiming()
+    {
+        // QQ Music's romaji is word-timed like its lyrics, a syllable at a time.
+        var l = LyricParser.ParseQrc("[1000,2000]夢(1000,500)に(1500,500)", null, "QQ Music")!;
+        LyricParser.AttachPronunciation("[1000,2000]yu (999,200)me (1199,300)ni (1499,500)", l);
+        var p = l.Lines[0].Pronunciation!;
+        Assert.Equal("yu me ni", p.Text);
+        Assert.Equal(["yu", " me", " ni"], p.Words!.Select(w => w.Text));
+        Assert.Equal([0.999, 1.199, 1.499], p.Words!.Select(w => w.Start));
+        // A line-timed romaji (NetEase's) has none.
+        var n = LyricParser.ParseLrc("[00:01.00]夢に", null, "NetEase")!;
+        LyricParser.AttachPronunciation("[00:01.00]yu me ni", n);
+        Assert.Equal("yu me ni", n.Lines[0].Pronunciation!.Text);
+        Assert.Null(n.Lines[0].Pronunciation!.Words);
+    }
 }

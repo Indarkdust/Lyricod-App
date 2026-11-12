@@ -335,21 +335,38 @@ public static partial class LyricParser
 
     /// <summary>
     /// Attaches a source's romanisation the same way: LRC (NetEase) or word-timed QRC
-    /// (QQ Music, one syllable per word), each entry to the nearest line.
+    /// (QQ Music, one syllable per word), each entry to the nearest line. QQ Music's keeps its
+    /// timing (see <see cref="Pronunciation.Words"/>).
     /// </summary>
     public static void AttachPronunciation(string text, Lyrics lyrics)
     {
-        IEnumerable<(double, string)> entries = ParseQrc(text, null, "") is { } qrc
-            ? qrc.Lines.Select(l => (l.Start, string.Join(' ', (l.Words ?? []).Select(w => w.Text.Trim()).Where(w => w.Length > 0))))
-            : ParseLrcEntries(text);
-        foreach (var (t, raw) in entries)
+        IEnumerable<(double, string, List<LyricWord>?)> entries = ParseQrc(text, null, "") is { } qrc
+            ? qrc.Lines.Select(l => (l.Start, string.Join(' ', (l.Words ?? []).Select(w => w.Text.Trim()).Where(w => w.Length > 0)), Syllables(l)))
+            : ParseLrcEntries(text).Select(e => (e.Item1, e.Item2, (List<LyricWord>?)null));
+        foreach (var (t, raw, syllables) in entries)
         {
             var tidy = string.Join(' ', raw.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
             // Romanisation is Latin letters; QQ heads its own with a Chinese notice.
             if (tidy.Length == 0 || tidy == "//" || tidy.Any(c => c >= '⺀' && c != '　')) continue;
             if (NearestLine(lyrics, t) is int i && lyrics.Lines[i].Pronunciation == null)
-                lyrics.Lines[i] = lyrics.Lines[i] with { Pronunciation = new Pronunciation(tidy) };
+                lyrics.Lines[i] = lyrics.Lines[i] with
+                {
+                    // The timing only where the syllables make up the text as it's shown.
+                    Pronunciation = new Pronunciation(tidy) { Words = syllables != null && string.Concat(syllables.Select(w => w.Text)) == tidy ? syllables : null },
+                };
         }
+    }
+
+    /// <summary>A romaji line's timed syllables, a space before each but the first, so their texts make up the line.</summary>
+    static List<LyricWord>? Syllables(LyricLine line)
+    {
+        var syllables = new List<LyricWord>();
+        foreach (var w in line.Words ?? [])
+        {
+            var s = string.Join(' ', w.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+            if (s.Length > 0) syllables.Add(w with { Text = syllables.Count == 0 ? s : " " + s });
+        }
+        return syllables.Count > 0 ? syllables : null;
     }
 
     /// <summary>QQ's lyric API escapes some characters as HTML entities ("&amp;#58;").</summary>

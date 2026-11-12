@@ -16,7 +16,22 @@ public enum LyricLanguage { Japanese, Korean, Chinese }
 
 /// <summary>How a line is said, in Latin letters: romaji, romanised Korean or pinyin.</summary>
 /// <param name="Language">Null until <c>Romanizer.Fill</c> has looked at the line.</param>
-public sealed record Pronunciation(string Text, LyricLanguage? Language = null, PronunciationOrigin Origin = PronunciationOrigin.Source);
+public sealed record Pronunciation(string Text, LyricLanguage? Language = null, PronunciationOrigin Origin = PronunciationOrigin.Source)
+{
+    /// <summary>
+    /// The syllables as the source timed them (QQ Music's romaji, a syllable at a time), so the
+    /// pronunciation can be lit as it's sung like the line above it. Their texts, spaces included,
+    /// make up <see cref="Text"/>. Null where the source gave no timing or Lyricod worked the line out.
+    /// </summary>
+    public IReadOnlyList<LyricWord>? Words { get; init; }
+
+    /// <summary>
+    /// The pronunciation of <paramref name="line"/> as a line of its own, with its syllables'
+    /// timing, to be lit as it's sung; null without timing.
+    /// </summary>
+    public LyricLine? Sung(LyricLine line) =>
+        Words is { Count: > 0 } words ? new LyricLine { Start = line.Start, End = line.End, Text = Text, Words = words } : null;
+}
 
 /// <summary>Where a pronunciation came from: the lyric source's own as given, the source's reading
 /// grouped by word (Windows read the line the same way), or worked out by Lyricod.</summary>
