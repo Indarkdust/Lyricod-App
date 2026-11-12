@@ -91,6 +91,28 @@ public class RomajiByWordTests
     }
 
     [Fact]
+    public void TimedRomajiTakesTheSameWordsAsLyricodsOwn()
+    {
+        // Windows' analyser as it splits these (see ByWordAKanjisKanaEndingStaysWithIt): a kanji's
+        // ending apart (鳴|る), て a word of its own, a small っ before the word it doubles.
+        var waves = new FakeReader(("|人里", "ひとざと"), ("|離れ", "はなれ"), ("て", "て"), ("|鳴", "な"), ("る", "る"), ("|音", "おと"), ("は", "は"),
+            ("|向かい", "むかい"), ("波", "なみ"));
+        var (line, _) = Timed("人里離れて鳴る音は向かい波", ("hi", 1), ("to", 1.3), ("za", 2), ("to", 2.5), ("ha", 3), ("na", 3.5), ("re", 4), ("te", 5),
+            ("na", 6), ("ru", 7), ("o", 8), ("to", 8.5), ("wa", 9), ("mu", 10), ("ka", 11), ("i", 12), ("na", 13), ("mi", 13.5));
+        var l = new Lyrics([line], "test");
+        new Romanizer(waves) { GroupJapaneseByWord = true }.Fill(l);
+        Assert.Equal("hitozato hanare te naru oto wa mukai nami", l.Lines[0].Pronunciation!.Text);
+        Assert.NotNull(l.Lines[0].Pronunciation!.Words);
+
+        var waiting = new FakeReader(("|待", "ま"), ("っ", "っ"), ("て", "て"), ("|泣", "な"), ("く", "く"), ("ん", "ん"), ("だ", "だ"), ("ね", "ね"));
+        var (wait, _) = Timed("待って泣くんだね", ("ma", 1), ("'t", 2), ("te", 3), ("na", 4), ("ku", 5), ("n", 6), ("da", 7), ("ne", 8));
+        var w = new Lyrics([wait], "test");
+        new Romanizer(waiting) { GroupJapaneseByWord = true }.Fill(w);
+        Assert.Equal("matte naku n da ne", w.Lines[0].Pronunciation!.Text);
+        Assert.NotNull(w.Lines[0].Pronunciation!.Words);
+    }
+
+    [Fact]
     public void TimedRomajiThatIsntWithinTheLineIsLinedUpByLetters()
     {
         // A syllable timed before the line starts: the timing can't place it, the letters still can.
