@@ -70,6 +70,8 @@ public sealed partial class IslandWindow : Window
     Storyboard? _widthAnimation, _heightAnimation, _lineAnimation;
     bool _waitingForWidth, _widthAnimating, _transitionPending;
     bool _shown, _hovered, _expanded, _barsRunning, _closed;
+    /// <summary>The mini player is opening or closing: the pill's height is on its way.</summary>
+    bool _playerMoving;
     IslandHover _hoverAction;
     /// <summary>Where the pointer has been outside the island lately (screen pixels, steady-clock seconds).</summary>
     readonly List<(double X, double Y, double T)> _trail = [];
@@ -150,8 +152,6 @@ public sealed partial class IslandWindow : Window
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
         _settings.PropertyChanged += OnSettingChanged;
-        // Dragged while floating and unlocked.
-        Pill.PointerPressed += OnPillPressed;
         // The island is placed by the screen's size and scale: when those change, it's placed again
         // (and its line fitted to the new width) at once, not when the next line happens to come.
         _overlay.DisplayChanged += () =>
@@ -160,15 +160,12 @@ public sealed partial class IslandWindow : Window
             Place();
             Render();
         };
-        // Lyricod Glass's shadow and frosted shape keep the pill's size as it grows and shrinks.
+        // Dragged while floating and unlocked.
+        Pill.PointerPressed += OnPillPressed;
+        // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and shrinks.
         Pill.SizeChanged += (_, _) =>
         {
-            try
-            {
-                UpdateShadow();
-                if (_shaped) Shape();
-                UpdateLiquid();
-            }
+            try { ApplyCorners(); }
             catch (Exception e) { Log.Write(e); }
         };
         // Nothing may touch the window once it's gone (the pointer check reads its position).
@@ -282,12 +279,12 @@ public sealed partial class IslandWindow : Window
                     break;
                 case nameof(Settings.IslandAudioBars) or nameof(Settings.FrameRate):
                     UpdateBars();
+                    if (_liquid != null) _liquid.FramesPerSecond = (int)_settings.FrameRate;
                     break;
             }
         }
         catch (Exception) { StopLiquid(); }
     }
-                    if (_liquid != null) _liquid.FramesPerSecond = (int)_settings.FrameRate;
 
     void UpdateSong()
     {

@@ -84,6 +84,7 @@ public sealed partial class IslandWindow
         if (expand != _expanded)
         {
             _expanded = expand;
+            _playerMoving = true; // until its height has settled (see Resize, ApplyCorners)
             // Keep the lyric in place; the player has its own cover.
             Fade(ArtFrame, expand ? 0 : 1, expand ? 0.18 : 0.28);
             Fade(Bars, expand ? 0 : 1, expand ? 0.18 : 0.28);

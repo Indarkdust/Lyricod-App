@@ -105,7 +105,13 @@ public sealed partial class IslandWindow
             _heightAnimation = story;
             story.Completed += (_, _) =>
             {
-                try { if (!_closed && ReferenceEquals(_heightAnimation, story)) Place(); }
+                try
+                {
+                    if (_closed || !ReferenceEquals(_heightAnimation, story)) return;
+                    _playerMoving = false;
+                    Place();
+                    ApplyCorners();
+                }
                 catch (Exception e) { Log.Write(e); }
             };
             story.Begin();
@@ -114,14 +120,27 @@ public sealed partial class IslandWindow
         if (!_waitingForWidth) RevealText();
     }
 
+    /// <summary>The mini player's corner, at Medium size.</summary>
+    const double PlayerRadius = 20;
+
     /// <summary>
     /// The default island is square where it meets the top edge; a floating one has the same corner
-    /// all round. Either way the cover's corners share their centre with the island's.
+    /// all round. Either way the cover's corners share their centre with the island's. The mini
+    /// player's corner is larger: it grows and shrinks with the player's height as it opens and
+    /// closes, rather than changing all at once as that starts.
     /// </summary>
     void ApplyCorners()
     {
-        double radius = (_expanded ? 20 : PillRadius) * LayoutScale;
-        Pill.CornerRadius = Floating ? new CornerRadius(radius) : new CornerRadius(0, 0, radius, radius);
+        double open = _expanded ? 1 : 0;
+        if (_playerMoving)
+        {
+            double closed = RowHeight + (HasSecondRow ? SecondHeight : 0);
+            double height = Pill.ActualHeight > 0 ? Pill.ActualHeight : Pill.Height;
+            open = Math.Clamp((height - closed) / ExpandedHeight, 0, 1);
+        }
+        double radius = (PillRadius + (PlayerRadius - PillRadius) * open) * LayoutScale;
+        var corners = Floating ? new CornerRadius(radius) : new CornerRadius(0, 0, radius, radius);
+        if (Pill.CornerRadius != corners) Pill.CornerRadius = corners;
         UpdateShadow();
         if (_shaped) Shape();
         UpdateLiquid();
