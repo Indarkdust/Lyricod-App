@@ -39,10 +39,14 @@ sealed class SweepPainter
     /// light ends softly there rather than at an edge. It's blurred once; only how much of it shows moves.
     /// </summary>
     readonly List<(SpriteVisual Sprite, DropShadow Shadow, RectangleClip Shown)> _halo = [];
-    const int HaloLayers = 4;
-    /// <summary>How far back from the last each layer of the light ends, and how far the light spreads beyond the text (view pixels).</summary>
-    const float HaloStep = 7;
-    float _haloReach;
+    const int HaloLayers = 6;
+    /// <summary>
+    /// How far back from the last each layer of the light ends; the stretch at either end of the
+    /// row over which the light comes from, and goes to, beyond the text; and how far it spreads
+    /// beyond the text (view pixels).
+    /// </summary>
+    const double HaloStep = 5, HaloRun = 40;
+    double _haloReach;
     /// <summary>Where the song was when the words were last set moving, when that was, and whether it was playing: where they are now.</summary>
     double _liftedAt;
     long _liftedWhen;
@@ -112,7 +116,7 @@ sealed class SweepPainter
         unsung.Mask = shape;
         var root = _compositor.CreateContainerVisual();
         float blur = (float)Math.Clamp(rise * 3.5, 6, 14);
-        _haloReach = blur * 1.5f;
+        _haloReach = blur * 1.5;
         for (int k = 0; k < HaloLayers; k++)
         {
             // A shadow of the text's shape, in the sung colour, from a sprite that draws nothing itself.
@@ -161,10 +165,18 @@ sealed class SweepPainter
 
     /// <summary>
     /// Where layer <paramref name="layer"/> of the light ends for <paramref name="sung"/> pixels sung:
-    /// before the text (and its own spread) when nothing is, past them when all of it is.
+    /// just behind where the sung colour is whole, each layer a little further back. Before the
+    /// text, and the light's own spread, when nothing is sung; past them when all of it is.
     /// </summary>
-    float HaloEnd(int layer, double sung, double width) =>
-        (float)(-_haloReach + sung * (width + 2 * _haloReach + (HaloLayers - 1) * HaloStep) / Math.Max(width, 1) - layer * HaloStep);
+    float HaloEnd(int layer, double sung, double width)
+    {
+        double back = Edge + layer * HaloStep;
+        double run = Math.Max(Math.Min(width / 2, HaloRun), 1);
+        double end = sung - back;
+        if (sung < run) end -= _haloReach * (1 - Math.Max(sung, 0) / run);
+        else if (sung > width - run) end += (back + _haloReach) * Math.Min((sung - (width - run)) / run, 1);
+        return (float)end;
+    }
 
     /// <summary>Puts each word where it is at <paramref name="position"/> and, while playing, moves it through the rest of its lift.</summary>
     void AnimateLift(double position, bool playing)
