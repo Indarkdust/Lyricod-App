@@ -14,8 +14,8 @@ namespace Lyricod;
 /// The lyrics window's background, from the Mac's (ArtworkDrift.swift): the cover softened once at
 /// small size, then copies slowly turned and moved by the compositor: a big one, a smaller one
 /// fading out towards its edges that wanders around the middle, and a third that drifts the other
-/// way a little faster, so the colours keep mixing. The whole picture slowly breathes in and out.
-/// Nothing runs in the app per frame; while the music is paused, all of it pauses in place.
+/// way a little faster. The whole picture slowly breathes. Nothing runs in the app per frame; while
+/// the music is paused, all of it pauses.
 /// </summary>
 sealed class ArtworkDrift
 {
@@ -164,9 +164,9 @@ sealed class ArtworkDrift
             breathe.IterationBehavior = AnimationIterationBehavior.Forever;
             set.StartAnimation("Scale", breathe);
         }
-        // The smaller copies wander around the middle on slow loops (the third the other way round,
-        // and faster); their paths depend on the size. The small one goes across in 60 s and down in
-        // 75 s, so its path comes back to where it started after 5 minutes; the third, 29.2 s and 38 s.
+        // The smaller copies wander around the middle on slow loops (the third the other way, and
+        // faster). The small one goes across in 60 s and down in 75 s, so its path repeats after 5
+        // minutes; the third, 29.2 s and 38 s.
         small.StartAnimation("Offset", Wander(small.Size, 300, 0.2f, 0.15f, 5, 4));
         third.StartAnimation("Offset", Wander(third.Size, 380, -0.26f, 0.2f, 13, 10));
         SetPaused(set, !_moving);
@@ -182,7 +182,7 @@ sealed class ArtworkDrift
         var middle = _size / 2;
         var wander = _compositor.CreateVector3KeyFrameAnimation();
         var linear = _compositor.CreateLinearEasingFunction();
-        // 24 points a turn of the faster way: at least as smooth as before.
+        // 24 points per turn of the faster axis.
         int points = 24 * Math.Max(acrossTurns, downTurns);
         for (int i = 0; i <= points; i++)
         {

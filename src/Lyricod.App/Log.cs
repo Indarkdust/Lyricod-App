@@ -2,15 +2,15 @@ namespace Lyricod;
 
 /// <summary>
 /// What went wrong, kept in a small file beside the settings (<c>%LOCALAPPDATA%\Lyricod\lyricod.log</c>).
-/// Lyricod carries on past most failures (a timer's callback must never throw: that ends the process),
-/// and a released build has no debug output, so without this nothing says what happened on someone's
-/// PC. The file stays on the PC: its lines can carry paths with the user's name in them.
+/// Lyricod carries on past most failures (a timer's callback must never throw: that ends the
+/// process) and a released build has no debug output, so this is the only record. It stays on the
+/// PC: lines can carry paths with the user's name in them.
 /// </summary>
 static class Log
 {
     /// <summary>The file starts afresh past this size, keeping the last one beside it as <c>lyricod.log.old</c>.</summary>
     const long MaxBytes = 256 * 1024;
-    /// <summary>The same line again within this long isn't written again: a timer failing on every tick would fill the file.</summary>
+    /// <summary>The same line again within this long isn't written again (a timer failing every tick would fill the file).</summary>
     const int RepeatSeconds = 30;
 
     static readonly Lock Gate = new();

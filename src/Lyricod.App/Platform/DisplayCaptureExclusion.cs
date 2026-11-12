@@ -23,8 +23,7 @@ internal static class DisplayCaptureExclusion
 
     /// <summary>
     /// Leaves <paramref name="window"/> out of the session's capture. <paramref name="iteration"/> is the
-    /// capture configuration that does: frames say which configuration they were made with (see
-    /// <see cref="FrameIteration"/>).
+    /// configuration that does so; frames say which one they were made with (see <see cref="FrameIteration"/>).
     /// </summary>
     public static unsafe bool TryExcludeWindow(nint session, nint window, int windowsBuild, out ulong iteration)
     {

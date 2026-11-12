@@ -52,7 +52,7 @@ public sealed partial class IslandWindow : Window
     readonly Settings _settings;
     readonly Overlay _overlay;
     readonly SweepPainter _sweep;
-    /// <summary>The same over the row under the lyric, when that's a pronunciation the source timed.</summary>
+    /// <summary>The same over the row under the lyric, when that's a timed pronunciation.</summary>
     readonly SweepPainter _secondSweep;
     /// <summary>That pronunciation as a line to light (null for any other row).</summary>
     LyricLine? _secondLine;

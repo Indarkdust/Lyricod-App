@@ -6,8 +6,7 @@ using Lyricod.Core;
 
 namespace Lyricod;
 
-/// <summary>Default hangs from the top centre of the main display, as it always has; Floating is
-/// fully rounded and can be dragged anywhere.</summary>
+/// <summary>Default hangs from the top centre of the main display; Floating is fully rounded and can be dragged anywhere.</summary>
 public enum IslandStyle { Default, Floating }
 
 /// <summary>How the island looks: Classic black, or Lyricod Glass (see-through, with a shine along its edge).</summary>
@@ -16,14 +15,11 @@ public enum IslandTheme { Classic, Glass }
 /// <summary>The colour of Lyricod Glass: a neutral dark, or the album cover's colour.</summary>
 public enum GlassTint { Neutral, Album }
 
-/// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it with Windows'
-/// acrylic, or redraws it lightly blurred and bent at the edges.</summary>
+/// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it (acrylic), or redraws it blurred and bent at the edges.</summary>
 public enum GlassEffect { Clear, Frosted, Liquid }
 
-/// <summary>What the island does while the pointer is over it.</summary>
 public enum IslandHover { Expand, Hide, Nothing, ByDirection }
 
-/// <summary>Weight of the island's lyric font.</summary>
 public enum IslandWeight { Regular, Medium, Semibold, Bold, Heavy }
 
 /// <summary>Layout size of the Windows island, including its mini player.</summary>
@@ -32,22 +28,17 @@ public enum IslandSize { Small, Medium, Large, ExtraLarge }
 /// <summary>How the sung part of a line shows (the island and the lyrics window).</summary>
 public enum SungEffect { Sweep, Glow, Line, Lift }
 
-/// <summary>How the island moves from one line to the next.</summary>
 public enum LineTransition { Instant, Slide, Fade }
 
 /// <summary>How often the island's bars redraw: smoother costs more battery.</summary>
 public enum FrameRate { BatterySaver = 15, Balanced = 30, Smooth = 60 }
 
-/// <summary>What's behind the lyrics in the lyrics window.</summary>
 public enum LyricsBackground { Artwork, StillArtwork, Colour, Dark }
 
-/// <summary>Text size in the lyrics window; Automatic grows with the window.</summary>
+/// <summary>Automatic grows with the window.</summary>
 public enum LyricsTextSize { Automatic, Small, Medium, Large }
 
-/// <summary>
-/// The user's settings, saved as JSON next to the lyrics cache. Defaults follow the macOS
-/// app. Change notifications arrive on the thread that made the change (the UI thread).
-/// </summary>
+/// <summary>The user's settings, saved as JSON next to the lyrics cache. Defaults follow the macOS app. PropertyChanged fires on the thread that made the change.</summary>
 public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 {
     public static readonly string DataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lyricod");
@@ -132,7 +123,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public int? DesktopX { get => _desktopX; set => Set(ref _desktopX, value); }
     public int? DesktopY { get => _desktopY; set => Set(ref _desktopY, value); }
 
-    /// <summary>The pill at the top centre of the screen (or where it floats). On by default.</summary>
+    /// <summary>The pill at the top centre of the screen (or where it floats).</summary>
     public bool ShowIsland { get => _showIsland; set => Set(ref _showIsland, value); }
     public IslandStyle IslandStyle { get => _islandStyle; set => Set(ref _islandStyle, Enum.IsDefined(value) ? value : IslandStyle.Default); }
     /// <summary>Floating only. Locked: the island works as usual. Unlocked: it takes clicks and can be dragged.</summary>
@@ -148,9 +139,9 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// <summary>Lyricod Glass: how see-through it is, in percent (10 to 90).</summary>
     public int GlassTransparency { get => _glassTransparency; set => Set(ref _glassTransparency, Math.Clamp(value, 10, 90)); }
     public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
-    /// <summary>Lyricod Glass's liquid effect: light along the glass's edge, and a shadow under a floating island.</summary>
+    /// <summary>Light along the glass's edge, and a shadow under a floating island.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
-    /// <summary>Lyricod Glass's effect: liquid unless chosen otherwise (it stays clear where Windows can't run it).</summary>
+    /// <summary>Liquid by default; it stays clear where Windows can't run it.</summary>
     public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Liquid); }
     /// <summary>Liquid glass: how much what's behind is blurred, in percent.</summary>
     public int LiquidBlur { get => _liquidBlur; set => Set(ref _liquidBlur, Math.Clamp(value, 0, 100)); }
@@ -159,7 +150,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }
-    /// <summary>Tint the island's lyric with the album cover's colour instead of its chosen colour.</summary>
     public bool IslandAlbumColour { get => _islandAlbumColour; set => Set(ref _islandAlbumColour, value); }
     /// <summary>"#RRGGBB", used when album colour is off or unavailable.</summary>
     public string IslandColor { get => _islandColor ?? "#8CD9FF"; set => Set(ref _islandColor, value); }
@@ -183,11 +173,10 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     [JsonConverter(typeof(KnownOrDefault<LyricsBackground>))]
     public LyricsBackground LyricsBackground { get => _lyricsBackground; set => Set(ref _lyricsBackground, value); }
     public LyricsTextSize LyricsTextSize { get => _lyricsTextSize; set => Set(ref _lyricsTextSize, value); }
-    /// <summary>The lyrics window shows translations / pronunciation under each line (its buttons flip these).</summary>
+    /// <summary>The lyrics window shows translations / pronunciation under each line.</summary>
     public bool ShowTranslations { get => _showTranslations; set => Set(ref _showTranslations, value); }
     public bool ShowPronunciation { get => _showPronunciation; set => Set(ref _showPronunciation, value); }
     public bool LyricsCentered { get => _lyricsCentered; set => Set(ref _lyricsCentered, value); }
-    /// <summary>Lines away from the one being sung blur a little more the further they are.</summary>
     public bool LyricsBlurDistant { get => _lyricsBlurDistant; set => Set(ref _lyricsBlurDistant, value); }
     public SungEffect LyricsEffect { get => _lyricsEffect; set => Set(ref _lyricsEffect, value); }
     /// <summary>In wide windows and full screen, controls fade while the pointer rests.</summary>
@@ -251,10 +240,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public Settings() { }
 }
 
-/// <summary>
-/// Reads a choice by name, falling back to the first choice for a name this version doesn't know,
-/// rather than failing to read the whole settings file (which would start everything afresh).
-/// </summary>
+/// <summary>Reads a choice by name; an unknown name becomes the first choice instead of failing the whole settings file.</summary>
 sealed class KnownOrDefault<T> : JsonConverter<T> where T : struct, Enum
 {
     public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>

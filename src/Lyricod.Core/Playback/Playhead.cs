@@ -1,9 +1,9 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// Where the song is, between player reports: a position known at one instant, carried
-/// forward while playing. Instants are in seconds on any steady clock (the app uses
-/// <see cref="System.Diagnostics.Stopwatch"/>), so tests can drive it by hand.
+/// Where the song is between player reports: a position known at one instant, carried forward while
+/// playing. Instants are seconds on any steady clock (the app uses <see
+/// cref="System.Diagnostics.Stopwatch"/>), so tests can drive it by hand.
 /// </summary>
 public sealed class Playhead
 {
@@ -12,8 +12,7 @@ public sealed class Playhead
 
     public bool IsPlaying { get; private set; }
 
-    /// <summary>Changes whenever the playhead is re-anchored (seek, pause, correction), so
-    /// animations that run on their own know to re-plan.</summary>
+    /// <summary>Changes whenever the playhead is re-anchored (seek, pause, correction), so animations know to re-plan.</summary>
     public int Version { get; private set; }
 
     /// <summary>Seconds, positive shows lyrics earlier (global plus this song's).</summary>
@@ -52,14 +51,13 @@ public sealed class Playhead
 public readonly record struct SweepStop(double Start, double End, double From, double To);
 
 /// <summary>
-/// Plans the word-by-word colour sweep as keyframes, like the macOS app: positions come
-/// from measuring the line's text, and the plan runs from "now" to the end of the line, so
-/// it can be re-planned whenever the clock re-anchors.
+/// Plans the word-by-word colour sweep as keyframes, like the macOS app: positions come from
+/// measuring the line's text, and the plan runs from "now" to the end of the line so it can be
+/// re-planned.
 /// </summary>
 public static class Sweep
 {
-    /// <summary>Each word's start and end time and the sung width at each, for a line of
-    /// <paramref name="width"/>. Empty for a line without word timing.</summary>
+    /// <summary>Each word's start and end time and the sung width at each, for a line of <paramref name="width"/>. Empty without word timing.</summary>
     public static List<SweepStop> Stops(LyricLine piece, double width, Func<string, double> measure)
     {
         var stops = new List<SweepStop>();
@@ -77,7 +75,6 @@ public static class Sweep
         return stops;
     }
 
-    /// <summary>The sung width at <paramref name="t"/>.</summary>
     public static double SungWidth(IReadOnlyList<SweepStop> stops, LyricLine piece, double width, double t)
     {
         if (stops.Count == 0) return t >= piece.Start ? width : 0;

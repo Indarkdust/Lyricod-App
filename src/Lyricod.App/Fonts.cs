@@ -34,10 +34,10 @@ static class Fonts
     static string? Chosen => _choice == "MiSans" ? _miSans : _choice.Length > 0 ? _choice : null;
 
     /// <summary>
-    /// Puts the chosen font on the rest of Lyricod's text too: Settings, the tray panel, buttons and
-    /// song titles. WinUI reads it as each window opens, so a change after start shows there after a
-    /// restart (<see cref="AppNeedsRestart"/>). The default keeps Windows' font: its Chinese is Microsoft
-    /// YaHei too, and it has the semibold that headings use and YaHei lacks.
+    /// Puts the chosen font on the rest of Lyricod's text too (Settings, tray panel, buttons, song
+    /// titles). WinUI reads it as each window opens, so a later change needs a restart (<see
+    /// cref="AppNeedsRestart"/>). The default keeps Windows' font: its Chinese is Microsoft YaHei
+    /// too, and it has the semibold that headings use and YaHei lacks.
     /// </summary>
     public static void ApplyToApp(ResourceDictionary resources)
     {

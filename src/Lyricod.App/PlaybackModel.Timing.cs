@@ -24,10 +24,7 @@ public sealed partial class PlaybackModel
         ApplyOffset();
     }
 
-    /// <summary>
-    /// Updates the current line, then sets one timer for when the next line starts. Anything
-    /// that moves the playhead, pauses, or changes the lyrics calls this again.
-    /// </summary>
+    /// <summary>Updates the current line, then sets one timer for when the next starts. Anything that moves the playhead, pauses or changes the lyrics calls this again.</summary>
     void Tick()
     {
         if (_stopped) return;

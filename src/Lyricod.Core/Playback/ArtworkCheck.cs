@@ -4,10 +4,10 @@ namespace Lyricod.Core;
 
 /// <summary>
 /// Whether a cover's encoded image arrived whole. A player can hand over a cover it's still
-/// downloading: decoded, the missing part shows as grey, and nothing else says it was cut short.
-/// Only whether the image reaches its end is checked, by walking its structure; a format it doesn't
-/// know counts as whole. A cover that never reads as whole is still shown in the end (see
-/// <c>PlaybackModel.LoadArtwork</c>), so a false "cut short" only delays it.
+/// downloading: decoded, the missing part shows as grey and nothing else says it was cut short.
+/// Only whether the image reaches its end is checked, by walking its structure; an unknown format
+/// counts as whole. A cover that never reads as whole is still shown in the end (see
+/// <c>PlaybackModel.LoadArtwork</c>).
 /// </summary>
 public static class ArtworkCheck
 {

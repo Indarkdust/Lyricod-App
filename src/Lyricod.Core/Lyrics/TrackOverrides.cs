@@ -11,7 +11,6 @@ public sealed class TrackOverride
     [JsonPropertyName("neteaseID")] public long? NeteaseId { get; set; }
     [JsonPropertyName("offset")] public double? Offset { get; set; }
 
-    /// <summary>Lyrics the user chose for this song.</summary>
     [JsonIgnore]
     public LyricsRef? Lyrics
     {

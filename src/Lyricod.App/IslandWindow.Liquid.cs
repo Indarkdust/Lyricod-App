@@ -85,9 +85,9 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Lets screenshots, recordings and screen sharing see the liquid glass island for a few seconds.
-    /// Meanwhile the glass stops capturing and keeps showing what was behind it, so it can't capture
-    /// itself; the lyrics carry on.
+    /// Lets screenshots, recordings and screen sharing see the liquid glass island for a few
+    /// seconds. Meanwhile the glass keeps showing what was behind it instead of capturing, so it
+    /// can't capture itself.
     /// </summary>
     public void ShowInScreenshots()
     {
@@ -130,11 +130,11 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Windows ended the liquid glass's capture (the screen slept or went away), which left the island
-    /// on clear glass until something else (a new song, a hover) built the glass again. So it's built
-    /// again a few seconds later, and if that fails too, however it fails (the screen may not be back
-    /// yet), again less and less often, up to every 30 seconds, until it runs or isn't wanted. A
-    /// failure with no capture ended before it isn't tried again.
+    /// Windows ended the liquid glass's capture (the screen slept or went away), which left the
+    /// island on clear glass until something else (a new song, a hover) built the glass again. So
+    /// it's built again a few seconds later, and if that fails too, however it fails (the screen
+    /// may not be back yet), again less and less often, up to every 30 seconds, until it runs or
+    /// isn't wanted. A failure with no capture ended before isn't retried.
     /// </summary>
     void RetryLiquidLater()
     {

@@ -27,7 +27,6 @@ sealed partial class TransportButtons : StackPanel
         Update();
     }
 
-    /// <summary>Follows play/pause.</summary>
     public void Update() => _playIcon.Glyph = _model.IsPlaying ? "\uE769" : "\uE768"; // Pause / Play
 
     /// <summary>Sizes the island's controls through layout, keeping the icons crisp.</summary>

@@ -5,7 +5,6 @@ using System.Text.RegularExpressions;
 
 namespace Lyricod.Core;
 
-/// <summary>Turns each source's lyric text into <see cref="Lyrics"/>.</summary>
 public static partial class LyricParser
 {
     const double MaxTime = 24 * 60 * 60;
@@ -17,12 +16,8 @@ public static partial class LyricParser
 
     static string[] SplitLines(string s) => s.Split(NewLines, StringSplitOptions.None);
 
-    // ---- LRC ----
 
-    /// <summary>
-    /// Parses LRC into (time, text) pairs, sorted. Also understands NetEase's JSON
-    /// credit lines: {"t":1000,"c":[{"tx":"作曲: "},{"tx":"周杰伦"}]}.
-    /// </summary>
+    /// <summary>Parses LRC into sorted (time, text) pairs. Also understands NetEase's JSON credit lines: {"t":1000,"c":[{"tx":"作曲: "},{"tx":"周杰伦"}]}.</summary>
     public static List<(double Time, string Text)> ParseLrcEntries(string lrc)
     {
         var entries = new List<(double, string)>();
@@ -134,7 +129,6 @@ public static partial class LyricParser
         return words.Count == 0 ? null : words;
     }
 
-    /// <summary>Unsynced lyrics: shown as a static list.</summary>
     public static Lyrics? PlainText(string text, string source)
     {
         var rows = SplitLines(text).Select(l => l.Trim())
@@ -145,21 +139,16 @@ public static partial class LyricParser
         return new Lyrics(lines, source, isSynced: false);
     }
 
-    // ---- Credits ----
 
     [GeneratedRegex(@"^\s*(作词|作詞|作曲|编曲|編曲|制作人|监制|混音|录音|和声|吉他|贝斯|鼓|弦乐|母带|出品|发行|企划|词|曲|OP|SP|Lyricist|Lyrics|Composer|Producer|Arranger|Written by)[^:：]{0,16}[:：]",
         RegexOptions.IgnoreCase)]
     private static partial Regex CreditPattern();
 
-    /// <summary>
-    /// A short Chinese role ending like an instrument or a job, then a colon:
-    /// "小号：古嘉䜣", "长笛：宫崎千佳", "录音师：…". End-of-song musician credits name more
-    /// roles than the list above covers.
-    /// </summary>
+    /// <summary>A short Chinese role ending like an instrument or a job, then a colon ("小号：古嘉䜣"). Musician credits name more roles than the list above.</summary>
     [GeneratedRegex(@"^\s*[㐀-鿿豈-﫿]{0,5}(号|笛|琴|鼓|箫|萧|吉他|贝斯|键盘|合成器|和音|配唱|统筹|协力|师|工程|助理|设计|摄影|版权|演奏|室|乐队|乐团|指挥|监制|策划|编写|出品人)\s*[:：]\s*\S.{0,48}$")]
     private static partial Regex RoleCreditPattern();
 
-    /// <summary>English job titles before a colon: "Guitar：…", "Recording &amp; Mix：…", "Composed by：…". Japanese releases list the whole crew this way; QQ Music's English songs open with it.</summary>
+    /// <summary>English job titles before a colon ("Guitar：…", "Recording &amp; Mix：…"). Japanese releases list the whole crew this way.</summary>
     [GeneratedRegex(@"^\s*(?:[A-Za-z]+\s+){0,2}(?:Produc|Record|Mix|Master|Guitar|Bass|Drum|Piano|Keyboard|Synth|String|Violin|Viola|Cello|Chorus|Vocal|Programm|Engineer|Direct|Arrang|Compos|Lyric|Words|Music|Illustrat|Movie|Video|Design|Label|Publish|Writ)[A-Za-z]*(?:\s+by)?(?:\s*(?:&|and|/)\s*[A-Za-z]+)*\s*[:：]\s*\S",
         RegexOptions.IgnoreCase)]
     private static partial Regex EnglishRolePattern();
@@ -167,7 +156,6 @@ public static partial class LyricParser
     public static bool IsCreditLine(string text) =>
         CreditPattern().IsMatch(text) || RoleCreditPattern().IsMatch(text) || EnglishRolePattern().IsMatch(text);
 
-    // ---- YRC (NetEase word-by-word) ----
 
     [GeneratedRegex(@"^\[([^,\]]+),([^,\]]+)\]")]
     private static partial Regex TimedLine();
@@ -238,9 +226,9 @@ public static partial class LyricParser
     }
 
     /// <summary>
-    /// NetEase YRC sometimes drops the space after a word ("I'm(…)going "). When a line
-    /// is clearly split per word (most boundaries carry a space), restore the missing ones
-    /// between two Latin words. Syllable-split and CJK lines are untouched.
+    /// NetEase YRC sometimes drops the space after a word. On a line clearly split per word (most
+    /// boundaries carry a space), restores the missing ones between two Latin words. Syllable-split
+    /// and CJK lines are untouched.
     /// </summary>
     public static void RepairMissingSpaces(List<LyricWord> words)
     {
@@ -260,7 +248,6 @@ public static partial class LyricParser
 
     static bool IsLatin(char c) => char.IsAscii(c) && (char.IsLetterOrDigit(c) || c is '\'' or ',' or '!' or '?');
 
-    // ---- QRC (QQ Music word-by-word) ----
 
     /// <summary>
     /// The lyric text inside a decrypted QRC document
@@ -308,7 +295,6 @@ public static partial class LyricParser
         return Finish(lines, translation, source);
     }
 
-    // ---- Translation and romanisation ----
 
     static int? NearestLine(Lyrics lyrics, double t)
     {
@@ -319,10 +305,7 @@ public static partial class LyricParser
         return Math.Abs(lyrics.Lines[best].Start - t) < 1.0 ? best : null;
     }
 
-    /// <summary>
-    /// Matches each translated LRC entry to the original line starting closest to it.
-    /// YRC and LRC timings differ by a few hundred ms, so this is nearest-match, not exact.
-    /// </summary>
+    /// <summary>Matches each translated LRC entry to the nearest original line: YRC and LRC timings differ by a few hundred ms.</summary>
     public static void AttachTranslation(string lrc, Lyrics lyrics)
     {
         foreach (var (t, text) in ParseLrcEntries(lrc))
@@ -334,9 +317,8 @@ public static partial class LyricParser
     }
 
     /// <summary>
-    /// Attaches a source's romanisation the same way: LRC (NetEase) or word-timed QRC
-    /// (QQ Music, one syllable per word), each entry to the nearest line. QQ Music's keeps its
-    /// timing (see <see cref="Pronunciation.Words"/>).
+    /// Attaches a source's romanisation the same way: LRC (NetEase) or word-timed QRC (QQ Music, one
+    /// syllable per word, timing kept: see <see cref="Pronunciation.Words"/>).
     /// </summary>
     public static void AttachPronunciation(string text, Lyrics lyrics)
     {

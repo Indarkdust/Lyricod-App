@@ -11,30 +11,21 @@ public sealed record LyricWord(double Start, double Duration, string Text)
     public double Progress(double t) => Duration <= 0 ? (t >= Start ? 1 : 0) : Math.Clamp((t - Start) / Duration, 0, 1);
 }
 
-/// <summary>A language whose lyrics can get a pronunciation line.</summary>
 public enum LyricLanguage { Japanese, Korean, Chinese }
 
 /// <summary>How a line is said, in Latin letters: romaji, romanised Korean or pinyin.</summary>
 /// <param name="Language">Null until <c>Romanizer.Fill</c> has looked at the line.</param>
 public sealed record Pronunciation(string Text, LyricLanguage? Language = null, PronunciationOrigin Origin = PronunciationOrigin.Source)
 {
-    /// <summary>
-    /// The syllables as the source timed them (QQ Music's romaji, a syllable at a time), so the
-    /// pronunciation can be lit as it's sung like the line above it. Their texts, spaces included,
-    /// make up <see cref="Text"/>. Null where the source gave no timing or Lyricod worked the line out.
-    /// </summary>
+    /// <summary>Its words with their timing, so it can be lit as it's sung: the source's own syllables (QQ Music's romaji), or words timed from the line's (Romanizer.Timing.cs). Their texts, spaces included, make up <see cref="Text"/>. Null without either.</summary>
     public IReadOnlyList<LyricWord>? Words { get; init; }
 
-    /// <summary>
-    /// The pronunciation of <paramref name="line"/> as a line of its own, with its syllables'
-    /// timing, to be lit as it's sung; null without timing.
-    /// </summary>
+    /// <summary>The pronunciation of <paramref name="line"/> as a line of its own with its syllables' timing; null without timing.</summary>
     public LyricLine? Sung(LyricLine line) =>
         Words is { Count: > 0 } words ? new LyricLine { Start = line.Start, End = line.End, Text = Text, Words = words } : null;
 }
 
-/// <summary>Where a pronunciation came from: the lyric source's own as given, the source's reading
-/// grouped by word (Windows read the line the same way), or worked out by Lyricod.</summary>
+/// <summary>Where a pronunciation came from: the lyric source as given, the source grouped by word, or Lyricod's own.</summary>
 public enum PronunciationOrigin { Source, SourceByWord, Lyricod }
 
 public sealed record LyricLine
@@ -64,12 +55,8 @@ public sealed class Lyrics
     public List<LyricLine> Lines { get; set; }
     public string Source { get; set; }
     public bool IsSynced { get; set; }
-    /// <summary>The song the lyrics came from, if known.</summary>
     public LyricsRef? Ref { get; set; }
-    /// <summary>
-    /// Where the translation came from when another song did: the player's own platform's,
-    /// laid over the other platform's word-by-word lines (see <c>LyricsProvider.WordTimed</c>).
-    /// </summary>
+    /// <summary>Where the translation came from when another song did: the player's own platform's, laid over the other's word-by-word lines (see <c>LyricsProvider.WordTimed</c>).</summary>
     public LyricsRef? TranslationRef { get; set; }
 
     public bool IsWordSynced => Lines.Any(l => l.Words != null);
@@ -90,7 +77,6 @@ public sealed class Lyrics
     public Lyrics Copy() => new([.. Lines], Source, IsSynced) { Ref = Ref, TranslationRef = TranslationRef };
 }
 
-/// <summary>Which lyric source a song lives in.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter<LyricsSource>))]
 public enum LyricsSource
 {
@@ -124,10 +110,7 @@ public sealed record Track
     public string? QqSongMid { get; init; }
     /// <summary>The artist's other names ("Crowd Lu" → 卢广仲), filled in by <c>LyricsProvider</c>.</summary>
     public IReadOnlyList<string> ArtistAliases { get; init; } = [];
-    /// <summary>
-    /// The song's other titles, learned from search results: YouTube Music shows 夢灯籠 as
-    /// "Dream lantern", which NetEase lists only under its English version, translated 梦灯笼.
-    /// </summary>
+    /// <summary>The song's other titles, learned from search results ("Dream lantern" for 夢灯籠).</summary>
     public IReadOnlyList<string> TitleAliases { get; init; } = [];
 }
 

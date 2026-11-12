@@ -3,11 +3,10 @@ using Lyricod.Core;
 namespace Lyricod.Core.Romanization;
 
 /// <summary>
-/// When a pronunciation is sung, where the source didn't say: from the line's own word timing.
-/// Each word of a pronunciation worked out here reads some characters of the line (a pinyin
-/// syllable its character, a romaji word its kanji and kana, a romanised Korean word its Hangul),
-/// so it's sung from when the first of them starts until the last has been. A source's romaji
-/// spaced by the words found here (romaji by word) is timed the same way, word for word.
+/// When a pronunciation is sung, where the source didn't say: from the line's own word timing. Each
+/// word worked out here reads some characters of the line (a pinyin syllable its character, a romaji
+/// word its kanji and kana, a Korean word its Hangul), so it's sung from when the first starts until
+/// the last has been. A source's romaji spaced by those words (romaji by word) is timed the same way.
 /// </summary>
 public sealed partial class Romanizer
 {
@@ -16,12 +15,10 @@ public sealed partial class Romanizer
     record struct Placed(int At, int From, int To);
 
     /// <summary>
-    /// <paramref name="text"/> (a pronunciation of <paramref name="line"/>) as words with their
-    /// timing, to be lit as it's sung: one for each of <paramref name="starts"/> (where a word
-    /// starts in the text), with the space before it and any marks after it (the first also what's
-    /// before it), sung when <paramref name="reads"/> says its characters are. Their texts make up
-    /// the text.
-    /// Null when the line isn't timed by word, or a word's characters aren't known.
+    /// <paramref name="text"/> (a pronunciation of <paramref name="line"/>) as timed words, one for each of
+    /// <paramref name="starts"/>, with the space before it and any marks after it, sung when
+    /// <paramref name="reads"/> says its characters are. Their texts make up the text. Null when the line
+    /// isn't timed by word or a word's characters aren't known.
     /// </summary>
     static List<LyricWord>? Sung(string text, List<int> starts, List<Placed> reads, LyricLine line)
     {

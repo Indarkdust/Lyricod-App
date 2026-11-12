@@ -7,24 +7,23 @@ using Windows.Globalization;
 namespace Lyricod.Platform;
 
 /// <summary>
-/// Japanese words and their kana readings from Windows' own analyser (the one the Japanese
-/// IME uses), for romaji. Text between words (spaces the analyser drops, punctuation) comes
-/// back with no reading.
+/// Japanese words and their kana readings from Windows' own analyser (the Japanese IME's), for
+/// romaji. Text between words (dropped spaces, punctuation) comes back with no reading.
 /// </summary>
 public sealed class JapaneseReader : IJapaneseReader
 {
     /// <summary>
-    /// Runs work where the analyser works. It can refuse threads from the thread pool (where lyrics
-    /// are worked out) with the same "ClassFactory" error while working on single-threaded (STA)
-    /// threads like the UI's, so it gets one of its own; failing that, the UI thread lends a hand.
+    /// Runs work where the analyser works. It can refuse thread-pool threads (where lyrics are worked
+    /// out) with the "ClassFactory" error yet work on STA threads like the UI's, so it gets a thread
+    /// of its own; failing that, the UI thread.
     /// </summary>
     static Action<Action>? _invoke;
 
     /// <summary>
     /// Whether Windows can analyse Japanese here. The analyser comes with the Japanese input
     /// method; without it Windows refuses to create it ("ClassFactory cannot supply requested
-    /// class"), and Japanese pronunciation comes only from the lyric sources' own romaji.
-    /// Checked on first use, which is on the UI thread at startup.
+    /// class"), and pronunciation comes only from the lyric sources' own romaji. Checked on first
+    /// use (the UI thread, at startup).
     /// </summary>
     public static bool IsAvailable { get; } = Probe();
 

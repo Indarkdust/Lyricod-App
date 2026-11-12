@@ -29,7 +29,7 @@ public partial class App : Application
 
     public App()
     {
-        // Whatever ends Lyricod unexpectedly is written down first (see Log). Nothing here changes what happens next.
+        // Whatever ends Lyricod unexpectedly is logged first; this changes nothing about what happens next.
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Write("unhandled: " + e.ExceptionObject);
         TaskScheduler.UnobservedTaskException += (_, e) => Log.Write("unobserved task: " + e.Exception);
         UnhandledException += (_, e) => Log.Write("unhandled (XAML): " + e.Exception);
@@ -48,7 +48,6 @@ public partial class App : Application
 
     async Task LaunchAsync()
     {
-        // One Lyricod at a time.
         if (!AppInstance.FindOrRegisterForKey("Lyricod").IsCurrent)
         {
             Platform.UpdateHealth.SignalStarted(); // it runs: another Lyricod is just already open
@@ -95,8 +94,8 @@ public partial class App : Application
         };
 
         await _model.StartAsync();
-        // After a portable update: windows, tray icon and media tracking are all up, so the launcher can
-        // let the old copy go. Anything above that throws ends here without this, and the launcher puts it back.
+        // After a portable update: everything is up, so the launcher can let the old copy go. If
+        // anything above threw, this is never reached and the launcher puts the old copy back.
         Platform.UpdateHealth.SignalStarted();
     }
 
@@ -172,10 +171,7 @@ public partial class App : Application
     /// <summary>Starts a new Lyricod and quits this one (to change language).</summary>
     void Restart() => Quit(restart: true);
 
-    /// <summary>
-    /// Quits once the click that asked for it (the tray panel's button or Settings' Restart) has
-    /// finished, since its window closes on the way out.
-    /// </summary>
+    /// <summary>Quits once the click that asked for it has finished, since its window closes on the way out.</summary>
     void Quit() => Quit(restart: false);
 
     public void QuitForUpdate() => Quit(restart: false);
@@ -194,10 +190,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Stops everything that calls back on its own (the player's reports, timers, the audio meter,
-    /// shortcuts and the tray icon), closes the windows, then exits. Anything left running would
-    /// run against closed windows, and an exception there crashes the process (0xC000027B in
-    /// CoreMessagingXP) instead of letting it exit.
+    /// Stops everything that calls back on its own (player reports, timers, audio meter, shortcuts,
+    /// tray icon), closes the windows, then exits. A callback left running against a closed window
+    /// that throws crashes the process (0xC000027B in CoreMessagingXP).
     /// </summary>
     void ShutDown(bool restart)
     {

@@ -7,23 +7,23 @@ namespace Lyricod.Core;
 /// <summary>The helper's download: where it is, how big, and its SHA-256 as GitHub lists it.</summary>
 public sealed record NeteaseHelperFile(Uri Url, long Size, string Sha256);
 
-/// <summary>How running the helper went: done, or what went wrong (its own words, in English).</summary>
+/// <summary>How running the helper went: done, or what went wrong (its own words).</summary>
 public sealed record NeteaseHelperOutcome(bool Ok, string? Error);
 
 /// <summary>
 /// NetEase Cloud Music sync (Settings › General): Lyricod CM Helper, downloaded only when asked,
-/// installs BetterNCM and the InfLink-rs plugin into NetEase Cloud Music so it reports where it is
-/// in the song. Everything about it lives here, in Platform/NeteaseSetup.cs and in
-/// SettingsWindow.NeteaseSync.cs, so it can be taken out whole.
+/// installs BetterNCM and the InfLink-rs plugin so NetEase reports where it is in the song. It all
+/// lives here, in NeteaseSetupState.cs, Platform/NeteaseSetup.cs and SettingsWindow.NeteaseSync.cs,
+/// so it can be taken out whole.
 /// </summary>
 public static class NeteaseSync
 {
     public const string HelperRepository = "darkdust-c/Lyricod-CM-Helper";
 
     /// <summary>
-    /// The helper runs as administrator, so Lyricod only runs the version reviewed for this release of
-    /// Lyricod, by its tag and SHA-256: a new release of the helper reaches people with a new Lyricod,
-    /// never on its own (and a changed file under the same tag is refused).
+    /// The helper runs as administrator, so Lyricod only runs the version reviewed for this
+    /// release, by its tag and SHA-256: a new helper release reaches people with a new Lyricod,
+    /// never on its own, and a changed file under the same tag is refused.
     /// </summary>
     public const string HelperVersion = "v1.0.1";
     public const string HelperSha256 = "76198fa2ee2cc372c1f07f7ca940ccc826e00b370699c871b2b40ed34fab20d8";
@@ -71,10 +71,7 @@ public static class NeteaseSync
         return release >= TestedFrom && release <= TestedTo;
     }
 
-    /// <summary>
-    /// The helper in its latest release, if it comes from that repository's own releases on github.com
-    /// and GitHub lists its SHA-256: without one, it can't be checked, so it isn't used.
-    /// </summary>
+    /// <summary>The helper in its latest release, if it comes from that repository's own releases on github.com and GitHub lists its SHA-256 (without one it can't be checked).</summary>
     public static NeteaseHelperFile? FindHelper(string json)
     {
         try
@@ -107,7 +104,6 @@ public static class NeteaseSync
     static string? Text(JsonElement element, string property) =>
         element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
-    /// <summary>The helper's command line: install or remove, with NetEase's and BetterNCM's folders and where to write the result.</summary>
     public static string Arguments(bool remove, string netease, string data, string result) =>
         $"{(remove ? "remove" : "install")} --netease {Quote(netease)} --data {Quote(data)} --result {Quote(result)}";
 
@@ -146,8 +142,8 @@ public static class NeteaseSync
 
     /// <summary>
     /// Whether InfLink-rs is in BetterNCM's data folder, however it got there: packed in <c>plugins</c>
-    /// (as the helper names it, InfLink-rs.plugin, or as BetterNCM's plugin store does,
-    /// InfLinkrs-&lt;version&gt;.plugin), or unpacked in <c>plugins_dev</c>.
+    /// (InfLink-rs.plugin from the helper, InfLinkrs-&lt;version&gt;.plugin from BetterNCM's store)
+    /// or unpacked in <c>plugins_dev</c>.
     /// </summary>
     public static bool HasInfLink(string dataFolder)
     {
@@ -161,7 +157,7 @@ public static class NeteaseSync
         catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
     }
 
-    /// <summary>The name in a packed plugin's (a zip's) manifest.json, or null when it isn't one.</summary>
+    /// <summary>The name in a packed plugin's (a zip's) manifest.json.</summary>
     static string? PackedName(string path)
     {
         try

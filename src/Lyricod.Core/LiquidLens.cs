@@ -1,16 +1,16 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// The lens of Lyricod Glass's liquid effect: a displacement map for a rounded rectangle that bends
-/// what's behind the glass inward near its edges, strongest at the edge and gone a short way in, as
-/// light bends through the rounded edge of a thick piece of glass; and the light the glass catches
-/// along that same edge, for its 3D effect.
+/// The lens of Lyricod Glass's liquid effect: a displacement map that bends what's behind a rounded
+/// rectangle inward near its edges, like a thick piece of glass, and the light the glass catches
+/// along them.
 /// </summary>
 public static class LiquidLens
 {
     /// <summary>
-    /// The map, as BGRA pixels: red and green hold how far to look across and down (128 means not at
-    /// all, 255 the most inward from the left or top, 0 from the right or bottom); blue is 0 and alpha 255.
+    /// The map, as BGRA pixels: red and green hold how far to look across and down (128 not at all,
+    /// 255 the most inward from the left or top, 0 from the right or bottom); blue is 0 and alpha
+    /// 255.
     /// </summary>
     /// <param name="radius">The corner radius, in pixels.</param>
     /// <param name="squareTop">The top edge is the screen's edge (the default island): no bending there.</param>
@@ -21,7 +21,6 @@ public static class LiquidLens
         Measure(width, height, radius, squareTop, (i, depth, dx, dy) =>
         {
             double strength = depth >= band || depth < 0 ? 0 : Math.Pow(1 - depth / band, 2);
-            // Inward: against the way out.
             pixels[i + 2] = (byte)Math.Round(128 - 127 * dx * strength);
             pixels[i + 1] = (byte)Math.Round(128 - 127 * dy * strength);
             pixels[i + 3] = 255;
@@ -31,9 +30,8 @@ public static class LiquidLens
 
     /// <summary>
     /// The light on the glass, as premultiplied BGRA pixels of white: a thin bright line along the
-    /// edge, strongest where the edge faces the light (above, a little to the left) and glinting
-    /// more faintly on the far side, where light comes back through the glass; and a soft glow over
-    /// the band where the glass bends, as its rounded edge gathers light.
+    /// edge, strongest where it faces the light (above, a little to the left) and fainter on the
+    /// far side, plus a soft glow over the band where the glass bends.
     /// </summary>
     /// <param name="rim">How wide the bright line is, in pixels.</param>
     public static byte[] Light(int width, int height, double radius, bool squareTop, double rim)
@@ -63,8 +61,8 @@ public static class LiquidLens
         Math.Max(2, Math.Min(Math.Min(width, height) / 2.0, Math.Max(radius * 1.5, 12)));
 
     /// <summary>
-    /// Visits each pixel (by its offset in a BGRA buffer) with how far inside the rounded rectangle it
-    /// is (negative: outside) and the way out from there, one pixel long.
+    /// Visits each pixel (by its offset in a BGRA buffer) with its depth inside the rounded rectangle
+    /// (negative: outside) and the unit vector pointing out.
     /// </summary>
     static void Measure(int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit)
     {

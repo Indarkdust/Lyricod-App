@@ -9,8 +9,8 @@ namespace Lyricod;
 
 /// <summary>
 /// The island's theme (Settings › Lyricod Island › Theme): Classic black, or Lyricod Glass, a
-/// see-through tint. With the liquid effect, glass's 3D effect lights it as glass catches light: the
-/// liquid glass draws the light along its edge itself, following the curve of its lens, and a
+/// see-through tint. With the liquid effect, glass's 3D effect lights it as glass catches light
+/// (the liquid glass draws the light along its edge itself, following the curve of its lens), and a
 /// floating island gets a shadow underneath.
 /// </summary>
 public sealed partial class IslandWindow

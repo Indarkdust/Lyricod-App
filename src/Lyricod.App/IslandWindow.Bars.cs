@@ -39,8 +39,7 @@ public sealed partial class IslandWindow
         }
     }
 
-    /// <summary>A new height eases in over <paramref name="seconds"/>, so the compositor draws the
-    /// frames in between (smooth at the display's rate, no extra work here).</summary>
+    /// <summary>A new height eases in over <paramref name="seconds"/>, so the compositor draws the frames in between.</summary>
     void Glide(double seconds, bool linear)
     {
         var compositor = _barVisuals[0].Compositor;
@@ -63,8 +62,8 @@ public sealed partial class IslandWindow
         for (int i = 0; i < _barVisuals.Count; i++)
         {
             double phase = t * (3.1 + i * 1.3) + i * 1.7;
-            // Listening but nothing to hear (between songs, or the meter is still starting): stay low
-            // rather than make up a bounce. The bounce is only for when listening can't work.
+            // Listening but nothing to hear (between songs, or the meter is still starting): stay
+            // low rather than make up a bounce, which is only for when listening can't work.
             double height = !_barsRunning ? 3
                 : levels != null ? 3 + 11 * Math.Clamp(levels[i], 0, 1)
                 : listening ? 3

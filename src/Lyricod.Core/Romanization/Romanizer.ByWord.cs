@@ -7,24 +7,15 @@ namespace Lyricod.Core.Romanization;
 /// Romaji by word (experimental, Settings > Lyrics): Japanese romaji spaced by word rather than by
 /// syllable. A source's romaji ("hi ka re a u no wa na ze", as QQ Music times it) is spaced by the
 /// words Windows' analyser finds ("hikare au no wa naze"), and a kanji's kana ending the analyser
-/// gives apart stays with it ("naku", not "na ku"). Off, Romanizer.cs works as it always has.
-/// <para>
-/// Where the source timed its romaji and the line word by word (QQ Music), each syllable is put
-/// with the word being sung when it starts: exact, whatever the two readings are, and the timing
-/// stays with the syllables. Otherwise the two romaji are lined up by their letters, and where the
-/// line is timed word by word each romaji word is sung when the characters it reads are
-/// (Romanizer.Timing.cs).
-/// </para>
+/// gives apart stays with it ("naku", not "na ku"). Where the source timed its romaji (QQ Music),
+/// each syllable goes with the word being sung when it starts; otherwise the two romaji are lined
+/// up by letters. Off, Romanizer.cs works as before.
 /// </summary>
 public sealed partial class Romanizer
 {
-    /// <summary>Romaji by word is on (off unless chosen in Settings).</summary>
     public bool GroupJapaneseByWord { get; set; }
 
-    /// <summary>
-    /// A source's romaji for <paramref name="line"/> spaced by the words worked out here, or null
-    /// when there's no reading here or the two don't line up (the source's then shows as it came).
-    /// </summary>
+    /// <summary>A source's romaji for <paramref name="line"/> spaced by the words worked out here; null when there's no reading here or the two don't line up.</summary>
     Pronunciation? ByWord(Pronunciation given, LyricLine line)
     {
         if (Reader is { } reader && given.Words is { } syllables && line.Words is { } sung
@@ -44,11 +35,11 @@ public sealed partial class Romanizer
     const double Leeway = 0.003;
 
     /// <summary>
-    /// The source's timed syllables spaced by the line's words (<paramref name="spans"/>: where each
-    /// is in the line's text): a syllable belongs to the word whose character is being sung when it
-    /// starts (<paramref name="sung"/>, the line word by word; a kanji's syllables all start within
-    /// it). A doubled consonant the source writes as a syllable of its own ("'t" before "ta") is
-    /// just the letter inside a word: "yokatta". Null when a syllable isn't within the line.
+    /// The source's timed syllables spaced by the line's words (<paramref name="spans"/>: where
+    /// each is in the line's text): a syllable belongs to the word whose character is being sung
+    /// when it starts (<paramref name="sung"/>, the line word by word). A doubled consonant written
+    /// as a syllable of its own ("'t" before "ta") is just a letter inside the word: "yokatta".
+    /// Null when a syllable isn't in the line.
     /// </summary>
     internal static Pronunciation? BySungWord(IReadOnlyList<LyricWord> syllables, LyricLine line, IReadOnlyList<LyricWord> sung,
         List<(int From, int To)> spans)
@@ -62,8 +53,8 @@ public sealed partial class Romanizer
             starts[i] = at + (sung[i].Text.Length - sung[i].Text.TrimStart().Length);
 
         var words = new List<LyricWord>(syllables.Count);
-        // The word the syllable before was in (a place between words counts as one of its own),
-        // and whether the next syllable goes straight after an opening bracket.
+        // The word the syllable before was in (a place between words counts as its own), and whether
+        // the next syllable goes straight after an opening bracket.
         int last = int.MinValue, k = 0;
         bool glued = false;
         foreach (var syllable in syllables)
@@ -89,16 +80,14 @@ public sealed partial class Romanizer
 
     /// <summary>
     /// <paramref name="source"/>'s romaji spaced by the words of <paramref name="ours"/>. Their letters
-    /// are lined up, which works where the readings differ here and there (明日 as "asu" or "ashita",
-    /// へ as "he" or "e", を as "wo" or "o"), and the source's spaces between letters go where ours
-    /// break between words. The source's letters, spelling and punctuation stay. Null when the two
+    /// are lined up, which copes with readings that differ here and there (明日 as "asu" or "ashita"),
+    /// and spaces go where ours break between words. The source's spelling stays. Null when the two
     /// are too different to line up.
     /// </summary>
     public static string? Regroup(string source, string ours)
     {
         // Letters only, lowercase and without accents; where each of ours starts a word.
         var theirs = new List<(char Letter, int At)>();
-        // Letters of theirs with a space (or anything else) before them.
         var spacedBefore = new HashSet<int>();
         for (int c = 0; c < source.Length; c++)
         {
@@ -127,7 +116,6 @@ public sealed partial class Romanizer
             for (int j = 1; j <= m; j++)
                 cost[i, j] = Math.Min(cost[i - 1, j - 1] + (mine[i - 1] == theirs[j - 1].Letter ? 0 : 1), Math.Min(cost[i - 1, j], cost[i, j - 1]) + 1);
         if (cost[n, m] > Math.Max(2, Math.Max(n, m) * 0.35)) return null;
-        // Where each of our letters starts and ends among theirs.
         var at = new int[n];
         var after = new int[n];
         for (int i = n, j = m; i > 0;)
@@ -146,8 +134,7 @@ public sealed partial class Romanizer
             if (k > 0 && k < m) breaks.Add(k);
         }
 
-        // Their text again, with a space between letters only where ours breaks; spaces next to
-        // punctuation stay as they were.
+        // Their text again, with a space between letters only where ours breaks; spaces next to punctuation stay.
         var sb = new StringBuilder();
         bool spaced = false;
         int letter = 0;
@@ -169,29 +156,22 @@ public sealed partial class Romanizer
 
     static char Plain(char c) => char.ToLowerInvariant(c.ToString().Normalize(NormalizationForm.FormD)[0]);
 
-    /// <summary>
-    /// Particles and helpers that stay words of their own after a kanji (音|は "oto wa", 離れ|て
-    /// "hanare te", 泣く|ん|だ|ね), unlike a kanji's own kana ending.
-    /// </summary>
+    /// <summary>Particles and helpers that stay words of their own after a kanji (音|は "oto wa", 離れ|て "hanare te"), unlike a kanji's own kana ending.</summary>
     static readonly HashSet<string> OwnWords = [
         "は", "が", "を", "に", "へ", "と", "で", "も", "の", "や", "か", "ね", "よ", "な", "ぞ", "さ", "わ", "ば", "て", "た", "だ", "ん",
         "から", "まで", "より", "けど", "けれど", "ので", "のに", "ても", "でも", "だけ", "しか", "ばかり", "など", "なら", "たら", "たり",
         "ながら", "ほど", "くらい", "ぐらい", "さえ", "こそ", "すら", "ずつ", "って", "とか", "ます", "ました", "ません", "ない", "なかっ",
         "たい", "です", "でし", "だろう", "でしょう", "でしょ", "じゃ", "ちゃ", "よう", "そう", "らしい", "みたい"];
 
-    /// <summary>
-    /// A kanji's kana ending that Windows' analyser gives as a word of its own (泣|く, 鳴|る, 憂|き),
-    /// which belongs with it: "naku", not "na ku". One kana, or an adjective's ending.
-    /// </summary>
+    /// <summary>A kanji's kana ending that the analyser gives as a word of its own (泣|く, 憂|き) but belongs with it: one kana, or an adjective's ending.</summary>
     static bool IsEnding(string surface) =>
         !OwnWords.Contains(surface) && surface.All(KanaRomaji.IsKana) && (surface.Length == 1 || surface is "しい" or "しく" or "しき");
 
     static bool EndsWithKanji(string s) => s.Length > 0 && !KanaRomaji.IsKana(s[^1]) && char.IsLetter(s[^1]);
 
     /// <summary>
-    /// Joins a kanji's kana ending to the word before it when the analyser gave it apart (泣|く
-    /// "naku"); a small っ ending goes on with the next word instead (待|っ|て "matte").
-    /// Returns whether the word was taken.
+    /// Joins a kanji's kana ending to the word before it (泣|く "naku"); a small っ ending goes on with
+    /// the next word instead (待|っ|て "matte"). Returns whether the word was taken.
     /// </summary>
     static bool JoinsEnding(List<Part> parts, ref string pending, ref int pendingFrom, ref string? lastSurface, ref string? lastReading,
         string surface, string reading, bool phraseStart, int to)

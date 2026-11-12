@@ -1,10 +1,10 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// The deliberate move that expands an island set to hide on hover, like pulling down a shade: the
-/// pointer sweeps sideways (across the island, along it, or on its way to it), then pulls down (a
-/// floating island: up or down) over the island. The pull may start inside and carry on out past its
-/// edge. Anything else hides the island, so brushing past never opens the mini player.
+/// The move that expands a hide-on-hover island, like pulling down a shade: the pointer sweeps
+/// sideways, then pulls down (up or down for a floating island) over the island. The pull may start
+/// inside and run out past the edge. Anything else hides the island, so brushing past never opens
+/// the mini player.
 /// </summary>
 public static class IslandGesture
 {

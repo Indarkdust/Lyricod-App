@@ -42,16 +42,16 @@ public sealed partial class UpdateChecker
         State = UpdateState.Idle;
     }
 
-    /// <summary>Right after an installer update, Setup is still running when it opens the new Lyricod,
-    /// so the start-up cleanup can't remove the downloaded setup yet: try once more a minute later,
-    /// unless an update is being downloaded or is waiting (its staged files must stay).</summary>
+    /// <summary>After an installer update Setup is still running when the new Lyricod opens, so the
+    /// start-up cleanup can't remove the downloaded setup yet: try once more a minute later, unless
+    /// an update is downloading or waiting (its staged files must stay).</summary>
     async Task CleanUpAgainAsync()
     {
         if (State != UpdateState.Idle || _disposed || !await _files.WaitAsync(0)) return;
         try
         {
             var running = UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0);
-            // Started by an update: the old copy is the launcher's to remove (or the next start's).
+            // Started by an update: the old copy is the launcher's to remove.
             bool keepOldCopies = Platform.UpdateHealth.Pending;
             await Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, running, keepOldCopies));
         }

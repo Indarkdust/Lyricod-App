@@ -1,9 +1,9 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// Softens a small copy of the cover once, for the lyrics window's background (the macOS app's
-/// ArtworkDrift does the same with Core Image): blurred and a little more saturated, then shown
-/// scaled up and slowly turning. Blurring once here costs nothing per frame later.
+/// Softens a small copy of the cover once for the lyrics window's background (as the macOS app's
+/// ArtworkDrift does with Core Image): blurred and a little more saturated, then shown scaled up and
+/// slowly turning, so nothing is blurred per frame.
 /// </summary>
 public static class ArtworkBlur
 {

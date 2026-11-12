@@ -139,7 +139,6 @@ public sealed partial class SettingsWindow
         });
     }
 
-    /// <summary>Lyricod Glass's settings, in their fold on the island page.</summary>
     void GlassSettings()
     {
         Card(L.Get("GlassTransparency"), null,
@@ -356,7 +355,7 @@ public sealed partial class SettingsWindow
         {
             FontFamily = new FontFamily("Consolas"), FontSize = 12,
             TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true,
-            Visibility = Visibility.Collapsed, // hidden until asked for
+            Visibility = Visibility.Collapsed,
         };
         void RefreshDiagnostics() => diagnostics.Text = _model.DiagnosticsText;
         _songWatchers.Add(RefreshDiagnostics);

@@ -46,7 +46,6 @@ public static partial class TrackMatcher
     [GeneratedRegex(@"(english|japanese|chinese|mandarin|cantonese|korean|thai)\s*(ver(sion)?|edition)\b|[\(（\[【]\s*(english|japanese|chinese|mandarin|cantonese|korean|thai)\s*[\)）\]】]|(英文|日文|中文|韩文|英语|日语|日本语|韩语|粤语|国语|普通话|华语|闽南语|台语|泰语|英|日|韩|粤)\s*(版|ver)")]
     private static partial Regex LanguageVersion();
 
-    // No vocals, so no lyrics to show.
     [GeneratedRegex(@"instrumental|\binst\b|伴奏|纯音乐|off\s*vocal|karaoke|カラオケ|オフボーカル|backing\s*track|消音|no\s*vocals?")]
     private static partial Regex NoVocals();
 
@@ -55,10 +54,7 @@ public static partial class TrackMatcher
     [GeneratedRegex(@"\blive\b|现场|演唱会|remix|acoustic|piano|钢琴|\bcover\b|翻自|翻唱|sped\s*up|slowed|加速|\bdj\b")]
     private static partial Regex Variant();
 
-    /// <summary>
-    /// What a title says it is besides the song: "lang:en" (an English version), "novocals"
-    /// (an instrumental), "variant" (live, remix, cover…).
-    /// </summary>
+    /// <summary>What a title says it is besides the song: "lang:en" (an English version), "novocals" (an instrumental), "variant" (live, remix, cover…).</summary>
     public static HashSet<string> Versions(string title)
     {
         var s = WordsHelper.ToSimplifiedChinese(title).ToLowerInvariant();
@@ -81,9 +77,9 @@ public static partial class TrackMatcher
         : "zh";
 
     /// <summary>
-    /// A Latin title for one written in kana, either way round ("BETELGEUSE" for ベテルギウス,
-    /// "Sayonara, Mata Itsuka!" for さよーならまたいつか！), as YouTube Music and Spotify often show them.
-    /// Compared by consonants, the way katakana spells English: r for l, b for v, vowels in between.
+    /// A Latin title for one written in kana, either way round ("BETELGEUSE" for ベテルギウス), as
+    /// YouTube Music and Spotify often show them. Compared by consonants, the way katakana spells
+    /// English: r for l, b for v, vowels in between.
     /// </summary>
     public static bool SoundsAlike(string a, string b)
     {
@@ -132,7 +128,6 @@ public static partial class TrackMatcher
         return row[b.Length];
     }
 
-    /// <summary>A title stripped of bracketed parts, for searching.</summary>
     public static string BareTitle(string title) => Regex.Replace(title, @"\s*[\(（\[【].*?[\)）\]】]", "");
 
     /// <summary>Whether any of <paramref name="artists"/> is the playing artist, under any of their names.</summary>
@@ -175,13 +170,12 @@ public static partial class TrackMatcher
         else if (wanted.Any(w => offered.Any(o => o.Contains(w) || w.Contains(o)))) score += 1.5;
         else if (wantedTitles.Any(w => offeredTitles.Any(o => SoundsAlike(w, o)))) score += 1.5;
         else titleMatches = false;
-        // No title in common: only the same artist with the same length identifies the song
-        // (an English title for a song listed only in Chinese). Anything looser is another
-        // song by that artist (晴天 matched 骑士精神, 11 s apart).
+        // No title in common: only the same artist with the same length identifies the song (an
+        // English title for a song listed only in Chinese). Anything looser is another song by that
+        // artist.
         if (!titleMatches && (track.Duration <= 0 || duration <= 0 || Math.Abs(duration - track.Duration) >= 3)) score -= 3;
 
-        // Versions: the English version of a Japanese song can share its title (NetEase lists
-        // "Dream lantern (English ver.)" under 夢灯籠 too), artist and length, but not its words.
+        // Versions: the English version of a Japanese song can share its title, artist and length, but not its words.
         var playingVersions = Versions(track.Title);
         playingVersions.UnionWith(Versions(track.Album).Where(v => v.StartsWith("lang:", StringComparison.Ordinal)));
         var offeredVersions = titleList.SelectMany(Versions).ToHashSet();

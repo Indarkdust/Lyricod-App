@@ -30,7 +30,6 @@ public static class KanaRomaji
         ['ぁ'] = "a", ['ぃ'] = "i", ['ぅ'] = "u", ['ぇ'] = "e", ['ぉ'] = "o", ['ゎ'] = "wa", ['ゕ'] = "ka", ['ゖ'] = "ke",
     };
 
-    /// <summary>Katakana → hiragana (ヴ and the small forms included); other text unchanged.</summary>
     public static char ToHiragana(char c) => c is >= 'ァ' and <= 'ヶ' ? (char)(c - 0x60) : c;
 
     public static bool IsKana(char c) => c is >= 'ぁ' and <= 'ゖ' or >= 'ァ' and <= 'ヺ' or 'ー' or 'ゝ' or 'ゞ' or 'ヽ' or 'ヾ';

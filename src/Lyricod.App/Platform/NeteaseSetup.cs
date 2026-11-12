@@ -64,9 +64,9 @@ public static class NeteaseSetup
 
     /// <summary>
     /// BetterNCM's data folder, found as BetterNCM finds it: the BETTERNCM_PROFILE environment variable
-    /// (which BetterNCM's installer sets when you change the folder), else C:\betterncm. Read from
-    /// Windows' saved settings first, the user's over the machine's as NetEase Cloud Music sees them:
-    /// they're current even if the folder changed after Lyricod started, unlike Lyricod's own copy.
+    /// (set by its installer when you change the folder), else C:\betterncm. Read from Windows'
+    /// saved settings (the user's over the machine's), which stay current if the folder changes
+    /// after Lyricod started, unlike Lyricod's own copy.
     /// </summary>
     public static string DataFolder()
     {

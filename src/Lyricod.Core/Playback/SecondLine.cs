@@ -8,9 +8,7 @@ public enum SecondLine { TranslationOrNext, Translation, PronunciationOrTranslat
 
 public static class SecondLineExtensions
 {
-    /// <summary>What the island shows under line <paramref name="i"/>, or null for no second row
-    /// (nothing chosen, no line yet, unsynced lyrics, or nothing under this line), so the row comes
-    /// and goes with the line.</summary>
+    /// <summary>What the island shows under line <paramref name="i"/>, or null for no second row (nothing chosen, no line yet, unsynced lyrics, or nothing under this line).</summary>
     public static (string Text, bool IsExtra)? RowUnder(this SecondLine mode, int? i, Lyrics? lyrics)
     {
         if (mode == SecondLine.None || i is not int index || lyrics is not { IsSynced: true }) return null;
@@ -18,9 +16,9 @@ public static class SecondLineExtensions
     }
 
     /// <summary>
-    /// The rows under line <paramref name="i"/> on the desktop strip: the pronunciation and then
-    /// the translation for <c>PronunciationAndTranslation</c> (each only when the line has it),
-    /// otherwise the one row <see cref="TextUnder"/> gives, if any.
+    /// The rows under line <paramref name="i"/> on the desktop strip: for
+    /// <c>PronunciationAndTranslation</c>, the pronunciation then the translation (each only when
+    /// the line has it), otherwise the one row <see cref="TextUnder"/> gives, if any.
     /// </summary>
     public static List<(string Text, bool IsExtra)> RowsUnder(this SecondLine mode, int i, Lyrics lyrics)
     {
@@ -34,14 +32,10 @@ public static class SecondLineExtensions
         return rows;
     }
 
-    /// <summary>
-    /// A row under <paramref name="line"/> as a line to light as it's sung: when the row is the
-    /// line's pronunciation and the source timed it. Null for any other row.
-    /// </summary>
+    /// <summary>A row under <paramref name="line"/> as a line to light as it's sung: only its pronunciation, and only when it has timing. Null otherwise.</summary>
     public static LyricLine? SungRow(string? row, LyricLine? line) =>
         line?.Pronunciation is { } p && p.Text == row ? p.Sung(line) : null;
 
-    /// <summary>How many rows <paramref name="mode"/> can put under a line.</summary>
     public static int MaxRows(this SecondLine mode) => mode switch
     {
         SecondLine.None => 0,

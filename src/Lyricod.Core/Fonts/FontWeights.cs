@@ -2,7 +2,6 @@ namespace Lyricod.Core.Fonts;
 
 public enum LyricWeight { Regular, Medium, Semibold, Bold, Heavy }
 
-/// <summary>Which kind of font the weights are for.</summary>
 public enum LyricFont { Default, MiSans, Other }
 
 public static class FontWeights

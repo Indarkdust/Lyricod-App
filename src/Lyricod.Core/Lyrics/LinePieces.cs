@@ -4,19 +4,16 @@ using System.Text;
 namespace Lyricod.Core;
 
 /// <summary>
-/// Splits a lyric line that's too wide for its space: into rows (the lyrics window) or into pieces
-/// shown one after another (the desktop strip and the island), each starting when its first word
-/// is sung.
+/// Splits a lyric line that's too wide for its space into rows (the lyrics window) or pieces shown
+/// one after another (the desktop strip and the island), each starting when its first word is sung.
 /// </summary>
 public static class LinePieces
 {
     /// <summary>
-    /// <paramref name="measure"/> gives a string's drawn width. Lines that fit come back whole.
-    /// Otherwise the line is broken into as few pieces as fit, as even as they can be, where a
-    /// reader would break: at spaces, after punctuation, between words rather than inside them.
-    /// A piece never starts with a closing mark ("」", "、") or ends with an opening one ("「").
-    /// Word timing is kept (a word split between pieces shares its time by length); a line without
-    /// it gets times spread over its characters.
+    /// <paramref name="measure"/> gives a string's drawn width. Lines that fit come back whole; others
+    /// are broken into as few, as even pieces as fit, between words or after punctuation, never leaving
+    /// a closing mark ("」", "、") at the start of a piece or an opening one ("「") at its end. Word
+    /// timing is kept (a split word shares its time by length); without it, times are spread over the characters.
     /// </summary>
     public static List<LyricLine> Split(LyricLine line, double maxWidth, Func<string, double> measure)
     {
@@ -71,7 +68,6 @@ public static class LinePieces
         return pieces.Count > 1 ? pieces : [line];
     }
 
-    /// <summary>Characters <paramref name="from"/> to <paramref name="to"/> of a word, with its share of the word's time.</summary>
     static LyricWord Part(LyricWord word, int from, int to)
     {
         double length = Math.Max(word.Text.Length, 1);
@@ -82,12 +78,10 @@ public static class LinePieces
     public static LyricLine? Current(IReadOnlyList<LyricLine> pieces, double t) =>
         pieces.LastOrDefault(p => p.Start <= t) ?? pieces.FirstOrDefault();
 
-    // ---- Where to break ----
 
     /// <summary>
-    /// A stretch of text that's never broken inside: a run of Latin letters, Hangul, digits and the
-    /// like (those break at spaces), or one Chinese or Japanese character. <c>Gap</c> is where the
-    /// spaces before it start.
+    /// A stretch of text never broken inside: a run of Latin letters, Hangul, digits and the like,
+    /// or one Chinese or Japanese character. <c>Gap</c> is where the spaces before it start.
     /// </summary>
     readonly record struct Token(int Start, int Length, int Gap);
 
@@ -118,7 +112,7 @@ public static class LinePieces
         var cost = new double[n];
         for (int k = 1; k < n; k++) cost[k] = BreakCost(text, tokens[k - 1], tokens[k]);
 
-        // The fewest rows: rows[j] for the first j tokens.
+        // The fewest rows that hold the first j tokens.
         var fewest = new int[n + 1];
         Array.Fill(fewest, int.MaxValue);
         fewest[0] = 0;
@@ -201,9 +195,9 @@ public static class LinePieces
 
     /// <summary>
     /// What breaking between two tokens costs (lower is better, infinity is never): nothing at a
-    /// space; little after punctuation or before an opening mark; more inside a run of Chinese or
-    /// Japanese characters, most where a word likely goes on (a kanji and its kana ending, the
-    /// middle of a katakana word); a lot inside a word too wide for a row.
+    /// space; little after punctuation or before an opening mark; more inside Chinese or Japanese
+    /// text, most where a word likely goes on (a kanji and its kana ending); a lot inside a word
+    /// too wide for a row.
     /// </summary>
     static double BreakCost(string text, Token before, Token after)
     {
@@ -212,7 +206,7 @@ public static class LinePieces
         if (NoBreakAfter(last) || NoBreakBefore(first)) return double.PositiveInfinity;
         if (IsPunctuation(last) || Opens(first)) return 1;
         Script a = Kind(last), b = Kind(first);
-        if (a == Script.Other && b == Script.Other) return 20; // inside a word too wide for a row
+        if (a == Script.Other && b == Script.Other) return 20;
         if (a == Script.Other || b == Script.Other) return 3;
         return (a, b) switch
         {
@@ -256,18 +250,13 @@ public static class LinePieces
             UnicodeCategory.ClosePunctuation or UnicodeCategory.FinalQuotePunctuation or UnicodeCategory.OtherPunctuation;
     }
 
-    /// <summary>Marks a row mustn't end with: opening brackets and quotes.</summary>
     static bool NoBreakAfter(string ch) => Opens(ch);
 
     static bool Opens(string ch) => Rune.TryGetRuneAt(ch, 0, out var r) && Rune.GetUnicodeCategory(r) is
         UnicodeCategory.OpenPunctuation or UnicodeCategory.InitialQuotePunctuation;
 
-    // ---- Timing without word timing ----
 
-    /// <summary>
-    /// Word-like tokens for a line without word timing: each CJK character, or a run of other
-    /// characters up to and including a space; times spread evenly.
-    /// </summary>
+    /// <summary>Word-like tokens for a line without word timing: each CJK character, or a run of other characters up to and including a space; times spread evenly.</summary>
     public static List<LyricWord> EstimatedWords(LyricLine line)
     {
         var tokens = new List<string>();

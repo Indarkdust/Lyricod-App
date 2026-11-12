@@ -2,10 +2,7 @@ using System.Globalization;
 
 namespace Lyricod.Core;
 
-/// <summary>
-/// Deliberately English, including numbers and source names, for bug reports. Grouped, a blank line
-/// apart: Lyricod and Windows, then the player, the song, its lyrics, and the last error.
-/// </summary>
+/// <summary>Deliberately English, numbers and source names included, so bug reports read the same everywhere.</summary>
 public static class Diagnostics
 {
     public static string Text(string version, string system, string architecture,
@@ -50,7 +47,7 @@ public static class Diagnostics
         if (treatedAsSong is { } songState) song.Add($"Treated as a song: {(songState ? "yes" : "no")}");
         if (cover is { } c)
         {
-            // How big the cover the player handed over is, and whether it came whole (see ArtworkCheck).
+            // Size of the cover the player handed over, and whether it came whole (see ArtworkCheck).
             string size = coverBytes is not { } n ? "" : n < 1024 * 1024 ? FormattableString.Invariant($", {Math.Max(1, n / 1024)} KB")
                 : FormattableString.Invariant($", {n / (1024.0 * 1024):0.0} MB");
             string whole = coverWhole is not { } w ? "" : w ? ", whole" : ", cut short";
@@ -74,8 +71,7 @@ public static class Diagnostics
             // The player's platform's translation over another platform's word-by-word lines.
             string from = lyrics.TranslationRef is { } tr && tr != lyrics.Ref ? $", from {Name(tr.Source)} ({tr.Source.ToString().ToLowerInvariant()}:{tr.Id})" : "";
             if (translated > 0) words.Add($"Translation: {translated} of {count} lines{from}");
-            // Where each pronunciation came from: the source's romaji as given, the source's grouped by
-            // word (Windows read the line the same), or Lyricod's own.
+            // Where each pronunciation came from: the source as given, the source grouped by word, or Lyricod's own.
             var said = lyrics.Lines.Select(l => l.Pronunciation).OfType<Pronunciation>().Where(p => !string.IsNullOrWhiteSpace(p.Text)).ToList();
             if (said.Count > 0)
             {

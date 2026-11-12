@@ -15,8 +15,8 @@ public sealed partial class LyricsProvider
     /// match, 7 needs title, artist and length to agree.</param>
     async Task<RawLyrics?> FromNetease(Track track, bool requireTitle, CancellationToken ct, LyricsSearch search, double minScore = 3)
     {
-        // Player titles carry suffixes like "(Theme Song from …)" that bury the real match,
-        // so also search the bare title, then keep the best across queries.
+        // Player titles carry suffixes like "(Theme Song from …)" that bury the real match, so also
+        // search the bare title and keep the best across queries.
         var bare = TrackMatcher.BareTitle(track.Title);
         // Also under the artist's other name, and that name alone: an English title may only
         // exist in Chinese, where the artist and an exact length still identify it.
@@ -34,7 +34,6 @@ public sealed partial class LyricsProvider
         }
         if (best is not { } b || b.Score < minScore || !search.Accepts(b.Score, b.TitleMatched)) return null;
         if (await Fetch(b.Id, ct) is { } raw && raw.Parse() != null) return raw.Matched(b.Score, b.TitleMatched);
-        // The best match had no usable lyrics: try the next few good candidates.
         var others = (await NeteaseSearch(queries[0], track, requireTitle, ct, search))
             .Where(c => c.Id != b.Id && c.Score >= Math.Max(b.Score - 1.5, minScore) && search.Accepts(c.Score, c.TitleMatched)).Take(3);
         foreach (var c in others)
@@ -42,7 +41,6 @@ public sealed partial class LyricsProvider
         return null;
     }
 
-    /// <summary>Lyrics for one NetEase song id.</summary>
     public async Task<RawLyrics?> FetchNetease(long id, CancellationToken ct = default)
     {
         var req = NeteaseRequest(HttpMethod.Get, "https://interface3.music.163.com/api/song/lyric/v1?" +
@@ -72,8 +70,7 @@ public sealed partial class LyricsProvider
         {
             if (Long(Field(song, "id")) is not { } id || Str(Field(song, "name")) is not { } name) continue;
             var ar = Arr(Field(song, "ar")).ToList();
-            // Players often use romanised names ("Crowd Lu") where NetEase uses 卢广仲, so
-            // aliases and translated titles count as matches too.
+            // Players often use romanised artist names, so aliases and translated titles count as matches too.
             var artists = ar.SelectMany(a => new[] { Str(Field(a, "name")) }.Concat(Arr(Field(a, "alias")).Select(Str)).Concat(Arr(Field(a, "tns")).Select(Str)))
                 .Where(s => s != null).Select(s => s!).ToList();
             var translated = Arr(Field(song, "tns")).Select(Str).Where(s => !string.IsNullOrEmpty(s)).Select(s => s!).ToList();
@@ -81,9 +78,9 @@ public sealed partial class LyricsProvider
             songs.Add((id, name, titles, translated, artists, string.Join(", ", ar.Select(a => Str(Field(a, "name"))).Where(s => s != null)),
                 Str(Field(song, "al", "name")) ?? "", (Num(Field(song, "dt")) ?? 0) / 1000));
         }
-        // A result with the playing title and artist names the song in other ways too: its
-        // translated titles find the other versions (YouTube Music's "Dream lantern" is the
-        // Japanese 夢灯籠; NetEase lists that title only under the English version, as 梦灯笼).
+        // A result with the playing title and artist names the song in other ways too: its translated
+        // titles find the other versions (YouTube Music's "Dream lantern" is 夢灯籠, which NetEase lists
+        // only under the English version, as 梦灯笼).
         var wanted = TrackMatcher.WantedTitles(track);
         var learned = songs.Where(s => s.Titles.Concat(s.Titles.SelectMany(TrackMatcher.Bracketed)).Any(t => wanted.Contains(TrackMatcher.Normalize(t)))
                                        && TrackMatcher.ArtistMatches(s.Artists, track))

@@ -117,7 +117,6 @@ public sealed partial class PlaybackModel
         });
     }
 
-    /// <summary>Builds <see cref="Lyrics"/> from what the source returned, per the settings.</summary>
     void ApplyDisplayFilters()
     {
         if (_allLyrics is not { } all) { Lyrics = null; CurrentIndex = null; Changed?.Invoke(Change.Lyrics | Change.Line); return; }

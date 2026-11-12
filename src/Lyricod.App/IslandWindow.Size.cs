@@ -9,8 +9,8 @@ namespace Lyricod;
 
 public sealed partial class IslandWindow
 {
-    /// <summary>Whether the current line has something under it (its translation, pronunciation or
-    /// the next line, as chosen); the second row and its height come and go with it.</summary>
+    /// <summary>Whether the current line has something under it (translation, pronunciation or the
+    /// next line, as chosen); the second row and its height come and go with it.</summary>
     bool HasSecondRow { get; set; }
 
     void ApplyLayout()
@@ -131,8 +131,8 @@ public sealed partial class IslandWindow
     /// <summary>
     /// The default island is square where it meets the top edge; a floating one has the same corner
     /// all round. Either way the cover's corners share their centre with the island's. The mini
-    /// player's corner is larger: it grows and shrinks with the player's height as it opens and
-    /// closes, rather than changing all at once as that starts.
+    /// player's corner is larger, and grows and shrinks with the player's height as it opens and
+    /// closes rather than changing all at once.
     /// </summary>
     void ApplyCorners()
     {
@@ -172,10 +172,10 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Whether the pill is wide enough to show its text between the covers on either side. The
-    /// gaps beside the covers may still be closing: the widening pill gets there within the first
-    /// tenth of a second, well before it settles, so the text comes in then. The row under the
-    /// lyric has the same room (see ApplyLayout), so it comes in whole too, not cut short with "…".
+    /// Whether the pill is wide enough to show its text between the covers on either side. The gaps
+    /// beside the covers may still be closing: the widening pill gets there within the first tenth
+    /// of a second, well before it settles, so the text comes in then. The row under the lyric has
+    /// the same room (see ApplyLayout).
     /// </summary>
     bool TextFits(double pillWidth) => pillWidth - 2 * (CoverInset + CoverSize) * LayoutScale >= _textWidth;
 

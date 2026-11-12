@@ -69,10 +69,7 @@ public sealed partial class SettingsWindow
     /// <summary>The fold being filled, while <see cref="Fold"/> runs.</summary>
     Panel? _folding;
 
-    /// <summary>
-    /// Settings folded under one line, out of the way until it's opened. The cards
-    /// <paramref name="fill"/> adds go inside. Returns the fold, for a page to hide when it doesn't apply.
-    /// </summary>
+    /// <summary>Settings folded under one line; the cards <paramref name="fill"/> adds go inside. Returns the fold, for a page to hide when it doesn't apply.</summary>
     Expander Fold(string title, string? detail, Action fill)
     {
         var header = new StackPanel { Spacing = 1, Padding = new Thickness(0, 10, 0, 10) };
@@ -123,8 +120,7 @@ public sealed partial class SettingsWindow
         catch (Exception e) when (e is Win32Exception or FileNotFoundException) { }
     }
 
-    /// <summary>A switch that lines up with the other controls at a card's right edge (WinUI's own
-    /// minimum width leaves a gap after it), saying On/Off in Lyricod's language, not Windows'.</summary>
+    /// <summary>A switch that lines up at a card's right edge (WinUI's minimum width leaves a gap) and says On/Off in Lyricod's language, not Windows'.</summary>
     static ToggleSwitch Switch(bool on) =>
         new() { IsOn = on, MinWidth = 0, OnContent = L.Get("ToggleOn"), OffContent = L.Get("ToggleOff") };
 
@@ -154,7 +150,6 @@ public sealed partial class SettingsWindow
     ComboBox Layout(string property, Func<SecondLine> get, Action<SecondLine> set, int rows) =>
         Choice(property, get, set, [.. Enum.GetValues<SecondLine>().Where(mode => mode.MaxRows() <= rows).Select(mode => (mode, L.Get("Layout" + mode)))]);
 
-    /// <summary>A slider for a whole percentage, with its value beside it.</summary>
     FrameworkElement Percent(string property, Func<int> get, Action<int> set, int min, int max)
     {
         var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Style = Style("Detail"), MinWidth = 44, TextAlignment = TextAlignment.Right };
@@ -199,7 +194,6 @@ public sealed partial class SettingsWindow
             swatches.Add((swatch, hex));
             row.Children.Add(swatch);
         }
-        // Any colour, from a picker.
         var picker = new ColorPicker
         {
             Color = DesktopLyricsWindow.ParseColor(get()), IsAlphaEnabled = false,

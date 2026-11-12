@@ -2,10 +2,7 @@ using Microsoft.Win32;
 
 namespace Lyricod.Platform;
 
-/// <summary>
-/// Opening Lyricod when Windows starts: an entry under the user's Run key (no admin rights
-/// needed, and it shows in Task Manager's Startup apps, where it can be turned off too).
-/// </summary>
+/// <summary>Opens Lyricod when Windows starts: an entry under the user's Run key (no admin rights; it also shows in Task Manager's Startup apps).</summary>
 static class Startup
 {
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
@@ -25,7 +22,6 @@ static class Startup
         }
     }
 
-    /// <returns>Whether it worked.</returns>
     public static bool Set(bool on)
     {
         try

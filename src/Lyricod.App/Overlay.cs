@@ -12,15 +12,14 @@ namespace Lyricod;
 /// top, fully transparent around its content, out of Alt-Tab, and never taking focus.
 /// </summary>
 /// <remarks>
-/// Always on top is set once, but another always-on-top window shown later goes above it, and
-/// Show Desktop (Win+D) can push it down or minimise it. So whenever another app's window comes
-/// forward (the desktop too), and every second besides, an overlay that's showing goes back on top
-/// if it needs to: minimised, no longer always on top, or covered by another window. Windows of the
-/// app in use (its menus and pop-ups, its own always-on-top window), the taskbar and its pop-ups,
-/// and Lyricod's own windows are left above it: a covered overlay goes just above the window
-/// covering it, not to the very top. A window that keeps putting itself back on top (another app
-/// holding its own there) is left above after three rounds, rather than the two swapping places
-/// every second. Nothing here takes focus.
+/// Always on top is set once, but another always-on-top window shown later goes above it, and Show
+/// Desktop (Win+D) can push it down or minimise it. So whenever another app's window comes forward
+/// (the desktop too), and every second besides, a showing overlay goes back on top if it is
+/// minimised, no longer always on top, or covered. Windows of the app in use (menus, pop-ups, its
+/// own always-on-top window), the taskbar and its pop-ups, and Lyricod's own windows stay above it:
+/// a covered overlay goes just above the window covering it. A window that keeps putting itself
+/// back on top (another app holding its own there) is left above after three rounds, rather than
+/// the two swapping places every second. Nothing here takes focus.
 /// </remarks>
 sealed class Overlay
 {
@@ -170,9 +169,9 @@ sealed class Overlay
 
     /// <summary>
     /// Makes the whole window content, with no frame. The presenter insists on a dialog frame
-    /// (Windows 11 draws it as a thin light outline) and undoes direct style changes, so the
-    /// frame is refused where Windows asks for it: no frame area, no frame painting, and frame
-    /// bits dropped from any style change.
+    /// (Windows 11 draws a thin light outline) and undoes direct style changes, so the frame is
+    /// refused where Windows asks for it: no frame area, no frame painting, and frame bits dropped
+    /// from any style change.
     /// </summary>
     WindowMessageMonitor SuppressFrame()
     {

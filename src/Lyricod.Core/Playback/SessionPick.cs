@@ -4,12 +4,11 @@ namespace Lyricod.Core;
 public static class SessionPick
 {
     /// <summary>
-    /// The chosen player when it's open (<paramref name="choice"/> is its app id, or "auto"). Otherwise one
-    /// that's playing (several players can be open), preferring the one Windows calls current, else the
-    /// current one, else any.
-    /// Some players show up twice under one app id: NetEase with its progress option or a progress plugin
-    /// keeps a session without the song's position next to one with it. Of one app's sessions, the one that
-    /// reports a position is followed; the other would leave Lyricod timing the song itself.
+    /// The chosen player when it's open (<paramref name="choice"/> is its app id, or "auto"), else
+    /// one that's playing, preferring the one Windows calls current. Some players show up twice
+    /// under one app id (NetEase with a progress plugin keeps a session without the song's position
+    /// next to one with it); the one that reports a position is followed, or Lyricod would time the
+    /// song itself.
     /// </summary>
     public static T? Choose<T>(IReadOnlyList<T> sessions, T? current, string choice,
         Func<T, string?> appId, Func<T, bool> playing, Func<T, bool> hasTimeline) where T : class

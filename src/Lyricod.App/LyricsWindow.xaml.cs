@@ -41,8 +41,8 @@ public sealed partial class LyricsWindow : Window
     /// <summary>Set while the next scroll is the move to the next line, which the lines below follow.</summary>
     bool _stagger;
     /// <summary>
-    /// Set while the user is scrolling through the lyrics, and for a few seconds after: the lines are
-    /// all sharp and readable, and the window doesn't pull back to the line being sung.
+    /// Set while the user is scrolling through the lyrics, and for a few seconds after: all lines
+    /// are sharp and the window doesn't pull back to the line being sung.
     /// </summary>
     bool _browsing;
     readonly DispatcherQueueTimer _browse;
@@ -56,7 +56,7 @@ public sealed partial class LyricsWindow : Window
         public LyricLine Line { get; } = line;
         public StackPanel Panel { get; } = panel;
         public List<(LyricLine Piece, double Width, SweepPainter Sweep)> Rows { get; } = [];
-        /// <summary>While it's being sung: the rows of a pronunciation the source timed, and their sweeps.</summary>
+        /// <summary>While it's being sung: the rows of a timed pronunciation, and their sweeps.</summary>
         public List<(LyricLine Piece, double Width, SweepPainter Sweep, FontFamily Font)> ExtraRows { get; } = [];
         /// <summary>The line's texts that soften with distance (none while it's being sung).</summary>
         public List<SoftText> Soft { get; } = [];

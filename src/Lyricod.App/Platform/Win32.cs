@@ -95,8 +95,7 @@ static partial class Win32
     [LibraryImport("dwmapi.dll")]
     private static partial int DwmSetWindowAttribute(nint hwnd, int attribute, ref uint value, int size);
 
-    /// <summary>No window border or rounded corners: Windows 11 draws a thin outline round
-    /// every top-level window, even a borderless transparent one.</summary>
+    /// <summary>No border or rounded corners: Windows 11 outlines every top-level window, even a borderless transparent one.</summary>
     public static void RemoveFrame(nint hwnd)
     {
         uint none = DWMWA_COLOR_NONE, square = DWMWCP_DONOTROUND;
@@ -113,9 +112,8 @@ static partial class Win32
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020); // NOMOVE NOSIZE NOZORDER NOACTIVATE FRAMECHANGED
 
     /// <summary>
-    /// Puts an always-on-top window above the others (another one brought forward later covers it),
-    /// or just above <paramref name="cover"/>, under whatever is above that, without moving, sizing
-    /// or activating it.
+    /// Puts an always-on-top window above the others (one brought forward later covers it), or just
+    /// above <paramref name="cover"/>, without moving, sizing or activating it.
     /// </summary>
     public static void RaiseTopmost(nint hwnd, nint cover = 0)
     {
@@ -192,16 +190,12 @@ static partial class Win32
     [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static partial nint GetWindowLongPtr(nint hwnd, int index);
 
-    /// <summary>Whether the window is always on top (WS_EX_TOPMOST).</summary>
     public static bool IsTopmost(nint hwnd) => ((long)GetWindowLongPtr(hwnd, GWL_EXSTYLE) & 0x8) != 0;
 
     [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
     private static partial nint SetWindowLongPtr(nint hwnd, int index, nint value);
 
-    /// <summary>
-    /// Sets the window's extended style and nothing else: no frame refresh, which can activate it and
-    /// take focus from the window in use (the tray panel closed when its lock was clicked).
-    /// </summary>
+    /// <summary>Sets the extended style and nothing else: a frame refresh can activate the window and take focus (the tray panel closed when its lock was clicked).</summary>
     public static void SetExtendedStyle(nint hwnd, long style) => SetWindowLongPtr(hwnd, GWL_EXSTYLE, (nint)style);
 
     [LibraryImport("gdi32.dll")]

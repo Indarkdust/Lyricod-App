@@ -8,11 +8,11 @@ using Microsoft.UI.Xaml.Hosting;
 namespace Lyricod;
 
 /// <summary>
-/// The sung colour over a line of text, in the text's shape, fading out over a soft edge where
-/// the singing is (as on the Mac). It's a gradient masked by the text and slid across on the
-/// compositor: no per-frame work in the app. Used by the desktop strip, the lyrics window and
-/// the island. In the lyrics window it can also draw the line as its words, each rising a little
-/// as it's sung and staying up, softly lit, until the line is over (<see cref="Lift"/>).
+/// The sung colour over a line of text, in the text's shape, fading out over a soft edge where the
+/// singing is (as on the Mac). It's a gradient masked by the text and slid across on the
+/// compositor, so there's no per-frame work in the app. Used by the desktop strip, the lyrics
+/// window and the island. The lyrics window can also draw the line as its words, each rising as
+/// it's sung and staying up, softly lit, until the line is over (see <see cref="Lift"/>).
 /// </summary>
 sealed class SweepPainter
 {
@@ -29,21 +29,21 @@ sealed class SweepPainter
     Windows.UI.Color _color = Colors.White;
     /// <summary>The row's words while they're drawn one by one, to rise as they're sung; empty otherwise.</summary>
     readonly List<Lifted> _lifted = [];
-    /// <summary>How far a word that's up is raised (view pixels), how much one grows as it's sung, and how strong the light behind the sung part is.</summary>
+    /// <summary>How far a raised word is up (view pixels), how much a sung word grows, and how strong the light behind the sung part is.</summary>
     double _rise;
     const double Growth = 0.03;
     const double Glow = 0.45;
     /// <summary>
-    /// The soft light behind the sung part of a row whose words rise: the text's blurred shape,
-    /// several times over, each shown up to a little further back from where the singing is, so the
-    /// light ends softly there rather than at an edge. It's blurred once; only how much of it shows moves.
+    /// The soft light behind the sung part of a row whose words rise: the text's blurred shadow,
+    /// several times over, each layer shown up to a little further back from the singing, so the
+    /// light ends softly. It's blurred once; only how much of it shows moves.
     /// </summary>
     readonly List<(SpriteVisual Sprite, DropShadow Shadow, RectangleClip Shown)> _halo = [];
     const int HaloLayers = 6;
     /// <summary>
-    /// How far back from the last each layer of the light ends; the stretch at either end of the
-    /// row over which the light comes from, and goes to, beyond the text; and how far it spreads
-    /// beyond the text (view pixels).
+    /// How far back from the last each layer of the light ends; the stretch at each end of the row
+    /// over which the light comes in and goes out; and how far it spreads beyond the text (view
+    /// pixels).
     /// </summary>
     const double HaloStep = 5, HaloRun = 40;
     double _haloReach;
@@ -52,9 +52,7 @@ sealed class SweepPainter
     long _liftedWhen;
     bool _liftedPlaying;
 
-    /// <summary>
-    /// One word of the row: the row drawn again, cut down to that word, so it can move by itself.
-    /// </summary>
+    /// <summary>One word of the row: the row drawn again, cut down to that word, so it can move by itself.</summary>
     sealed record Lifted(LiftWord Word, ContainerVisual Holder, SpriteVisual Unsung, SpriteVisual Sung, double Centre);
 
     /// <param name="text">The line, drawn in the unsung colour.</param>
@@ -87,20 +85,19 @@ sealed class SweepPainter
         foreach (var word in _lifted)
         {
             word.Unsung.Size = word.Sung.Size = size;
-            // A word grows from the middle of its letters, across and up and down: growing doesn't
-            // carry it any higher, which it would then have to come back from.
+            // A word grows from the middle of its letters, so growing doesn't carry it any higher.
             word.Holder.CenterPoint = new Vector3((float)word.Centre, size.Y * 0.55f, 0);
         }
     }
 
     /// <summary>
-    /// Draws the row as its words rather than as one text, so each can rise a little as it's sung
-    /// and stay up, softly lit, until the line is over (<see cref="WordLift"/>, <see cref="Release"/>);
-    /// it also swells a little while it's sung. Every word is the whole row again, cut
-    /// down to that word: at rest they add up to exactly the text, however it was shaped. The text
-    /// itself then has to be all but hidden by the caller (not quite: a fully transparent text has no
-    /// shape to draw from), since the words now draw its unsung part too, at <paramref name="dim"/>.
-    /// False, and nothing changes, for a row without word timing.
+    /// Draws the row as its words rather than as one text, so each can rise as it's sung and stay
+    /// up, softly lit, until the line is over (<see cref="WordLift"/>, <see cref="Release"/>), and
+    /// swell a little while sung. Every word is the whole row again, cut down to that word, so at
+    /// rest they add up to exactly the text. The caller then has to all but hide the text (not
+    /// quite: a fully transparent text has no shape to draw from), since the words draw its unsung
+    /// part too, at <paramref name="dim"/>. False, and nothing changes, for a row without word
+    /// timing.
     /// </summary>
     /// <param name="rise">How far a word at its top is raised (view pixels).</param>
     public bool Lift(LyricLine piece, Func<string, double> measure, double dim, double rise)
@@ -119,7 +116,7 @@ sealed class SweepPainter
         _haloReach = blur * 1.5;
         for (int k = 0; k < HaloLayers; k++)
         {
-            // A shadow of the text's shape, in the sung colour, from a sprite that draws nothing itself.
+            // A shadow of the text's shape in the sung colour, from a sprite that draws nothing itself.
             var shadow = _compositor.CreateDropShadow();
             shadow.Mask = shape;
             shadow.Color = _color;
@@ -164,9 +161,9 @@ sealed class SweepPainter
     static readonly float HaloOpacity = (float)(1 - Math.Pow(1 - Glow, 1.0 / HaloLayers));
 
     /// <summary>
-    /// Where layer <paramref name="layer"/> of the light ends for <paramref name="sung"/> pixels sung:
-    /// just behind where the sung colour is whole, each layer a little further back. Before the
-    /// text, and the light's own spread, when nothing is sung; past them when all of it is.
+    /// Where layer <paramref name="layer"/> of the light ends for <paramref name="sung"/> pixels
+    /// sung: just behind where the sung colour is whole, each layer a little further back. Before
+    /// the text (and the light's spread) when nothing is sung, past them when all of it is.
     /// </summary>
     float HaloEnd(int layer, double sung, double width)
     {
@@ -178,7 +175,6 @@ sealed class SweepPainter
         return (float)end;
     }
 
-    /// <summary>Puts each word where it is at <paramref name="position"/> and, while playing, moves it through the rest of its lift.</summary>
     void AnimateLift(double position, bool playing)
     {
         if (_lifted.Count == 0) return;
@@ -195,8 +191,8 @@ sealed class SweepPainter
 
     /// <summary>
     /// The line is over: its words come back down together, from wherever each is, and their light
-    /// goes out. False when none was up (nothing to wait for). The row is to be drawn plain once
-    /// they're down, <see cref="WordLift.Settle"/> later.
+    /// goes out. False when none was up. The row is to be drawn plain once they're down, <see
+    /// cref="WordLift.Settle"/> later.
     /// </summary>
     public bool Release()
     {
@@ -224,7 +220,6 @@ sealed class SweepPainter
         return true;
     }
 
-    /// <summary>Stops <paramref name="word"/> where it's <paramref name="up"/> and has grown by <paramref name="swell"/>.</summary>
     void Put(Lifted word, double up, double swell)
     {
         word.Holder.StopAnimation("Offset");
@@ -269,9 +264,9 @@ sealed class SweepPainter
     }
 
     /// <summary>
-    /// Sweep: the colour moves word by word. Glow: the same, and the sung part glows in its colour
-    /// (a soft shadow of the sung shape). Line: the whole line lights as it starts. As on the Mac.
-    /// Lift: the sweep, over words that rise as they're sung and stay up, softly lit (where <see cref="Lift"/> was asked for).
+    /// Sweep: the colour moves word by word. Glow: the same, and the sung part glows in its colour.
+    /// Line: the whole line lights as it starts. As on the Mac. Lift: the sweep over words that
+    /// rise as they're sung (where <see cref="Lift"/> was asked for).
     /// </summary>
     public SungEffect Effect
     {
@@ -324,7 +319,6 @@ sealed class SweepPainter
             animation.InsertKeyFrame((float)(times[k] / total), OffsetFor(values[k], width), linear);
         animation.Duration = TimeSpan.FromSeconds(total);
         _gradient.StartAnimation("Offset", animation);
-        // The light follows, a little behind.
         for (int layer = 0; layer < _halo.Count; layer++)
         {
             var shown = _compositor.CreateScalarKeyFrameAnimation();
@@ -336,8 +330,8 @@ sealed class SweepPainter
     }
 
     /// <summary>
-    /// Where the fade ends for <paramref name="sung"/> pixels sung: at 0 when nothing is, and just
-    /// past the text when all of it is, so both ends are crisp (as on the Mac).
+    /// Where the fade ends for <paramref name="sung"/> pixels sung: at 0 when nothing is, just past
+    /// the text when all of it is, so both ends are crisp (as on the Mac).
     /// </summary>
     static Vector2 OffsetFor(double sung, double width) => new((float)(sung * (width + Edge) / Math.Max(width, 1)), 0);
 }

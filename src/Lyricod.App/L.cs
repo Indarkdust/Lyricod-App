@@ -4,15 +4,13 @@ namespace Lyricod;
 
 /// <summary>
 /// UI strings from Strings/&lt;language&gt;/Resources.resw: in Windows' language, or the one chosen in
-/// Settings › General (set once at startup, before any string is read, as on the Mac it applies
-/// after a restart).
+/// Settings › General (read once at startup, so a change applies after a restart, as on the Mac).
 /// </summary>
 static class L
 {
     static (ResourceMap Map, ResourceContext Context)? _strings;
 
-    /// <summary>The language the strings were started in ("" for Windows'), to tell whether a
-    /// change in Settings needs a restart.</summary>
+    /// <summary>The language the strings started in ("" for Windows'), to tell whether a change needs a restart.</summary>
     public static string Language { get; private set; } = "";
 
     /// <summary>"" for Windows' language, or "en-US" / "zh-Hans".</summary>

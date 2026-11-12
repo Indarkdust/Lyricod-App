@@ -36,7 +36,7 @@ public sealed partial class DesktopLyricsWindow : Window
     readonly nint _hwnd;
     readonly Compositor _compositor;
     readonly SweepPainter _sung;
-    /// <summary>The sung colour over the row under the line, when that's a pronunciation the source timed.</summary>
+    /// <summary>The sung colour over the row under the line, when that's a timed pronunciation.</summary>
     readonly SweepPainter _sungUnder;
     readonly TextRuler _underRuler;
     /// <summary>That pronunciation as a line to light (null for any other row).</summary>

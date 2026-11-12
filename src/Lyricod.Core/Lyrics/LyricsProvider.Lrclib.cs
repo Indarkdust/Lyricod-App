@@ -36,8 +36,7 @@ public sealed partial class LyricsProvider
                 }
             }
         }
-        // The exact lookup needs the album too, which browsers often don't report: search, and
-        // take the best match that has timed lyrics.
+        // The exact lookup needs the album too, which browsers often don't report: search instead.
         foreach (var c in search.Observe(await LrclibCandidates($"{track.Title} {track.Artist}", track, ct)))
         {
             if (c.Score < (search.IsMusicPlayer ? 6 : LyricsSearch.ConfidentScore)) break;

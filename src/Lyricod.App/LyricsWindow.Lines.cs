@@ -19,8 +19,8 @@ public sealed partial class LyricsWindow
     readonly TextRuler _extraRuler;
 
     /// <summary>
-    /// What's new (another song's lyrics, or word that there are none) fades in, rather than replacing
-    /// what was there all at once. The same lyrics laid out again (a resize, a setting) don't.
+    /// What's new (another song's lyrics, or word that there are none) fades in; the same lyrics
+    /// laid out again (a resize, a setting) don't.
     /// </summary>
     static void FadeIn(UIElement element)
     {
@@ -98,11 +98,10 @@ public sealed partial class LyricsWindow
     const double LiftRise = 0.075;
 
     /// <summary>
-    /// Draws a line plain (faded) or, while it's being sung, as rows that sweep. Both break into the
-    /// same rows (LinePieces: even, at spaces, punctuation and between words), so a line doesn't
-    /// move or rewrap when it lights up. <paramref name="settling"/>: the line was just sung and
-    /// its words are still coming down (the lift), so its rows stay as they are for now and only
-    /// what's under them is drawn anew, plain.
+    /// Draws a line plain (faded) or, while it's being sung, as rows that sweep. Both break into
+    /// the same rows (<c>LinePieces</c>), so a line doesn't move or rewrap when it lights up.
+    /// <paramref name="settling"/>: the line was just sung and its words are still coming down, so
+    /// its rows stay and only what's under them is drawn anew, plain.
     /// </summary>
     void RenderLine(LineView view, bool current, bool settling = false)
     {
@@ -176,9 +175,9 @@ public sealed partial class LyricsWindow
     }
 
     /// <summary>
-    /// The pronunciation under a line. One the source timed is lit as it's sung, like the line: in
-    /// rows of its own, broken as the line's are and the same whether it's being sung or not, so it
-    /// doesn't rewrap when it lights up. Any other is one text that wraps.
+    /// The pronunciation under a line. One with timing is lit as it's sung, in rows broken as
+    /// the line's are (the same sung or not, so it doesn't rewrap). Any other is one text that
+    /// wraps.
     /// </summary>
     void AddPronunciation(LineView view, Pronunciation p, bool current, LyricLanguage? song, TextAlignment align)
     {
@@ -247,10 +246,9 @@ public sealed partial class LyricsWindow
     };
 
     /// <summary>
-    /// The line being sung is full size and sharp; the others shrink a little, and fade and blur more
-    /// the further they are (as on the Mac: up to 8 points of blur). Unsynced lyrics are all plain.
-    /// While the user scrolls through the lyrics the others are all sharp and a little brighter, to
-    /// be read.
+    /// The line being sung is full size and sharp; the others shrink, and fade and blur more the
+    /// further they are (as on the Mac: up to 8 points of blur). Unsynced lyrics are all plain.
+    /// While the user scrolls the lyrics the others are sharp and a little brighter, to be read.
     /// </summary>
     void ApplyDistance(LineView view)
     {
@@ -295,8 +293,7 @@ public sealed partial class LyricsWindow
         Settled();
         if (old is int o && o < _views.Count)
         {
-            // Words that rose as they were sung come back down together first, as the line fades
-            // and the window moves on; the line is drawn plain once they have.
+            // Words that rose as they were sung come back down together first; the line is drawn plain once they have.
             var view = _views[o];
             bool down = false;
             if (animate) foreach (var (_, _, sweep) in view.Rows) down |= sweep.Release();
@@ -326,10 +323,10 @@ public sealed partial class LyricsWindow
     }
 
     /// <summary>
-    /// The user is scrolling through the lyrics (<paramref name="on"/>), or has stopped: a few seconds
-    /// after their last scroll, or on picking a line. Meanwhile every line is sharp and readable and
-    /// the window stays where they put it; afterwards the blur comes back and it glides to the line
-    /// being sung. Unsynced lyrics have neither, so nothing changes for them.
+    /// The user is scrolling through the lyrics (<paramref name="on"/>), or has stopped: a few
+    /// seconds after the last scroll, or on picking a line. Meanwhile every line is sharp and the
+    /// window stays where they put it; afterwards the blur comes back and it glides to the line
+    /// being sung. Unsynced lyrics have neither.
     /// </summary>
     void Browse(bool on)
     {
@@ -342,7 +339,7 @@ public sealed partial class LyricsWindow
         if (!on) ScrollToCurrent(animate: true);
     }
 
-    /// <summary>Puts the sung line a third of the way down.</summary>
+    /// <summary>Puts the sung line 30% of the way down.</summary>
     void ScrollToCurrent(bool animate)
     {
         if (_current is not int target || target >= _views.Count) return;
@@ -361,11 +358,11 @@ public sealed partial class LyricsWindow
     const double Glide = 0.6;
 
     /// <summary>
-    /// Scrolls to the next line with a soft, spring-like ease (the Mac's spring), not Windows' quick
-    /// default. Moving on a line, the lines don't move as one block: each one below the line just
-    /// sung sets off a moment after the one above (like Apple Music's lyrics), held back by a
-    /// translation that runs beside the scroll on the compositor and ends at nothing. A line still
-    /// catching up from the last move eases the rest of the way instead of jumping.
+    /// Scrolls to the next line with a soft, spring-like ease (the Mac's), not Windows' quick
+    /// default. Moving on a line, each line below the one just sung sets off a moment after the one
+    /// above (like Apple Music's lyrics), held back by a translation on the compositor that ends at
+    /// nothing. A line still catching up from the last move eases the rest of the way instead of
+    /// jumping.
     /// </summary>
     void OnScrollAnimationStarting(ScrollView sender, ScrollingScrollAnimationStartingEventArgs args)
     {
