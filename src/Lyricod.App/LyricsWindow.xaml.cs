@@ -107,19 +107,16 @@ public sealed partial class LyricsWindow : Window
         {
             try
             {
-                // A finger still on the lyrics: not done yet.
-                if (Scroller.State == ScrollingInteractionState.Interaction) _browse.Start(); else Browse(false);
+                // A finger still on the lyrics, or the lyrics still coasting: not done yet.
+                if (UserScrolling(Scroller)) _browse.Start(); else Browse(false);
             }
             catch (Exception e) { Log.Write(e); }
         };
-        // The wheel or a touchpad (the scroller has handled those by the time they get here), or a finger.
-        Scroller.AddHandler(UIElement.PointerWheelChangedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler((_, _) =>
-        {
-            try { Browse(true); } catch (Exception e) { Log.Write(e); }
-        }), true);
+        // The scroller takes the wheel, a touchpad and a finger itself, below XAML's pointer events:
+        // what tells them from Lyricod's own scrolling is its state (that's "Animation").
         Scroller.StateChanged += (scroller, _) =>
         {
-            try { if (scroller.State == ScrollingInteractionState.Interaction) Browse(true); } catch (Exception e) { Log.Write(e); }
+            try { if (UserScrolling(scroller)) Browse(true); } catch (Exception e) { Log.Write(e); }
         };
         _idle = DispatcherQueue.CreateTimer();
         _idle.IsRepeating = false;
@@ -211,6 +208,10 @@ public sealed partial class LyricsWindow : Window
                 break;
         }
     }
+
+    /// <summary>Whether the lyrics are moving under the user's hand: a finger on them, or coasting after a flick or the wheel.</summary>
+    static bool UserScrolling(ScrollView scroller) =>
+        scroller.State is ScrollingInteractionState.Interaction or ScrollingInteractionState.Inertia;
 
     void UpdateTimer()
     {
