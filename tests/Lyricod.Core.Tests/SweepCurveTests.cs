@@ -133,6 +133,40 @@ public class SweepCurveTests
         Assert.Equal(80, onset.At(10.98), 3);
     }
 
+    [Fact]
+    public void AskedToBeEarlyQuickWordsStartAheadOfTheirTime()
+    {
+        // Held for 2 s, two quick ones of 0.1 s, then 0.4 s: the dash starts 120 ms early (no more)
+        // and ends 25 ms late (that leaves it three times the next word's speed, which is allowed).
+        var early = SweepCurve.From(HeldThenQuick, early: true)!;
+        Assert.Equal(40, early.At(12 - SweepCurve.Lead), 6);
+        Assert.Equal(80, early.At(12.1), 6);
+        Assert.Equal(120, early.At(12.225), 6);
+        Assert.Equal(0, early.At(10), 6);
+        Assert.Equal(160, early.At(12.6), 6);
+        // It's slower at its fastest than the sweep that keeps to the times, and still never turns back.
+        var onTime = SweepCurve.From(HeldThenQuick)!;
+        double Top(SweepCurve c) => Enumerable.Range(0, 2700).Max(k => c.Speed(10 + k * 0.001));
+        Assert.True(Top(early) < 0.75 * Top(onTime));
+        double last = 0;
+        for (double t = 9.9; t < 12.7; t += 0.002) { Assert.True(early.At(t) >= last - 1e-9); last = early.At(t); }
+        // No boundary is more than Lead ahead of its time or Lag behind it.
+        foreach (var stop in HeldThenQuick.Skip(1))
+        {
+            Assert.True(early.At(stop.Start - SweepCurve.Lead - 0.001) <= stop.From + 1e-6);
+            Assert.True(early.At(stop.Start + SweepCurve.Lag + 0.001) >= stop.From - 1e-6);
+        }
+
+        // Words that differ less than three to one are left on their times.
+        var even = Words(5, (0.5, 30, 0), (0.25, 30, 0), (0.5, 30, 0));
+        for (double t = 4.9; t < 6.4; t += 0.01) Assert.Equal(SweepCurve.From(even)!.At(t), SweepCurve.From(even, early: true)!.At(t), 9);
+
+        // A quick word after a rest still starts on time.
+        var rest = SweepCurve.From(Words(10, (1, 40, 0.5), (0.1, 40, 0), (0.1, 40, 0), (1, 40, 0)), early: true)!;
+        Assert.Equal(40, rest.At(11.5), 6);
+        Assert.Equal(0, rest.Speed(11.4));
+    }
+
     /// The sung width a plan gives <paramref name="seconds"/> from its start, as the compositor draws it.
     static double Drawn(List<SweepKey> keys, double seconds)
     {

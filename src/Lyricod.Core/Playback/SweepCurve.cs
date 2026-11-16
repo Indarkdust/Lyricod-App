@@ -13,7 +13,9 @@ public readonly record struct SweepKey(double Time, double Value, double Ease1 =
 /// meet is the harmonic mean of theirs (at most twice the slower, so it can't overshoot or turn
 /// back). A rest is still a stop, reached and left at the word's own speed. The one change to the
 /// timing: a word timed shorter than <see cref="Least"/> (sources give some a few milliseconds)
-/// borrows the rest from its neighbours, or the sweep would cross it in a frame.
+/// borrows the rest from its neighbours, or the sweep would cross it in a frame. Asked to be early
+/// (<see cref="Even"/>), it also lets a run of quick words start ahead of its time, so the sweep
+/// doesn't crawl and then dash.
 /// </summary>
 public sealed class SweepCurve
 {
@@ -22,6 +24,13 @@ public sealed class SweepCurve
 
     /// <summary>The least a word's sweep takes (seconds).</summary>
     public const double Least = 0.08;
+
+    /// <summary>
+    /// For the early sweep: neighbours whose speeds differ by more than <see cref="Ratio"/> have
+    /// their boundary moved, at most <see cref="Lead"/> ahead of its time or <see cref="Lag"/>
+    /// behind it (seconds). Lit a little early reads fine; lit late doesn't.
+    /// </summary>
+    public const double Ratio = 3, Lead = 0.12, Lag = 0.04;
 
     /// <summary>The least time between two points, so a word of no length still takes a moment.</summary>
     const double Step = 0.001;
@@ -46,7 +55,8 @@ public sealed class SweepCurve
     }
 
     /// <summary>The curve through <paramref name="stops"/>, or null when they sweep nothing.</summary>
-    public static SweepCurve? From(IReadOnlyList<SweepStop> stops)
+    /// <param name="early">Quick words after a slow one may start ahead of their time (<see cref="Even"/>).</param>
+    public static SweepCurve? From(IReadOnlyList<SweepStop> stops, bool early = false)
     {
         var words = stops.Where(s => s.To - s.From > 0.01).ToList();
         if (words.Count == 0) return null;
@@ -65,8 +75,33 @@ public sealed class SweepCurve
             if (next - word.End > Bridge) Add(word.End, word.To);
             Add(next, word.To);
         }
+        var timed = t.ToArray();
         Spread(t, x);
+        if (early) Even(t, x, timed);
         return new SweepCurve(t, x);
+    }
+
+    /// <summary>
+    /// Evens out speeds that change more than <see cref="Ratio"/> to one between two words that
+    /// follow each other, by moving their boundary into the slower word: earlier before quick
+    /// words (by <see cref="Lead"/> at most, from <paramref name="timed"/>, its time in the
+    /// source), later after them (by <see cref="Lag"/>). Several passes, so a run of quick words
+    /// shares what it gains. A boundary beside a rest stays: a word after a rest never starts early.
+    /// </summary>
+    static void Even(List<double> t, List<double> x, double[] timed)
+    {
+        bool Sweeps(int i) => x[i + 1] - x[i] > 0;
+        for (int pass = 0; pass < 8; pass++)
+            for (int i = 1; i + 1 < t.Count; i++)
+            {
+                if (!Sweeps(i - 1) || !Sweeps(i)) continue;
+                double before = t[i] - t[i - 1], after = t[i + 1] - t[i], a = x[i] - x[i - 1], b = x[i + 1] - x[i];
+                double move = b / after > Ratio * a / before ? -(b * before - Ratio * a * after) / (b + Ratio * a)
+                    : a / before > Ratio * b / after ? (a * after - Ratio * b * before) / (a + Ratio * b) : 0;
+                // Neither word is left with less than Least (or than it has).
+                double from = Math.Max(timed[i] - Lead, t[i - 1] + Math.Min(Least, before)), to = Math.Min(timed[i] + Lag, t[i + 1] - Math.Min(Least, after));
+                if (move != 0 && from <= to) t[i] = Math.Clamp(t[i] + move, from, to);
+            }
     }
 
     /// <summary>

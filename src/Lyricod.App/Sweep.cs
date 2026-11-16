@@ -25,8 +25,8 @@ sealed class SweepPainter
     readonly CompositionMaskBrush _masked;
     readonly TextBlock _text;
     readonly Panel _host;
-    /// <summary>Experimental (Settings › Lyrics): the sweep eases through changes in singing speed (<see cref="SweepCurve"/>).</summary>
-    public static bool Smooth { get; set; }
+    /// <summary>Experimental (Settings › Lyrics): how the sweep moves through words of different lengths.</summary>
+    public static SweepMotion Motion { get; set; }
 
     SungEffect _effect = SungEffect.Sweep;
     Windows.UI.Color _color = Colors.White;
@@ -310,7 +310,7 @@ sealed class SweepPainter
     {
         // The whole line at once: no word stops, so it lights as it starts.
         List<SweepStop> stops = _effect == SungEffect.Line ? [] : Sweep.Stops(piece, width, measure);
-        var curve = Smooth ? SweepCurve.From(stops) : null;
+        var curve = Motion == SweepMotion.Straight ? null : SweepCurve.From(stops, early: Motion == SweepMotion.Early);
         Set(curve?.At(position) ?? Sweep.SungWidth(stops, piece, width, position), width);
         AnimateLift(position, playing);
         if (!playing) return;

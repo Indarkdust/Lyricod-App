@@ -284,7 +284,8 @@ public sealed partial class SettingsWindow
         }
         Card(L.Get("PronunciationFor"), L.Get("PronunciationForDetail"), languages);
         Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
-        Card(L.Get("SmoothSweep"), L.Get("SmoothSweepDetail"), Toggle(nameof(Settings.SmoothSweep), () => _settings.SmoothSweep, v => _settings.SmoothSweep = v));
+        Card(L.Get("SweepMotion"), L.Get("SweepMotionDetail"), Choice(nameof(Settings.SweepMotion), () => _settings.SweepMotion, v => _settings.SweepMotion = v,
+            (SweepMotion.Straight, L.Get("SweepStraight")), (SweepMotion.Smooth, L.Get("SweepSmooth")), (SweepMotion.Early, L.Get("SweepEarly"))));
         Card(L.Get("ShowCredits"), null, Toggle(nameof(Settings.ShowCredits), () => _settings.ShowCredits, v => _settings.ShowCredits = v));
         Note(L.Get(Lyricod.Platform.JapaneseReader.IsAvailable ? "PronunciationNote" : "PronunciationNoteNoReader"));
 
