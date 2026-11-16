@@ -318,13 +318,6 @@ public sealed partial class SettingsWindow
         clear.Click += (_, _) => { _model.ClearSavedLyrics(); Count(); };
         Count();
         Card(L.Get("SavedLyrics"), L.Get("SavedLyricsDetail"), Row(count, clear));
-
-        // What's still being tried out, in one place; open when any of it is on.
-        Fold(L.Get("FoldExperimental"), L.Get("FoldExperimentalDetail"), () =>
-        {
-            Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
-            Card(L.Get("SmoothSweep"), L.Get("SmoothSweepDetail"), Toggle(nameof(Settings.SmoothSweep), () => _settings.SmoothSweep, v => _settings.SmoothSweep = v));
-        }).IsExpanded = _settings.RomajiByWord || _settings.SmoothSweep;
         Refresh();
     }
 
@@ -384,6 +377,14 @@ public sealed partial class SettingsWindow
         };
         Group(new TextBlock { Text = L.Get("DiagnosticsDetail"), Style = Style("Detail"), TextWrapping = TextWrapping.Wrap },
               Row(show, copy), diagnostics);
+        // What's still being tried out, in one place; open when any of it is on. The details above say which are.
+        Fold(L.Get("FoldExperimental"), L.Get("FoldExperimentalDetail"), () =>
+        {
+            Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
+            Card(L.Get("SmoothSweep"), L.Get("SmoothSweepDetail"), Toggle(nameof(Settings.SmoothSweep), () => _settings.SmoothSweep, v => _settings.SmoothSweep = v));
+        }).IsExpanded = _settings.RomajiByWord || _settings.SmoothSweep;
+        Watch(nameof(Settings.RomajiByWord), RefreshDiagnostics);
+        Watch(nameof(Settings.SmoothSweep), RefreshDiagnostics);
 
         Heading(L.Get("LyricsHeader"));
         Group(Entry(L.Get("NetEase"), L.Get("SourceDetail"), "https://music.163.com"),

@@ -4,7 +4,7 @@ using Lyricod.Core;
 namespace Lyricod.Core.Romanization;
 
 /// <summary>
-/// Romaji by word (experimental, Settings > Lyrics): Japanese romaji spaced by word rather than by
+/// Romaji by word (experimental, Settings > About): Japanese romaji spaced by word rather than by
 /// syllable. A source's romaji ("hi ka re a u no wa na ze", as QQ Music times it) is spaced by the
 /// words Windows' analyser finds ("hikare au no wa naze"), and a kanji's kana ending the analyser
 /// gives apart stays with it ("naku", not "na ku"). Where the source timed its romaji (QQ Music),

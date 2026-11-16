@@ -31,7 +31,7 @@ sealed class SweepPainter
     readonly CompositionMaskBrush _masked;
     readonly TextBlock _text;
     readonly Panel _host;
-    /// <summary>Experimental (Settings › Lyrics): the sweep follows <see cref="SweepCurve"/> instead of one speed through each word.</summary>
+    /// <summary>Experimental (Settings › About): the sweep follows <see cref="SweepCurve"/> instead of one speed through each word.</summary>
     public static bool Smooth { get; set; }
 
     SungEffect _effect = SungEffect.Sweep;
