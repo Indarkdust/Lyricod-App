@@ -283,8 +283,6 @@ public sealed partial class SettingsWindow
             languages.Children.Add(box);
         }
         Card(L.Get("PronunciationFor"), L.Get("PronunciationForDetail"), languages);
-        Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
-        Card(L.Get("SmoothSweep"), L.Get("SmoothSweepDetail"), Toggle(nameof(Settings.SmoothSweep), () => _settings.SmoothSweep, v => _settings.SmoothSweep = v));
         Card(L.Get("ShowCredits"), null, Toggle(nameof(Settings.ShowCredits), () => _settings.ShowCredits, v => _settings.ShowCredits = v));
         Note(L.Get(Lyricod.Platform.JapaneseReader.IsAvailable ? "PronunciationNote" : "PronunciationNoteNoReader"));
 
@@ -320,6 +318,13 @@ public sealed partial class SettingsWindow
         clear.Click += (_, _) => { _model.ClearSavedLyrics(); Count(); };
         Count();
         Card(L.Get("SavedLyrics"), L.Get("SavedLyricsDetail"), Row(count, clear));
+
+        // What's still being tried out, in one place; open when any of it is on.
+        Fold(L.Get("FoldExperimental"), L.Get("FoldExperimentalDetail"), () =>
+        {
+            Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
+            Card(L.Get("SmoothSweep"), L.Get("SmoothSweepDetail"), Toggle(nameof(Settings.SmoothSweep), () => _settings.SmoothSweep, v => _settings.SmoothSweep = v));
+        }).IsExpanded = _settings.RomajiByWord || _settings.SmoothSweep;
         Refresh();
     }
 

@@ -57,7 +57,8 @@ public sealed partial class PlaybackModel
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,
         SongOffset, _settings.Offset, LastError, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind, IsMusicPlayer, IsSong, BestMatchScore, AutomaticLookupAllowed,
-        Artwork?.Length, Artwork == null ? null : _artworkWhole, GlassStatus?.Invoke());
+        Artwork?.Length, Artwork == null ? null : _artworkWhole, GlassStatus?.Invoke(),
+        [.. new[] { (_settings.RomajiByWord, "romaji by word"), (_settings.SmoothSweep, "smooth sweep") }.Where(e => e.Item1).Select(e => e.Item2)]);
 
     void WriteDebugState(double position)
     {

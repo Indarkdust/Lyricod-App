@@ -161,4 +161,14 @@ public class DiagnosticsTests
         Assert.Contains(@"(%USERPROFILE%\Apps\player.exe)", text);
         Assert.Contains(@"'%USERPROFILE%\AppData\Local\Lyricod\lyrics\x.json'", text);
     }
+
+    [Fact]
+    public void SaysWhichExperimentalFeaturesAreOn()
+    {
+        string Text(params string[] on) => Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0, experimental: on);
+        Assert.Contains("Experimental: romaji by word, smooth sweep\n", Text("romaji by word", "smooth sweep") + "\n");
+        // None on: nothing about them.
+        Assert.DoesNotContain("Experimental", Text());
+        Assert.DoesNotContain("Experimental", Diagnostics.Text("dev", "Windows", "x64", null, null, false, null, null, false, false, 0, 0));
+    }
 }

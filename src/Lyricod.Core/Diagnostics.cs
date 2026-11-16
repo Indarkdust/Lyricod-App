@@ -10,7 +10,7 @@ public static class Diagnostics
         bool searching, bool pinned, double songOffset, double offset, string? lastError = null, string? userProfile = null,
         bool? playerTimeline = null, (int Width, int Height)? cover = null, string? font = null, InstallKind? installKind = null,
         bool? musicPlayer = null, bool? treatedAsSong = null, double? bestMatchScore = null, bool? automaticLookupAllowed = null,
-        long? coverBytes = null, bool? coverWhole = null, string? glass = null)
+        long? coverBytes = null, bool? coverWhole = null, string? glass = null, IReadOnlyList<string>? experimental = null)
     {
         // Error messages and some player ids carry paths with the user's name in them.
         playerId = Redact(playerId, userProfile);
@@ -20,6 +20,8 @@ public static class Diagnostics
         if (installKind is { } installation) app.Add($"Install: {installation.ToString().ToLowerInvariant()}");
         if (font != null) app.Add($"Font: {Redact(font, userProfile)}");
         if (glass != null) app.Add($"Glass capture: {glass}");
+        // A report about something that's still being tried out should say it was on.
+        if (experimental is { Count: > 0 }) app.Add($"Experimental: {string.Join(", ", experimental)}");
 
         List<string> player = [];
         if (playerId != null)
