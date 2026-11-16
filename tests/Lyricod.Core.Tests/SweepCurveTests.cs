@@ -18,46 +18,61 @@ public class SweepCurveTests
     /// A held syllable, then two quick ones, then an ordinary one: 40 px each.
     static readonly List<SweepStop> HeldThenQuick = Words(10, (2, 40, 0), (0.1, 40, 0), (0.1, 40, 0), (0.4, 40, 0));
 
+    /// Words whose speeds differ by less than three to one: 40 px each.
+    static readonly List<SweepStop> Ordinary = Words(10, (0.6, 40, 0), (0.3, 40, 0), (0.45, 40, 0), (0.9, 40, 0));
+
+    static double Top(SweepCurve curve, double from, double to) =>
+        Enumerable.Range(0, (int)((to - from) * 1000)).Max(k => curve.Speed(from + k * 0.001));
+
     [Fact]
-    public void EveryWordStartsAndEndsOnTime()
+    public void OrdinaryWordsStartAndEndOnTime()
     {
-        var curve = SweepCurve.From(HeldThenQuick)!;
-        foreach (var stop in HeldThenQuick)
+        var curve = SweepCurve.From(Ordinary)!;
+        foreach (var stop in Ordinary)
         {
             Assert.Equal(stop.From, curve.At(stop.Start), 6);
             Assert.Equal(stop.To, curve.At(stop.End), 6);
         }
         Assert.Equal(0, curve.At(9));
         Assert.Equal(160, curve.At(13));
+        // Within the word being sung, as the straight sweep is.
+        for (double t = 10; t < 12.25; t += 0.002)
+        {
+            var stop = Ordinary.Last(s => s.Start <= t);
+            Assert.InRange(curve.At(t), stop.From - 1e-6, stop.To + 1e-6);
+        }
     }
 
     [Fact]
-    public void ItNeverTurnsBackOrRunsPastAWord()
+    public void ItNeverTurnsBack()
     {
-        var curve = SweepCurve.From(HeldThenQuick)!;
-        double last = 0;
-        for (double t = 9.9; t < 12.8; t += 0.002)
+        foreach (var stops in new[] { HeldThenQuick, Ordinary })
         {
-            double at = curve.At(t);
-            Assert.True(at >= last - 1e-9);
-            // Within the word being sung, as the straight sweep is.
-            var stop = HeldThenQuick.LastOrDefault(s => s.Start <= t);
-            if (stop.End > stop.Start) Assert.InRange(at, stop.From - 1e-6, stop.To + 1e-6);
-            last = at;
+            var curve = SweepCurve.From(stops)!;
+            double last = 0;
+            for (double t = 9.9; t < 12.8; t += 0.002)
+            {
+                Assert.InRange(curve.At(t), last - 1e-9, 160);
+                last = curve.At(t);
+            }
         }
     }
 
     [Fact]
     public void TheSpeedDoesntJumpBetweenWords()
     {
-        var curve = SweepCurve.From(HeldThenQuick)!;
-        // The straight sweep goes from 20 to 400 pixels a second at 12 s; this one has one speed there.
-        Assert.Equal(curve.Speed(12 - 1e-6), curve.Speed(12 + 1e-6), 1);
-        // It's between the two words' speeds, and no more than twice the slower.
-        Assert.InRange(curve.Speed(12), 20, 40.001);
-        foreach (double boundary in new[] { 12.1, 12.2 }) Assert.Equal(curve.Speed(boundary - 1e-6), curve.Speed(boundary + 1e-6), 1);
-        // And it never changes much from one millisecond to the next.
-        for (double t = 10.001; t < 12.59; t += 0.001) Assert.InRange(Math.Abs(curve.Speed(t + 0.001) - curve.Speed(t)), 0, 25);
+        var curve = SweepCurve.From(Ordinary)!;
+        // The straight sweep goes from 67 to 133 pixels a second at 10.6 s; this one has one speed there,
+        // between the two words' and no more than twice the slower.
+        Assert.Equal(curve.Speed(10.6 - 1e-6), curve.Speed(10.6 + 1e-6), 1);
+        Assert.InRange(curve.Speed(10.6), 66, 133.4);
+        foreach (double boundary in new[] { 10.9, 11.35 }) Assert.Equal(curve.Speed(boundary - 1e-6), curve.Speed(boundary + 1e-6), 1);
+        // And it never changes much from one millisecond to the next, whatever the words.
+        foreach (var stops in new[] { HeldThenQuick, Ordinary })
+        {
+            var any = SweepCurve.From(stops)!;
+            for (double t = 10.001; t < stops[^1].End - 0.002; t += 0.001) Assert.InRange(Math.Abs(any.Speed(t + 0.001) - any.Speed(t)), 0, 25);
+        }
     }
 
     [Fact]
@@ -105,23 +120,24 @@ public class SweepCurveTests
     }
 
     [Fact]
-    public void AWordTimedInAFewMillisecondsBorrowsFromItsNeighbours()
+    public void AWordTimedInAFewMillisecondsGetsTime()
     {
-        // 40 px in 6 ms, between two ordinary syllables: the sweep would cross it in one frame.
+        // 40 px in 6 ms, between two ordinary syllables: the straight sweep crosses it in one frame.
         var stops = Words(10, (0.4, 40, 0), (0.006, 40, 0), (0.4, 40, 0));
         var curve = SweepCurve.From(stops)!;
-        // It now takes 80 ms, half from each side: 37 ms early in, 37 ms late out.
-        Assert.Equal(40, curve.At(10.4 - 0.037), 3);
-        Assert.Equal(80, curve.At(10.406 + 0.037), 3);
-        Assert.InRange(curve.At(10.403), 50, 70);
+        // It takes 80 ms at least, and its edges are no further from their times than a boundary may move.
+        double from = Enumerable.Range(0, 900).Select(k => 10 + k * 0.001).First(t => curve.At(t) > 40.001);
+        double to = Enumerable.Range(0, 900).Select(k => 10 + k * 0.001).First(t => curve.At(t) > 79.999);
+        Assert.True(to - from >= SweepCurve.Least - 0.002);
+        Assert.InRange(from, 10.4 - SweepCurve.Lead, 10.4);
+        Assert.InRange(to, 10.406, 10.406 + SweepCurve.Lag + 0.002);
         Assert.Equal(0, curve.At(10), 6);
         Assert.Equal(120, curve.At(10.806), 6);
-        // No faster anywhere than a word of that width in that time can be (at most twice its own speed).
-        for (double t = 10; t < 10.81; t += 0.001) Assert.InRange(curve.Speed(t), 0, 2 * 40 / SweepCurve.Least + 1);
+        // No faster anywhere than a word of that width in 80 ms can be (at most twice its own speed).
+        Assert.InRange(Top(curve, 10, 10.81), 0, 2 * 40 / SweepCurve.Least + 1);
 
-        // Before a rest it takes the rest's time: nothing else moves, and the next word still starts on time.
+        // Before a rest it takes the rest's time, and the next word still starts on time.
         var rest = SweepCurve.From(Words(10, (0.4, 40, 0), (0.01, 40, 0.5), (0.4, 40, 0)))!;
-        Assert.Equal(40, rest.At(10.4), 6);
         Assert.Equal(80, rest.At(10.48), 6);
         Assert.Equal(80, rest.At(10.9), 6);
         Assert.Equal(0, rest.Speed(10.905));
@@ -134,35 +150,27 @@ public class SweepCurveTests
     }
 
     [Fact]
-    public void AskedToBeEarlyQuickWordsStartAheadOfTheirTime()
+    public void QuickWordsAfterAHeldOneStartAheadOfTheirTime()
     {
         // Held for 2 s, two quick ones of 0.1 s, then 0.4 s: the dash starts 120 ms early (no more)
         // and ends 25 ms late (that leaves it three times the next word's speed, which is allowed).
-        var early = SweepCurve.From(HeldThenQuick, early: true)!;
-        Assert.Equal(40, early.At(12 - SweepCurve.Lead), 6);
-        Assert.Equal(80, early.At(12.1), 6);
-        Assert.Equal(120, early.At(12.225), 6);
-        Assert.Equal(0, early.At(10), 6);
-        Assert.Equal(160, early.At(12.6), 6);
-        // It's slower at its fastest than the sweep that keeps to the times, and still never turns back.
-        var onTime = SweepCurve.From(HeldThenQuick)!;
-        double Top(SweepCurve c) => Enumerable.Range(0, 2700).Max(k => c.Speed(10 + k * 0.001));
-        Assert.True(Top(early) < 0.75 * Top(onTime));
-        double last = 0;
-        for (double t = 9.9; t < 12.7; t += 0.002) { Assert.True(early.At(t) >= last - 1e-9); last = early.At(t); }
+        var curve = SweepCurve.From(HeldThenQuick)!;
+        Assert.Equal(40, curve.At(12 - SweepCurve.Lead), 6);
+        Assert.Equal(80, curve.At(12.1), 6);
+        Assert.Equal(120, curve.At(12.225), 6);
+        Assert.Equal(0, curve.At(10), 6);
+        Assert.Equal(160, curve.At(12.6), 6);
+        // The straight sweep goes through the quick words at 400 pixels a second; this one stays under that.
+        Assert.InRange(Top(curve, 10, 12.7), 200, 399);
         // No boundary is more than Lead ahead of its time or Lag behind it.
         foreach (var stop in HeldThenQuick.Skip(1))
         {
-            Assert.True(early.At(stop.Start - SweepCurve.Lead - 0.001) <= stop.From + 1e-6);
-            Assert.True(early.At(stop.Start + SweepCurve.Lag + 0.001) >= stop.From - 1e-6);
+            Assert.True(curve.At(stop.Start - SweepCurve.Lead - 0.001) <= stop.From + 1e-6);
+            Assert.True(curve.At(stop.Start + SweepCurve.Lag + 0.001) >= stop.From - 1e-6);
         }
 
-        // Words that differ less than three to one are left on their times.
-        var even = Words(5, (0.5, 30, 0), (0.25, 30, 0), (0.5, 30, 0));
-        for (double t = 4.9; t < 6.4; t += 0.01) Assert.Equal(SweepCurve.From(even)!.At(t), SweepCurve.From(even, early: true)!.At(t), 9);
-
         // A quick word after a rest still starts on time.
-        var rest = SweepCurve.From(Words(10, (1, 40, 0.5), (0.1, 40, 0), (0.1, 40, 0), (1, 40, 0)), early: true)!;
+        var rest = SweepCurve.From(Words(10, (1, 40, 0.5), (0.1, 40, 0), (0.1, 40, 0), (1, 40, 0)))!;
         Assert.Equal(40, rest.At(11.5), 6);
         Assert.Equal(0, rest.Speed(11.4));
     }

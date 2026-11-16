@@ -97,7 +97,7 @@ public sealed partial class PlaybackModel
         _provider = provider;
         _romanizer = romanizer;
         _romanizer.GroupJapaneseByWord = settings.RomajiByWord;
-        SweepPainter.Motion = settings.SweepMotion;
+        SweepPainter.Smooth = settings.SmoothSweep;
         _overrides = overrides;
         _settings = settings;
         _lineTimer = ui.CreateTimer();

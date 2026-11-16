@@ -19,14 +19,20 @@ sealed class SweepPainter
     /// <summary>The soft edge between sung and unsung (view pixels).</summary>
     public const double Edge = 8;
 
+    /// <summary>
+    /// The soft edge in use. The smooth sweep's is half the text's size (as other lyric players
+    /// have it): under a wide edge a fast stretch reads as a glide, not as steps a frame apart.
+    /// </summary>
+    double Fade => Smooth ? Math.Max(Edge, _text.FontSize * 0.5) : Edge;
+
     readonly Compositor _compositor;
     readonly CompositionLinearGradientBrush _gradient;
     readonly SpriteVisual _sprite;
     readonly CompositionMaskBrush _masked;
     readonly TextBlock _text;
     readonly Panel _host;
-    /// <summary>Experimental (Settings › Lyrics): how the sweep moves through words of different lengths.</summary>
-    public static SweepMotion Motion { get; set; }
+    /// <summary>Experimental (Settings › Lyrics): the sweep follows <see cref="SweepCurve"/> instead of one speed through each word.</summary>
+    public static bool Smooth { get; set; }
 
     SungEffect _effect = SungEffect.Sweep;
     Windows.UI.Color _color = Colors.White;
@@ -170,7 +176,7 @@ sealed class SweepPainter
     /// </summary>
     float HaloEnd(int layer, double sung, double width)
     {
-        double back = Edge + layer * HaloStep;
+        double back = Fade + layer * HaloStep;
         double run = Math.Max(Math.Min(width / 2, HaloRun), 1);
         double end = sung - back;
         if (sung < run) end -= _haloReach * (1 - Math.Max(sung, 0) / run);
@@ -294,6 +300,7 @@ sealed class SweepPainter
     public void Set(double sung, double width)
     {
         _gradient.StopAnimation("Offset");
+        _gradient.StartPoint = new Vector2((float)-Fade, 0);
         _gradient.Offset = OffsetFor(sung, width);
         for (int k = 0; k < _halo.Count; k++)
         {
@@ -310,7 +317,7 @@ sealed class SweepPainter
     {
         // The whole line at once: no word stops, so it lights as it starts.
         List<SweepStop> stops = _effect == SungEffect.Line ? [] : Sweep.Stops(piece, width, measure);
-        var curve = Motion == SweepMotion.Straight ? null : SweepCurve.From(stops, early: Motion == SweepMotion.Early);
+        var curve = Smooth ? SweepCurve.From(stops) : null;
         Set(curve?.At(position) ?? Sweep.SungWidth(stops, piece, width, position), width);
         AnimateLift(position, playing);
         if (!playing) return;
@@ -343,5 +350,5 @@ sealed class SweepPainter
     /// Where the fade ends for <paramref name="sung"/> pixels sung: at 0 when nothing is, just past
     /// the text when all of it is, so both ends are crisp.
     /// </summary>
-    static Vector2 OffsetFor(double sung, double width) => new((float)(sung * (width + Edge) / Math.Max(width, 1)), 0);
+    Vector2 OffsetFor(double sung, double width) => new((float)(sung * (width + Fade) / Math.Max(width, 1)), 0);
 }

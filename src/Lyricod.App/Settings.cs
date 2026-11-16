@@ -28,13 +28,6 @@ public enum IslandSize { Small, Medium, Large, ExtraLarge }
 /// <summary>How the sung part of a line shows (the island and the lyrics window).</summary>
 public enum SungEffect { Sweep, Glow, Line, Lift }
 
-/// <summary>
-/// How the sweep moves through words of different lengths (experimental). Straight: one speed
-/// through each word. Smooth: eased between them, on the words' own times. Early: the same, and
-/// quick words after a slow one start a little ahead of their time (see <c>SweepCurve</c>).
-/// </summary>
-public enum SweepMotion { Straight, Smooth, Early }
-
 public enum LineTransition { Instant, Slide, Fade }
 
 /// <summary>How often the island's bars redraw: smoother costs more battery.</summary>
@@ -116,7 +109,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     double _offset;
     bool _showCredits;
     bool _romajiByWord;
-    SweepMotion _sweepMotion = SweepMotion.Straight;
+    bool _smoothSweep;
     bool _lookUpOtherPlayers = true;
     List<LyricLanguage> _pronunciationLanguages = [LyricLanguage.Japanese, LyricLanguage.Korean];
 
@@ -202,8 +195,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// <summary>Japanese romaji spaced by word rather than by syllable (experimental; needs Windows' Japanese reader).</summary>
     public bool RomajiByWord { get => _romajiByWord; set => Set(ref _romajiByWord, value); }
 
-    [JsonConverter(typeof(KnownOrDefault<SweepMotion>))]
-    public SweepMotion SweepMotion { get => _sweepMotion; set => Set(ref _sweepMotion, value); }
+    /// <summary>The sweep eases between singing speeds and starts quick syllables a little early (experimental; see <c>SweepCurve</c>).</summary>
+    public bool SmoothSweep { get => _smoothSweep; set => Set(ref _smoothSweep, value); }
     public bool LookUpOtherPlayers { get => _lookUpOtherPlayers; set => Set(ref _lookUpOtherPlayers, value); }
     /// <summary>Languages that get a pronunciation line. Chinese is off by default.</summary>
     public List<LyricLanguage> PronunciationLanguages { get => _pronunciationLanguages; set => Set(ref _pronunciationLanguages, value); }

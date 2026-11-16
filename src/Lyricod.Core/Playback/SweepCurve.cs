@@ -8,14 +8,16 @@ namespace Lyricod.Core;
 public readonly record struct SweepKey(double Time, double Value, double Ease1 = 1.0 / 3, double Ease2 = 2.0 / 3);
 
 /// <summary>
-/// The sweep without <see cref="Sweep.Plan"/>'s jumps in speed between words of different lengths.
-/// It passes each word's edges at the same moments, on a monotone cubic: the speed where two words
-/// meet is the harmonic mean of theirs (at most twice the slower, so it can't overshoot or turn
-/// back). A rest is still a stop, reached and left at the word's own speed. The one change to the
-/// timing: a word timed shorter than <see cref="Least"/> (sources give some a few milliseconds)
-/// borrows the rest from its neighbours, or the sweep would cross it in a frame. Asked to be early
-/// (<see cref="Even"/>), it also lets a run of quick words start ahead of its time, so the sweep
-/// doesn't crawl and then dash.
+/// The sweep without <see cref="Sweep.Plan"/>'s jumps in speed between words of different lengths:
+/// a monotone cubic through each word's edges, whose speed where two words meet is the harmonic
+/// mean of theirs (at most twice the slower, so it can't overshoot or turn back). A rest is still
+/// a stop, reached and left at the word's own speed.
+/// <para>
+/// Kept to the source's times it looks much like the straight sweep where a held word is followed
+/// by quick ones: both have to crawl and then dash. So the times give a little: quick words start
+/// ahead of theirs (<see cref="Even"/>), and a word timed in a few milliseconds gets at least
+/// <see cref="Least"/> (<see cref="Spread"/>).
+/// </para>
 /// </summary>
 public sealed class SweepCurve
 {
@@ -26,9 +28,9 @@ public sealed class SweepCurve
     public const double Least = 0.08;
 
     /// <summary>
-    /// For the early sweep: neighbours whose speeds differ by more than <see cref="Ratio"/> have
-    /// their boundary moved, at most <see cref="Lead"/> ahead of its time or <see cref="Lag"/>
-    /// behind it (seconds). Lit a little early reads fine; lit late doesn't.
+    /// Neighbours whose speeds differ by more than <see cref="Ratio"/> have their boundary moved,
+    /// at most <see cref="Lead"/> ahead of its time or <see cref="Lag"/> behind it (seconds). Lit
+    /// a little early reads fine; lit late doesn't.
     /// </summary>
     public const double Ratio = 3, Lead = 0.12, Lag = 0.04;
 
@@ -55,8 +57,7 @@ public sealed class SweepCurve
     }
 
     /// <summary>The curve through <paramref name="stops"/>, or null when they sweep nothing.</summary>
-    /// <param name="early">Quick words after a slow one may start ahead of their time (<see cref="Even"/>).</param>
-    public static SweepCurve? From(IReadOnlyList<SweepStop> stops, bool early = false)
+    public static SweepCurve? From(IReadOnlyList<SweepStop> stops)
     {
         var words = new List<SweepStop>();
         foreach (var stop in stops.Where(s => s.To - s.From > 0.01))
@@ -88,7 +89,7 @@ public sealed class SweepCurve
         }
         var timed = t.ToArray();
         Spread(t, x);
-        if (early) Even(t, x, timed);
+        Even(t, x, timed);
         return new SweepCurve(t, x);
     }
 
