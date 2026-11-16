@@ -58,8 +58,19 @@ public sealed class SweepCurve
     /// <param name="early">Quick words after a slow one may start ahead of their time (<see cref="Even"/>).</param>
     public static SweepCurve? From(IReadOnlyList<SweepStop> stops, bool early = false)
     {
-        var words = stops.Where(s => s.To - s.From > 0.01).ToList();
+        var words = new List<SweepStop>();
+        foreach (var stop in stops.Where(s => s.To - s.From > 0.01))
+        {
+            // A word of no length (a space, as QQ Music times one) is swept with the word after it.
+            if (words.Count > 0 && words[^1].End - words[^1].Start < Step) words[^1] = stop with { From = words[^1].From };
+            else words.Add(stop);
+        }
         if (words.Count == 0) return null;
+        if (words.Count > 1 && words[^1].End - words[^1].Start < Step)
+        {
+            words[^2] = words[^2] with { To = words[^1].To };
+            words.RemoveAt(words.Count - 1);
+        }
         var t = new List<double> { words[0].Start };
         var x = new List<double> { words[0].From };
         void Add(double time, double at)
