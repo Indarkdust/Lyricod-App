@@ -21,7 +21,7 @@ public sealed class SweepCurve
     public const double Bridge = 0.08;
 
     /// <summary>The least a word's sweep takes (seconds).</summary>
-    public const double Least = 0.06;
+    public const double Least = 0.08;
 
     /// <summary>The least time between two points, so a word of no length still takes a moment.</summary>
     const double Step = 0.001;
