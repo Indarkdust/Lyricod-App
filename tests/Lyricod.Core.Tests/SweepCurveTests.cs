@@ -104,6 +104,35 @@ public class SweepCurveTests
         Assert.Null(SweepCurve.From([new(1, 2, 0, 0)]));
     }
 
+    [Fact]
+    public void AWordTimedInAFewMillisecondsBorrowsFromItsNeighbours()
+    {
+        // 40 px in 6 ms, between two ordinary syllables: the sweep would cross it in one frame.
+        var stops = Words(10, (0.4, 40, 0), (0.006, 40, 0), (0.4, 40, 0));
+        var curve = SweepCurve.From(stops)!;
+        // It now takes 60 ms, half from each side: 27 ms early in, 27 ms late out.
+        Assert.Equal(40, curve.At(10.4 - 0.027), 3);
+        Assert.Equal(80, curve.At(10.406 + 0.027), 3);
+        Assert.InRange(curve.At(10.403), 50, 70);
+        Assert.Equal(0, curve.At(10), 6);
+        Assert.Equal(120, curve.At(10.806), 6);
+        // No faster anywhere than a word of that width in 60 ms can be (at most twice its own speed).
+        for (double t = 10; t < 10.81; t += 0.001) Assert.InRange(curve.Speed(t), 0, 2 * 40 / SweepCurve.Least + 1);
+
+        // Before a rest it takes the rest's time: nothing else moves, and the next word still starts on time.
+        var rest = SweepCurve.From(Words(10, (0.4, 40, 0), (0.01, 40, 0.5), (0.4, 40, 0)))!;
+        Assert.Equal(40, rest.At(10.4), 6);
+        Assert.Equal(80, rest.At(10.46), 6);
+        Assert.Equal(80, rest.At(10.9), 6);
+        Assert.Equal(0, rest.Speed(10.905));
+        Assert.True(rest.At(10.92) > 80);
+
+        // After a rest it never starts early: it only runs on into the next word's time.
+        var onset = SweepCurve.From(Words(10, (0.4, 40, 0.5), (0.01, 40, 0), (0.4, 40, 0)))!;
+        Assert.Equal(40, onset.At(10.9), 6);
+        Assert.Equal(80, onset.At(10.96), 3);
+    }
+
     /// The sung width a plan gives <paramref name="seconds"/> from its start, as the compositor draws it.
     static double Drawn(List<SweepKey> keys, double seconds)
     {

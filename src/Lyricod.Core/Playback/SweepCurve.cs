@@ -11,12 +11,17 @@ public readonly record struct SweepKey(double Time, double Value, double Ease1 =
 /// The sweep without <see cref="Sweep.Plan"/>'s jumps in speed between words of different lengths.
 /// It passes each word's edges at the same moments, on a monotone cubic: the speed where two words
 /// meet is the harmonic mean of theirs (at most twice the slower, so it can't overshoot or turn
-/// back). A rest is still a stop, reached and left at the word's own speed.
+/// back). A rest is still a stop, reached and left at the word's own speed. The one change to the
+/// timing: a word timed shorter than <see cref="Least"/> (sources give some a few milliseconds)
+/// borrows the rest from its neighbours, or the sweep would cross it in a frame.
 /// </summary>
 public sealed class SweepCurve
 {
     /// <summary>A gap between words this short (seconds) isn't a rest: the word before lasts until the next starts.</summary>
     public const double Bridge = 0.08;
+
+    /// <summary>The least a word's sweep takes (seconds).</summary>
+    public const double Least = 0.06;
 
     /// <summary>The least time between two points, so a word of no length still takes a moment.</summary>
     const double Step = 0.001;
@@ -60,7 +65,31 @@ public sealed class SweepCurve
             if (next - word.End > Bridge) Add(word.End, word.To);
             Add(next, word.To);
         }
+        Spread(t, x);
         return new SweepCurve(t, x);
+    }
+
+    /// <summary>
+    /// Gives each stretch shorter than <see cref="Least"/> the time it lacks: from a rest after it
+    /// if there is one (no word then starts off its time), else from the words either side, which
+    /// keep at least as much themselves. A word after a rest never starts early.
+    /// </summary>
+    static void Spread(List<double> t, List<double> x)
+    {
+        bool Sweeps(int i) => x[i + 1] - x[i] > 0;
+        for (int i = 0; i + 1 < t.Count; i++)
+        {
+            if (!Sweeps(i)) continue;
+            double need = Least - (t[i + 1] - t[i]);
+            if (need <= 0) continue;
+            double before = i > 0 && Sweeps(i - 1) ? Math.Max(t[i] - t[i - 1] - Least, 0) : 0;
+            bool rest = i + 2 < t.Count && !Sweeps(i + 1);
+            double after = i + 2 < t.Count ? Math.Max(t[i + 2] - t[i + 1] - (rest ? Step : Least), 0) : 0;
+            double late = Math.Min(after, rest ? need : need / 2), early = Math.Min(before, need - late);
+            late = Math.Min(after, need - early);
+            t[i] -= early;
+            t[i + 1] += late;
+        }
     }
 
     /// <summary>The sung width at <paramref name="time"/>.</summary>
