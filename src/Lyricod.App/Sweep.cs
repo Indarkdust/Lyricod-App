@@ -25,6 +25,9 @@ sealed class SweepPainter
     readonly CompositionMaskBrush _masked;
     readonly TextBlock _text;
     readonly Panel _host;
+    /// <summary>Experimental (Settings › Lyrics): the sweep eases through changes in singing speed (<see cref="SweepCurve"/>).</summary>
+    public static bool Smooth { get; set; }
+
     SungEffect _effect = SungEffect.Sweep;
     Windows.UI.Color _color = Colors.White;
     /// <summary>The row's words while they're drawn one by one, to rise as they're sung; empty otherwise.</summary>
@@ -307,27 +310,34 @@ sealed class SweepPainter
     {
         // The whole line at once: no word stops, so it lights as it starts.
         List<SweepStop> stops = _effect == SungEffect.Line ? [] : Sweep.Stops(piece, width, measure);
-        Set(Sweep.SungWidth(stops, piece, width, position), width);
+        var curve = Smooth ? SweepCurve.From(stops) : null;
+        Set(curve?.At(position) ?? Sweep.SungWidth(stops, piece, width, position), width);
         AnimateLift(position, playing);
         if (!playing) return;
-        var (times, values) = Sweep.Plan(stops, piece, width, position);
-        double total = times[^1];
+        var keys = curve?.Plan(position) ?? Straight(Sweep.Plan(stops, piece, width, position));
+        double total = keys[^1].Time;
         if (total < 0.01) return;
         var linear = _compositor.CreateLinearEasingFunction();
+        // The smooth sweep's cubic between two keys is a Bézier with its control points at 1/3 and 2/3 of the time.
+        var eases = keys.Select(k => k.Ease1 == 1.0 / 3 && k.Ease2 == 2.0 / 3 ? (CompositionEasingFunction)linear
+            : _compositor.CreateCubicBezierEasingFunction(new Vector2(1f / 3, (float)k.Ease1), new Vector2(2f / 3, (float)k.Ease2))).ToList();
         var animation = _compositor.CreateVector2KeyFrameAnimation();
-        for (int k = 0; k < times.Count; k++)
-            animation.InsertKeyFrame((float)(times[k] / total), OffsetFor(values[k], width), linear);
+        for (int k = 0; k < keys.Count; k++)
+            animation.InsertKeyFrame((float)(keys[k].Time / total), OffsetFor(keys[k].Value, width), eases[k]);
         animation.Duration = TimeSpan.FromSeconds(total);
         _gradient.StartAnimation("Offset", animation);
         for (int layer = 0; layer < _halo.Count; layer++)
         {
             var shown = _compositor.CreateScalarKeyFrameAnimation();
-            for (int k = 0; k < times.Count; k++)
-                shown.InsertKeyFrame((float)(times[k] / total), HaloEnd(layer, values[k], width), linear);
+            for (int k = 0; k < keys.Count; k++)
+                shown.InsertKeyFrame((float)(keys[k].Time / total), HaloEnd(layer, keys[k].Value, width), eases[k]);
             shown.Duration = animation.Duration;
             _halo[layer].Shown.StartAnimation("Right", shown);
         }
     }
+
+    static List<SweepKey> Straight((List<double> Times, List<double> Values) plan) =>
+        [.. plan.Times.Select((time, k) => new SweepKey(time, plan.Values[k]))];
 
     /// <summary>
     /// Where the fade ends for <paramref name="sung"/> pixels sung: at 0 when nothing is, just past

@@ -109,6 +109,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     double _offset;
     bool _showCredits;
     bool _romajiByWord;
+    bool _smoothSweep;
     bool _lookUpOtherPlayers = true;
     List<LyricLanguage> _pronunciationLanguages = [LyricLanguage.Japanese, LyricLanguage.Korean];
 
@@ -193,6 +194,9 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public bool ShowCredits { get => _showCredits; set => Set(ref _showCredits, value); }
     /// <summary>Japanese romaji spaced by word rather than by syllable (experimental; needs Windows' Japanese reader).</summary>
     public bool RomajiByWord { get => _romajiByWord; set => Set(ref _romajiByWord, value); }
+
+    /// <summary>The sung colour eases through changes in singing speed instead of changing speed at each word (experimental).</summary>
+    public bool SmoothSweep { get => _smoothSweep; set => Set(ref _smoothSweep, value); }
     public bool LookUpOtherPlayers { get => _lookUpOtherPlayers; set => Set(ref _lookUpOtherPlayers, value); }
     /// <summary>Languages that get a pronunciation line. Chinese is off by default.</summary>
     public List<LyricLanguage> PronunciationLanguages { get => _pronunciationLanguages; set => Set(ref _pronunciationLanguages, value); }

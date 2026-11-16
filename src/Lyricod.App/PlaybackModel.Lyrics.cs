@@ -150,6 +150,10 @@ public sealed partial class PlaybackModel
                     _romanizer.GroupJapaneseByWord = _settings.RomajiByWord;
                     if (Track is { } song) LoadLyrics(song, ignoreCache: false);
                     break;
+                case nameof(Settings.SmoothSweep):
+                    SweepPainter.Smooth = _settings.SmoothSweep;
+                    ApplyOffset(); // the sweep re-plans
+                    break;
                 case nameof(Settings.Offset):
                     ApplyOffset();
                     break;
