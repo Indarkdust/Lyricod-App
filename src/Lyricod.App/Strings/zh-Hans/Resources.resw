@@ -175,9 +175,9 @@
   <data name="FoldExperimental" xml:space="preserve"><value>实验性功能</value></data>
   <data name="FoldExperimentalDetail" xml:space="preserve"><value>仍在试验中，之后可能调整或移除。</value></data>
   <data name="RomajiByWord" xml:space="preserve"><value>按词分隔罗马音</value></data>
-  <data name="RomajiByWordDetail" xml:space="preserve"><value>借助 Windows 的日语分析，按词而不是按音节分隔日语罗马音（需要在 Windows 语言设置中添加日语）。部分词语仍可能被拆开。</value></data>
+  <data name="RomajiByWordDetail" xml:space="preserve"><value>按词而不是按音节分隔日语罗马音。需要在 Windows 语言设置中添加日语；部分词语仍可能被拆开。</value></data>
   <data name="SmoothSweep" xml:space="preserve"><value>平滑扫过</value></data>
-  <data name="SmoothSweepDetail" xml:space="preserve"><value>演唱速度变化时，已唱颜色平缓过渡；一串很短的音节最多提前 0.12 秒开始，避免先慢后突然加速；颜色边缘也更柔和。</value></data>
+  <data name="SmoothSweepDetail" xml:space="preserve"><value>长音后面紧跟短音时，让已唱颜色移动得更均匀，不会先慢后突然加快。短音可能稍微提前亮起，颜色边缘也更柔和。</value></data>
   <data name="ShowCredits" xml:space="preserve"><value>显示词曲作者信息</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词自带的罗马音；没有时尝试通过 Windows 生成，部分汉字可能读错。各个歌词视图可以分别设置是否显示翻译和音译。</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语罗马音来自歌词来源（如有）。如需 Lyricod 为其他歌曲生成，请在 Windows 设置 › 时间和语言 › 语言和区域 中添加日语。</value></data>
