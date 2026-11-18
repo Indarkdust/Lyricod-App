@@ -32,7 +32,7 @@
   <data name="Win2DDetail" xml:space="preserve"><value>Used to render Lyricod Glass's liquid effect.</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
   <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
-  <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent or Xiaomi.</value></data>
+  <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Klee is a trademark of Fontworks. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent, Xiaomi or Fontworks.</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Lyricod settings</value></data>
   <data name="LyricsWindowTitle" xml:space="preserve"><value>Lyrics window</value></data>
   <data name="PaneGeneral" xml:space="preserve"><value>General</value></data>
@@ -334,16 +334,24 @@
   <data name="FontSearch" xml:space="preserve"><value>Search installed fonts</value></data>
   <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans by Xiaomi works well with Chinese, English and Japanese text. The usual download is about 15 MB, although some cases require the full font archive. Use is subject to Xiaomi's licence.</value></data>
   <data name="FontDownload" xml:space="preserve"><value>Download</value></data>
-  <data name="FontRemove" xml:space="preserve"><value>Remove MiSans</value></data>
+  <data name="FontRemove" xml:space="preserve"><value>Remove</value></data>
   <data name="FontRetry" xml:space="preserve"><value>Retry</value></data>
-  <data name="FontDownloading" xml:space="preserve"><value>Downloading MiSans…</value></data>
+  <data name="FontDownloading" xml:space="preserve"><value>Downloading {0}…</value></data>
   <data name="FontDownloadingArchive" xml:space="preserve"><value>Downloading the full font archive (about 228 MB)…</value></data>
   <data name="FontDownloadingLicence" xml:space="preserve"><value>Downloading the licence…</value></data>
-  <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download MiSans.</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download {0}.</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>The download timed out. Please retry.</value></data>
-  <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all MiSans files. Close Lyricod and try again.</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>MiSans could not be loaded or copied to the app folder. Lyricod is using its default font.</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all {0} files. Close Lyricod and try again.</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>{0} could not be loaded or copied to the app folder. Lyricod is using its default font.</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>Could not list installed fonts.</value></data>
+  <data name="FontWenKai" xml:space="preserve"><value>LXGW WenKai Lite</value></data>
+  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>LXGW WenKai is an open-source font in a handwritten kai style, for Chinese and Japanese kana. The Lite version has no Korean, so Korean lyrics use another font. Choosing it downloads the font from GitHub, about 14 MB. Use is subject to the SIL Open Font License.</value></data>
+  <data name="FontViewLicence" xml:space="preserve"><value>View the licence</value></data>
+  <data name="FontsDownloaded" xml:space="preserve"><value>Downloaded fonts</value></data>
+  <data name="FontInUse" xml:space="preserve"><value>In use</value></data>
+  <data name="FontPartial" xml:space="preserve"><value>Download not finished</value></data>
+  <data name="WenKaiName" xml:space="preserve"><value>LXGW WenKai Lite by LXGW</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>An open font based on Fontworks' Klee One, under the SIL Open Font License. It can be downloaded in Settings › Lyrics.</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and Install</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>What’s new</value></data>
   <data name="UpdateRestart" xml:space="preserve"><value>Restart to Update</value></data>

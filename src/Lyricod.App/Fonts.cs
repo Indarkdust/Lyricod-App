@@ -15,23 +15,37 @@ static class Fonts
     const string Japanese = "Yu Gothic UI, Microsoft YaHei UI, Malgun Gothic";
     const string Korean = "Malgun Gothic, Microsoft YaHei UI, Yu Gothic UI";
     static readonly Dictionary<string, FontFamily> Families = [];
+    /// <summary>The fonts Lyricod downloads, as saved in the font setting.</summary>
+    public const string MiSans = "MiSans", WenKai = "WenKai";
+    public static bool IsDownloadable(string choice) => choice is MiSans or WenKai;
+
     static string _choice = "";
-    static string? _miSans, _hash, _appFont;
+    /// <summary>The chosen downloadable font, once it's on disk and loads; null otherwise.</summary>
+    static string? _download, _hash, _appFont;
     static bool _resolved;
 
     public static event Action? Changed;
     public static string? Error { get; private set; }
-    static bool UsingMiSans => _choice == "MiSans" && _miSans != null;
-    static LyricFont Kind => UsingMiSans ? LyricFont.MiSans : _choice is "" or "MiSans" ? LyricFont.Default : LyricFont.Other;
+    /// <summary>The downloadable font in use, or null.</summary>
+    public static string? InUse => _download == null ? null : _choice;
+    static LyricFont Kind => InUse switch
+    {
+        MiSans => LyricFont.MiSans,
+        WenKai => LyricFont.WenKai,
+        _ => _choice == "" || IsDownloadable(_choice) ? LyricFont.Default : LyricFont.Other,
+    };
     public static FontWeight BoldWeight => new(FontWeights.Get(LyricWeight.Bold, Kind));
     public static FontWeight SemiboldWeight => new(FontWeights.Get(LyricWeight.Semibold, Kind));
     public static FontWeight Weight(IslandWeight weight) => new(FontWeights.Get((LyricWeight)weight, Kind));
-    public static string DiagnosticsText => UsingMiSans
-        ? $"MiSans (downloaded, {(_hash == MiSansArchive.KnownHash ? "hash ok" : "hash differs")})"
-        : _choice is "" or "MiSans" ? "Microsoft YaHei (default)" : _choice;
+    public static string DiagnosticsText => InUse switch
+    {
+        MiSans => $"MiSans (downloaded, {(_hash == MiSansArchive.KnownHash ? "hash ok" : "hash differs")})",
+        WenKai => "LXGW WenKai Lite (downloaded)",
+        _ => _choice == "" || IsDownloadable(_choice) ? "Microsoft YaHei (default)" : _choice,
+    };
 
     /// <summary>The chosen font, or null for the default (Microsoft YaHei for lyrics, Windows' own font elsewhere).</summary>
-    static string? Chosen => _choice == "MiSans" ? _miSans : _choice.Length > 0 ? _choice : null;
+    static string? Chosen => IsDownloadable(_choice) ? _download : _choice.Length > 0 ? _choice : null;
 
     /// <summary>
     /// Puts the chosen font on the rest of Lyricod's text too (Settings, tray panel, buttons, song
@@ -71,7 +85,7 @@ static class Fonts
     static void Apply(string choice)
     {
         _choice = choice;
-        if (choice == "MiSans") Resolve();
+        if (IsDownloadable(choice)) Resolve();
         Families.Clear();
         Notify();
     }
@@ -80,7 +94,7 @@ static class Fonts
     public static void Reload()
     {
         _resolved = false;
-        _miSans = _hash = Error = null;
+        _download = _hash = Error = null;
         Apply(_choice);
     }
 
@@ -94,29 +108,51 @@ static class Fonts
         }
     }
 
+    /// <summary>A downloadable font's name, as the font list shows it.</summary>
+    public static string NameOf(string choice) => choice == WenKai ? L.Get("FontWenKai") : "MiSans";
+
     static void Resolve()
     {
         if (_resolved) return;
         _resolved = true;
-        if (!MiSansDownload.IsDownloaded) return;
+        bool wenKai = _choice == WenKai;
+        if (!(wenKai ? WenKaiDownload.IsDownloaded : MiSansDownload.IsDownloaded)) return;
         try
         {
-            _hash = MiSansArchive.ValidateAsync(MiSansDownload.FontPath).GetAwaiter().GetResult();
-            string file = new Uri(MiSansDownload.FontPath).AbsoluteUri + "#MiSans VF";
-            if (Loads(file)) { _miSans = file; return; }
-            Directory.CreateDirectory(Path.GetDirectoryName(MiSansDownload.AppCopyPath)!);
-            string temp = MiSansDownload.AppCopyPath + ".tmp";
-            try
+            if (wenKai) _download = Load(WenKaiDownload.FontPath, WenKaiDownload.AppCopyPath, WenKaiFont.Families);
+            else
             {
-                File.Copy(MiSansDownload.FontPath, temp, true);
-                File.Move(temp, MiSansDownload.AppCopyPath, true);
+                _hash = MiSansArchive.ValidateAsync(MiSansDownload.FontPath).GetAwaiter().GetResult();
+                _download = Load(MiSansDownload.FontPath, MiSansDownload.AppCopyPath, ["MiSans VF"]);
             }
-            finally { File.Delete(temp); }
-            const string app = "ms-appx:///Fonts/MiSansVF.ttf#MiSans VF";
-            if (Loads(app)) { _miSans = app; return; }
-            Error = L.Get("FontLoadFailed");
+            if (_download == null) Error = L.Format("FontLoadFailed", NameOf(_choice));
         }
-        catch (Exception e) { Error = L.Get("FontLoadFailed") + " " + e.Message; }
+        catch (Exception e) { Error = L.Format("FontLoadFailed", NameOf(_choice)) + " " + e.Message; }
+    }
+
+    /// <summary>
+    /// The font at <paramref name="path"/> under the first of its <paramref name="families"/> that loads.
+    /// Where Windows won't load a font from the user's folder, a copy beside the app does.
+    /// </summary>
+    static string? Load(string path, string appCopy, IReadOnlyList<string> families)
+    {
+        string file = new Uri(path).AbsoluteUri;
+        foreach (string family in families)
+            if (Loads(file + "#" + family)) return file + "#" + family;
+        Directory.CreateDirectory(Path.GetDirectoryName(appCopy)!);
+        string temp = appCopy + ".tmp";
+        try
+        {
+            File.Copy(path, temp, true);
+            File.Move(temp, appCopy, true);
+        }
+        finally { File.Delete(temp); }
+        foreach (string family in families)
+        {
+            string app = "ms-appx:///Fonts/" + Path.GetFileName(appCopy) + "#" + family;
+            if (Loads(app)) return app;
+        }
+        return null;
     }
 
     static bool Loads(string source)

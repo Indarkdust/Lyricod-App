@@ -71,7 +71,7 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 ; In particular, do not add a recursive [UninstallDelete] entry for user data.
 
 [UninstallDelete]
-; MiSans may be copied beside the app, including the portable launcher layout.
+; Downloaded fonts (MiSans, LXGW WenKai) may be copied beside the app, including the portable launcher layout.
 Type: filesandordirs; Name: "{app}\Fonts"
 Type: filesandordirs; Name: "{app}\app\Fonts"
 

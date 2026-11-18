@@ -20,6 +20,7 @@ public class FontTests
         Assert.Equal(standard, FontWeights.Get(weight, LyricFont.Other));
         Assert.Equal(miSans, FontWeights.Get(weight, LyricFont.MiSans));
         Assert.Equal(yaHei, FontWeights.Get(weight, LyricFont.Default));
+        Assert.Equal(500, FontWeights.Get(weight, LyricFont.WenKai));
     }
 
     static byte[] Font()

@@ -32,7 +32,7 @@
   <data name="Win2DDetail" xml:space="preserve"><value>用于绘制 Lyricod Glass 的液态玻璃效果。</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>基于 Microsoft 的 .NET 和 Windows App SDK 构建。</value></data>
   <data name="Trademarks" xml:space="preserve"><value>商标</value></data>
-  <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯或小米没有关联，也未获得其认可或赞助。</value></data>
+  <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Klee 是 Fontworks 的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯、小米或 Fontworks 没有关联，也未获得其认可或赞助。</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Lyricod 设置</value></data>
   <data name="LyricsWindowTitle" xml:space="preserve"><value>歌词窗口</value></data>
   <data name="PaneGeneral" xml:space="preserve"><value>通用</value></data>
@@ -334,16 +334,24 @@
   <data name="FontSearch" xml:space="preserve"><value>搜索已安装的字体</value></data>
   <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans 是小米推出的字体，适合中、英、日文混排。选择后会从小米下载字体文件，通常约 15 MB；部分情况下需要下载完整字体包。使用时遵循小米的许可协议。</value></data>
   <data name="FontDownload" xml:space="preserve"><value>下载</value></data>
-  <data name="FontRemove" xml:space="preserve"><value>移除 MiSans</value></data>
+  <data name="FontRemove" xml:space="preserve"><value>移除</value></data>
   <data name="FontRetry" xml:space="preserve"><value>重试</value></data>
-  <data name="FontDownloading" xml:space="preserve"><value>正在下载 MiSans…</value></data>
+  <data name="FontDownloading" xml:space="preserve"><value>正在下载 {0}…</value></data>
   <data name="FontDownloadingArchive" xml:space="preserve"><value>正在下载完整字体包（约 228 MB）…</value></data>
   <data name="FontDownloadingLicence" xml:space="preserve"><value>正在下载许可协议…</value></data>
-  <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 MiSans。</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 {0}。</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>下载超时，请重试。</value></data>
-  <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 MiSans 文件。请关闭 Lyricod 后重试。</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 MiSans 或将其复制到应用文件夹。Lyricod 将使用默认字体显示。</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 {0} 文件。请关闭 Lyricod 后重试。</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 {0} 或将其复制到应用文件夹。Lyricod 将使用默认字体显示。</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>无法读取已安装的字体。</value></data>
+  <data name="FontWenKai" xml:space="preserve"><value>霞鹜文楷 Lite</value></data>
+  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>霞鹜文楷是一款开源的楷体风格字体，适合中文和日文假名。Lite 版不含韩文，韩文歌词会改用其他字体显示。选择后会从 GitHub 下载字体文件，约 14 MB。使用时遵循 SIL 开源字体许可协议。</value></data>
+  <data name="FontViewLicence" xml:space="preserve"><value>查看许可协议</value></data>
+  <data name="FontsDownloaded" xml:space="preserve"><value>已下载的字体</value></data>
+  <data name="FontInUse" xml:space="preserve"><value>正在使用</value></data>
+  <data name="FontPartial" xml:space="preserve"><value>下载未完成</value></data>
+  <data name="WenKaiName" xml:space="preserve"><value>霞鹜文楷 Lite（LXGW）</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>开源字体，基于 Fontworks 的 Klee One，遵循 SIL 开源字体许可协议。可在「设置 › 歌词」中下载。</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>下载并安装</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>更新内容</value></data>
   <data name="UpdateRestart" xml:space="preserve"><value>重启并更新</value></data>

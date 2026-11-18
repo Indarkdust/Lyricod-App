@@ -108,7 +108,7 @@ InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.43 and 2.
 
 You can customize lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island mode and theme, animations, hover behaviour, and global shortcuts. The island, desktop lyrics and lyrics window have separate display settings.
 
-Lyrics use Microsoft YaHei by default. You can choose another installed font or download **MiSans** by Xiaomi from Settings. MiSans is not bundled with Lyricod and is subject to Xiaomi's licence.
+Lyrics use Microsoft YaHei by default. You can choose another installed font, or download **MiSans** by Xiaomi or **LXGW WenKai Lite** (霞鹜文楷) from Settings. Neither is bundled with Lyricod: MiSans is subject to Xiaomi's licence, and LXGW WenKai Lite is an open font under the SIL Open Font License.
 
 ## Privacy
 

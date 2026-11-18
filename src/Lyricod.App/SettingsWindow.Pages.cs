@@ -1,4 +1,5 @@
 using Lyricod.Core;
+using Lyricod.Core.Fonts;
 using Lyricod.Platform;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -427,6 +428,10 @@ public sealed partial class SettingsWindow
         _songWatchers.Add(ShowFontLicence);
         ShowFontLicence();
         Group(Entry(L.Get("MiSansName"), L.Get("MiSansDetail"), "https://hyperos.mi.com/font/"), licence);
+        // WenKai's licence ships with Lyricod, so it's there to read whether or not the font is.
+        var wenKaiLicence = new HyperlinkButton { Content = L.Get("FontViewLicence"), Padding = new Thickness(0, 4, 0, 0) };
+        wenKaiLicence.Click += (_, _) => Open(Path.Combine(AppContext.BaseDirectory, "licenses", WenKaiFont.LicenceFileName));
+        Group(Entry(L.Get("WenKaiName"), L.Get("WenKaiDetail"), "https://github.com/lxgw/LxgwWenKai-Lite"), wenKaiLicence);
 
         Heading(L.Get("BuiltWith"));
         Group(Entry("WinUIEx by Morten Nielsen", L.Get("WinUIExDetail"), "https://github.com/dotMorten/WinUIEx"),

@@ -13,6 +13,7 @@ Lyricod for Windows is licensed under the Apache License 2.0 (see `LICENSE`). It
 - **Lyricify's Dynamic Lyrics Island**, a design by WXRIW licensed under CC BY-SA 4.0, inspired Lyricod Island, which is designed and written independently.
 - **BetterNCM** and **InfLink-rs** are not included. If you set up NetEase Cloud Music sync in Settings › General, Lyricod downloads Lyricod CM Helper ([darkdust-c/Lyricod-CM-Helper](https://github.com/darkdust-c/Lyricod-CM-Helper), Apache License 2.0), which installs them into NetEase Cloud Music from their own releases. Both are licensed under the GNU GPL v3.
 - **MiSans** by Xiaomi is not included. If you choose it in Settings › Lyrics, Lyricod downloads it from Xiaomi ([hyperos.mi.com/font](https://hyperos.mi.com/font/)) to your PC, where it's used under Xiaomi's MiSans font licence, saved next to it.
+- **LXGW WenKai Lite** (霞鹜文楷 Lite) by LXGW is not included. If you choose it in Settings › Lyrics, Lyricod downloads it, unchanged, from its release on GitHub ([lxgw/LxgwWenKai-Lite](https://github.com/lxgw/LxgwWenKai-Lite)). SIL Open Font License 1.1, © 2021-2026 LXGW, with Reserved Font Names; based on Klee One, © 2020 The Klee Project Authors (`licenses/LXGWWenKaiLite-OFL.txt`, also saved next to the font). Klee is a trademark of Fontworks.
 - The installers are built with **Inno Setup** by Jordan Russell and Martijn Laan.
 
 Lyrics are fetched from NetEase Cloud Music, QQ Music and LRCLIB, and belong to their copyright holders. Lyricod is not affiliated with Microsoft, NetEase, Tencent or Xiaomi.
