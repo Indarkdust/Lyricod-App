@@ -57,7 +57,7 @@
   <data name="NeteaseSyncBeforeDetail" xml:space="preserve"><value>安装过程中，网易云音乐会关闭并重新启动，Windows 也会请求管理员权限。部分安全软件可能会对插件发出警告。BetterNCM 已停止维护，网易云音乐后续更新可能导致插件无法正常使用。</value></data>
   <data name="NeteaseSyncVersion" xml:space="preserve"><value>网易云音乐版本</value></data>
   <data name="NeteaseSyncTested" xml:space="preserve"><value>{0}（已测试）</value></data>
-  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0}（未经测试，已测试版本为 3.1.20 至 3.1.42）</value></data>
+  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0}（未经测试，已测试版本为 3.1.20 至 3.1.43）</value></data>
   <data name="NeteaseSyncUnsupported" xml:space="preserve"><value>仅支持 64 位的网易云音乐 3.x 版本。</value></data>
   <data name="NeteaseSyncStatus" xml:space="preserve"><value>状态</value></data>
   <data name="NeteaseSyncInstalled" xml:space="preserve"><value>已安装</value></data>

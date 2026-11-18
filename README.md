@@ -102,7 +102,7 @@ The easiest way is through Lyricod: open Settings > General > NetEase Cloud Musi
 
 Lyricod will detect the additional playback information automatically. You can check this in Settings > About > Diagnostics.
 
-InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.41 and 2.10.13. If a player update causes problems, check for an updated plugin. BetterNCM can be removed by deleting `msimg32.dll` from the NetEase Cloud Music installation folder, or use Remove in Lyricod's Settings > General > NetEase Cloud Music sync if you installed it through Lyricod. Do not install the older InfLink alongside InfLink-rs.
+InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.43 and 2.10.13. If a player update causes problems, check for an updated plugin. BetterNCM can be removed by deleting `msimg32.dll` from the NetEase Cloud Music installation folder, or use Remove in Lyricod's Settings > General > NetEase Cloud Music sync if you installed it through Lyricod. Do not install the older InfLink alongside InfLink-rs.
 
 ## Customization
 

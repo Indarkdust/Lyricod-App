@@ -54,9 +54,9 @@ public class NeteaseSyncTests
 
     [Theory]
     [InlineData(3, 1, 20, true)]
-    [InlineData(3, 1, 42, true)]
+    [InlineData(3, 1, 43, true)]
     [InlineData(3, 1, 19, false)]
-    [InlineData(3, 1, 43, false)]
+    [InlineData(3, 1, 44, false)]
     [InlineData(2, 10, 13, false)]
     public void KnowsTheTestedVersions(int major, int minor, int build, bool tested) =>
         Assert.Equal(tested, NeteaseSync.IsTested(new Version(major, minor, build, 204712)));

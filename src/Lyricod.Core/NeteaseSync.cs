@@ -63,7 +63,7 @@ public static class NeteaseSync
     }
 
     /// <summary>The NetEase Cloud Music versions sync has been tested with (3.x).</summary>
-    public static readonly Version TestedFrom = new(3, 1, 20), TestedTo = new(3, 1, 42);
+    public static readonly Version TestedFrom = new(3, 1, 20), TestedTo = new(3, 1, 43);
 
     public static bool IsTested(Version version)
     {

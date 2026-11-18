@@ -57,7 +57,7 @@
   <data name="NeteaseSyncBeforeDetail" xml:space="preserve"><value>NetEase Cloud Music will restart during installation, and Windows will request administrator permission. Some antivirus software may flag the add-ons. BetterNCM is no longer maintained, so future NetEase Cloud Music updates may cause compatibility issues.</value></data>
   <data name="NeteaseSyncVersion" xml:space="preserve"><value>NetEase Cloud Music version</value></data>
   <data name="NeteaseSyncTested" xml:space="preserve"><value>{0} (tested)</value></data>
-  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0} (untested; verified with 3.1.20–3.1.42)</value></data>
+  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0} (untested; verified with 3.1.20–3.1.43)</value></data>
   <data name="NeteaseSyncUnsupported" xml:space="preserve"><value>Only the 64-bit version of NetEase Cloud Music 3.x is supported.</value></data>
   <data name="NeteaseSyncStatus" xml:space="preserve"><value>Status</value></data>
   <data name="NeteaseSyncInstalled" xml:space="preserve"><value>Installed</value></data>
