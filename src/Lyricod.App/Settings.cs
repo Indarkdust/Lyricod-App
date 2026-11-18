@@ -64,6 +64,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     int _glassTransparency = 90;
     GlassTint _glassTint = GlassTint.Neutral;
     bool _glassShine = true;
+    ShineStyle _glassShineStyle = ShineStyle.Bright;
     GlassEffect _glassEffect = GlassEffect.Liquid;
     int _liquidBlur = 10, _liquidRefraction = 50;
     // Hide when the pointer comes in, open the mini player on a sweep then a pull down.
@@ -142,6 +143,9 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public GlassTint GlassTint { get => _glassTint; set => Set(ref _glassTint, Enum.IsDefined(value) ? value : GlassTint.Neutral); }
     /// <summary>Light along the glass's edge, and a shadow under a floating island.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
+    /// <summary>How the 3D effect looks when it's on. Saved apart from the switch, so an older version still reads that.</summary>
+    [JsonConverter(typeof(KnownOrDefault<ShineStyle>))]
+    public ShineStyle GlassShineStyle { get => _glassShineStyle; set => Set(ref _glassShineStyle, value); }
     /// <summary>Liquid by default; it stays clear where Windows can't run it.</summary>
     public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Liquid); }
     /// <summary>Liquid glass: how much what's behind is blurred, in percent.</summary>

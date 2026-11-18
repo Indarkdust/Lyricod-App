@@ -1,4 +1,5 @@
 using System.Numerics;
+using Lyricod.Core;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Hosting;
@@ -19,6 +20,7 @@ public sealed partial class IslandWindow
     static readonly Color NeutralGlass = Color.FromArgb(255, 18, 18, 22);
 
     SpriteVisual? _shadow;
+    DropShadow? _dropShadow;
     CompositionRoundedRectangleGeometry? _shadowShape;
     ShapeVisual? _shadowCaster;
     CompositionVisualSurface? _shadowSurface;
@@ -90,12 +92,14 @@ public sealed partial class IslandWindow
             shadow.Mask = compositor.CreateSurfaceBrush(_shadowSurface);
             shadow.Color = Microsoft.UI.Colors.Black;
             shadow.BlurRadius = 18;
-            shadow.Opacity = 0.18f;
-            shadow.Offset = new Vector3(0, 3, 0);
+            _dropShadow = shadow;
             _shadow = compositor.CreateSpriteVisual();
             _shadow.Shadow = shadow;
             ElementCompositionPreview.SetElementChildVisual(ShadowHost, _shadow);
         }
+        bool soft = _settings.GlassShineStyle == ShineStyle.Soft;
+        _dropShadow!.Opacity = soft ? 0.18f : 0.45f;
+        _dropShadow.Offset = new Vector3(0, soft ? 3 : 6, 0);
         float radius = (float)Pill.CornerRadius.BottomLeft;
         _shadowShape!.Size = size;
         _shadowShape.CornerRadius = new Vector2(radius, radius);

@@ -263,7 +263,7 @@ public sealed partial class IslandWindow : Window
                 case nameof(Settings.IslandLocked):
                     ApplyMoveMode();
                     break;
-                case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine)
+                case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine) or nameof(Settings.GlassShineStyle)
                     or nameof(Settings.GlassEffect) or nameof(Settings.LiquidBlur) or nameof(Settings.LiquidRefraction):
                     ApplyTheme();
                     break;

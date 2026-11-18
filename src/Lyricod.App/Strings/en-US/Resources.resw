@@ -114,6 +114,12 @@
   <data name="GlassTintNeutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>Album colour</value></data>
   <data name="GlassShine" xml:space="preserve"><value>3D effect</value></data>
+  <data name="GlassShineOff" xml:space="preserve"><value>Off</value></data>
+  <data name="GlassShineBright" xml:space="preserve"><value>Bright</value></data>
+  <data name="GlassShineSoft" xml:space="preserve"><value>Soft</value></data>
+  <data name="GlassShineOffDetail" xml:space="preserve"><value>No light along the edge, and no shadow under a floating island.</value></data>
+  <data name="GlassShineBrightDetail" xml:space="preserve"><value>A clear light along the edge. Gives the glass thickness over a busy background.</value></data>
+  <data name="GlassShineSoftDetail" xml:space="preserve"><value>A fainter light, with shade on the side away from it. Keeps the edge visible over a plain background.</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>Glass effect</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted</value></data>

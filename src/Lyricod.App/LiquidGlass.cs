@@ -32,7 +32,7 @@ sealed class LiquidGlass : IDisposable
     public static bool IsSupported => Environment.OSVersion.Version.Build >= 22000 && GraphicsCaptureSession.IsSupported();
 
     /// <summary>What to draw: the island's pixels on its screen, its corners and the look (<c>Shine</c>: width of the edge light in pixels, 0 for none).</summary>
-    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine);
+    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine, ShineStyle Style);
 
     readonly DispatcherQueue _ui;
     readonly Action _changed;
@@ -60,7 +60,7 @@ sealed class LiquidGlass : IDisposable
     CanvasBitmap? _lens;
     (int Width, int Height, float Radius, bool SquareTop) _lensFor;
     CanvasBitmap? _light;
-    (int Width, int Height, float Radius, bool SquareTop, float Rim) _lightFor;
+    (int Width, int Height, float Radius, bool SquareTop, float Rim, ShineStyle Style) _lightFor;
     Look? _look;
     int _pending, _generation, _startGeneration;
     readonly DispatcherQueueTimer _startDelay;
@@ -186,7 +186,7 @@ sealed class LiquidGlass : IDisposable
     /// catches the light).
     /// </summary>
     public void Update(nint monitor, PointInt32 origin, RectInt32 pill, Vector2 size, float radius, bool squareTop,
-        float blur, float refraction, Windows.UI.Color tint, bool shine)
+        float blur, float refraction, Windows.UI.Color tint, bool shine, ShineStyle style)
     {
         if (_disposed || Failed) return;
         try
@@ -198,7 +198,7 @@ sealed class LiquidGlass : IDisposable
             _shape.CornerRadius = new Vector2(radius, radius);
             float scale = size.X > 0 ? pill.Width / size.X : 1;
             _look = new Look(new RectInt32(pill.X - origin.X, pill.Y - origin.Y, pill.Width, pill.Height), radius * scale, squareTop,
-                blur * scale, refraction * scale, tint, shine ? 1.5f * scale : 0);
+                blur * scale, refraction * scale, tint, shine ? 1.5f * scale : 0, style);
             if (monitor != _monitor) Start(monitor);
             else if (_screen != null)
             {
@@ -547,7 +547,7 @@ sealed class LiquidGlass : IDisposable
         session.Clear(Microsoft.UI.Colors.Transparent);
         session.DrawImage(_vivid);
         session.FillRectangle(0, 0, width, height, look.Tint);
-        if (look.Shine > 0) session.DrawImage(Light(width, height, look.Radius, look.SquareTop, look.Shine));
+        if (look.Shine > 0) session.DrawImage(Light(width, height, look.Radius, look.SquareTop, look.Shine, look.Style));
     }
 
     /// <summary>The lens map (see <see cref="LiquidLens"/>), made again only when the island's shape changes.</summary>
@@ -561,14 +561,14 @@ sealed class LiquidGlass : IDisposable
         return _lens;
     }
 
-    /// <summary>The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape changes.</summary>
-    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float rim)
+    /// <summary>The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape or the 3D look changes.</summary>
+    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float rim, ShineStyle style)
     {
-        if (_light != null && _lightFor == (width, height, radius, squareTop, rim)) return _light;
+        if (_light != null && _lightFor == (width, height, radius, squareTop, rim, style)) return _light;
         DisposeOwned(ref _light);
-        _light = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Light(width, height, radius, squareTop, rim), width, height,
+        _light = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Light(width, height, radius, squareTop, rim, style), width, height,
             Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
-        _lightFor = (width, height, radius, squareTop, rim);
+        _lightFor = (width, height, radius, squareTop, rim, style);
         return _light;
     }
 
