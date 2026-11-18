@@ -67,7 +67,8 @@ public sealed class SweepCurve
             else words.Add(stop);
         }
         if (words.Count == 0) return null;
-        if (words.Count > 1 && words[^1].End - words[^1].Start < Step)
+        // A last one of no length goes with the word before it, unless a rest keeps them apart.
+        if (words.Count > 1 && words[^1].End - words[^1].Start < Step && words[^1].Start - words[^2].End <= Bridge)
         {
             words[^2] = words[^2] with { To = words[^1].To };
             words.RemoveAt(words.Count - 1);
@@ -147,7 +148,8 @@ public sealed class SweepCurve
 
     (double Width, double Speed) Value(double time)
     {
-        if (time <= _t[0]) return (time < _t[0] ? 0 : _x[0], 0);
+        // At the first point it's already leaving at the first word's speed, which a plan from there needs.
+        if (time <= _t[0]) return time < _t[0] ? (0, 0) : (_x[0], _out[0]);
         if (time >= _t[^1]) return (_x[^1], 0);
         int i = Array.BinarySearch(_t, time);
         if (i < 0) i = ~i - 1;

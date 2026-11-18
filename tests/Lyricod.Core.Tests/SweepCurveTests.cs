@@ -116,6 +116,14 @@ public class SweepCurveTests
         }
         Assert.Equal(120, curve.At(11), 6);
         Assert.Null(SweepCurve.From([]));
+
+        // A last word of no length after a rest is still sung on its time, not with the word before it.
+        var late = SweepCurve.From([new(10, 11, 0, 40), new(12, 12, 40, 80)])!;
+        Assert.Equal(40, late.At(11), 6);
+        Assert.Equal(40, late.At(11.99), 6);
+        Assert.Equal(80, late.At(12.01), 6);
+        // Right after the word before it, it's swept with that word.
+        Assert.Equal(80, SweepCurve.From([new(10, 11, 0, 40), new(11, 11, 40, 80)])!.At(11), 6);
         Assert.Null(SweepCurve.From([new(1, 2, 0, 0)]));
     }
 
@@ -190,6 +198,7 @@ public class SweepCurveTests
 
     [Theory]
     [InlineData(9.5)]   // before the line
+    [InlineData(10)]    // just as it starts (a seek to the line)
     [InlineData(10.7)]  // in the held word
     [InlineData(12.05)] // in a quick one
     [InlineData(11.2)]  // in a rest
