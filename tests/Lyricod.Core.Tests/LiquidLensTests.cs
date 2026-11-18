@@ -60,7 +60,10 @@ public class LiquidLensTests
         Assert.True(At(map, 1, 5).Across > 60);
     }
 
-    static byte Lit(byte[] light, int x, int y) => light[(y * Width + x) * 4 + 3];
+    static byte Lit(byte[] light, int x, int y) => light[(y * Width + x) * 4];
+
+    /// <summary>How much black is under the white: the alpha the light alone doesn't account for.</summary>
+    static int Shade(byte[] light, int x, int y) => light[(y * Width + x) * 4 + 3] - Lit(light, x, y);
 
     [Fact]
     public void LightCatchesTheEdgeNotTheMiddle()
@@ -68,11 +71,25 @@ public class LiquidLensTests
         var light = Light();
         Assert.Equal(Width * Height * 4, light.Length);
         Assert.Equal(0, Lit(light, 150, 30));
-        Assert.True(Lit(light, 150, 0) > 100);
+        Assert.True(Lit(light, 150, 0) > 30);
         Assert.Equal(0, Lit(light, 0, 0)); // cut off by the rounding
-        // White, premultiplied.
+        // White over black, premultiplied.
         Assert.All(Enumerable.Range(0, Width * Height), i =>
-            Assert.True(light[i * 4] == light[i * 4 + 3] && light[i * 4 + 1] == light[i * 4 + 3] && light[i * 4 + 2] == light[i * 4 + 3]));
+            Assert.True(light[i * 4] <= light[i * 4 + 3] && light[i * 4 + 1] == light[i * 4] && light[i * 4 + 2] == light[i * 4]));
+    }
+
+    [Fact]
+    public void TheSideAwayFromTheLightIsShaded()
+    {
+        var light = Light();
+        // Just inside the line along the edge.
+        Assert.True(Shade(light, 150, 56) > 8);
+        // None on the side that faces it, or the island gets a dark ring.
+        Assert.Equal(0, Shade(light, 150, 3));
+        Assert.True(Shade(light, 296, 30) > Shade(light, 3, 30));
+        Assert.Equal(0, Shade(light, 150, 30));
+        // The line itself stays bright.
+        Assert.True(Shade(light, 150, 59) < Shade(light, 150, 56));
     }
 
     [Fact]
@@ -96,7 +113,7 @@ public class LiquidLensTests
     {
         var light = Light(squareTop: true);
         Assert.Equal(0, Lit(light, 150, 0));
-        Assert.True(Lit(light, 150, 59) > 50);
+        Assert.True(Lit(light, 150, 59) > 20);
     }
 
     [Fact]

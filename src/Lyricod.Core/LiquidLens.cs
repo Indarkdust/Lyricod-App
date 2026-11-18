@@ -29,9 +29,12 @@ public static class LiquidLens
     }
 
     /// <summary>
-    /// The light on the glass, as premultiplied BGRA pixels of white: a thin bright line along the
-    /// edge, strongest where it faces the light (above, a little to the left) and fainter on the
-    /// far side, plus a soft glow over the band where the glass bends.
+    /// The light and shade on the glass, as premultiplied BGRA pixels of white over black: a thin
+    /// bright line along the edge, strongest where it faces the light (above, a little to the left)
+    /// and fainter on the far side, plus a soft glow over the band where the glass bends. Just
+    /// inside the line that band is shaded on the side away from the light: white light doesn't
+    /// show over a light background, and the shade is what gives the glass its depth there. All of
+    /// it is kept faint, so the edge reads as thickness and not as an outline.
     /// </summary>
     /// <param name="rim">How wide the bright line is, in pixels.</param>
     public static byte[] Light(int width, int height, double radius, bool squareTop, double rim)
@@ -48,10 +51,13 @@ public static class LiquidLens
             double facing = dx * lightX + dy * lightY;
             double lit = 0.15 + 0.85 * Math.Max(Math.Pow(Math.Max(facing, 0), 2), 0.55 * Math.Pow(Math.Max(-facing, 0), 2));
             double t = Math.Clamp(1 - depth / rim, 0, 1);
-            double line = 0.6 * lit * t * t * (3 - 2 * t);
-            double glow = 0.1 * Math.Pow(1 - Math.Max(depth, 0) / band, 3) * (0.5 + 0.5 * lit);
-            byte alpha = (byte)Math.Round(255 * (1 - (1 - line) * (1 - glow)));
-            pixels[i] = pixels[i + 1] = pixels[i + 2] = pixels[i + 3] = alpha;
+            double line = 0.24 * lit * t * t * (3 - 2 * t);
+            double near = 1 - Math.Max(depth, 0) / band;
+            double glow = 0.03 * Math.Pow(near, 3) * (0.5 + 0.5 * lit);
+            double white = 1 - (1 - line) * (1 - glow);
+            double shade = 0.1 * Math.Max(-facing, 0) * near * near * (1 - t);
+            pixels[i] = pixels[i + 1] = pixels[i + 2] = (byte)Math.Round(255 * white);
+            pixels[i + 3] = (byte)Math.Round(255 * (1 - (1 - white) * (1 - shade)));
         });
         return pixels;
     }

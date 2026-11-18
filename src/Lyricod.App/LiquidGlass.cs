@@ -16,7 +16,7 @@ namespace Lyricod;
 /// <summary>
 /// Lyricod Glass's liquid effect: what's behind the island, captured from the screen and drawn as
 /// its background, lightly blurred and bent at the edges like the rim of a lens, with the light its
-/// edge catches drawn along the same curve. On supported builds the island is excluded from its own
+/// edge catches and the shade of its far side drawn along the same curve. On supported builds the island is excluded from its own
 /// capture session, so other recorders still see it; older builds need global capture exclusion to
 /// avoid feedback. Windows 11 only: Windows 10 outlines the whole screen in yellow while anything
 /// captures it.

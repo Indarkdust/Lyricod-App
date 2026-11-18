@@ -90,8 +90,8 @@ public sealed partial class IslandWindow
             shadow.Mask = compositor.CreateSurfaceBrush(_shadowSurface);
             shadow.Color = Microsoft.UI.Colors.Black;
             shadow.BlurRadius = 18;
-            shadow.Opacity = 0.45f;
-            shadow.Offset = new Vector3(0, 6, 0);
+            shadow.Opacity = 0.18f;
+            shadow.Offset = new Vector3(0, 3, 0);
             _shadow = compositor.CreateSpriteVisual();
             _shadow.Shadow = shadow;
             ElementCompositionPreview.SetElementChildVisual(ShadowHost, _shadow);
