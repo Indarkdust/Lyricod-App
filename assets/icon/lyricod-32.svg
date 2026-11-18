@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-labelledby="title desc">
+  <title id="title">Lyricod icon 32 px</title>
+  <desc id="desc">Pixel-optimized Lyricod icon with a one-pixel transparent margin, transparent corners, and pixel-snapped lyric bars.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff94bc"/>
+      <stop offset=".29" stop-color="#db71df"/>
+      <stop offset=".67" stop-color="#9a51ea"/>
+      <stop offset="1" stop-color="#5f3df0"/>
+    </linearGradient>
+    <linearGradient id="note" x1="0" y1="0" x2=".75" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#faedff"/>
+    </linearGradient>
+    <clipPath id="iconShape"><rect x="1" y="1" width="30" height="30" rx="6.32812"/></clipPath>
+    <clipPath id="lyricBar"><rect x="5" y="19" width="22" height="2" rx="1.00"/></clipPath>
+  </defs>
+  <g clip-path="url(#iconShape)">
+    <rect x="1" y="1" width="30" height="30" rx="6.32812" fill="url(#background)"/>
+    <path d="M144 117c0-9 5-16 14-19l65-23c13-5 24 2 24 15v35c0 11-6 18-16 22l-61 21v56c0 29-30 51-61 51-27 0-46-14-46-36 0-25 24-45 52-45 12 0 22 4 29 10v-87z" transform="translate(1 1) scale(0.058593750) translate(10 0)" fill="url(#note)"/>
+    <g clip-path="url(#lyricBar)">
+      <rect x="5" y="19" width="22" height="2" fill="#fff" opacity=".37"/>
+      <rect x="5" y="19" width="13" height="2" fill="#fff"/>
+    </g>
+    <rect x="5" y="23" width="15" height="2" rx="1.00" fill="#fff" opacity=".30"/>
+  </g>
+</svg>

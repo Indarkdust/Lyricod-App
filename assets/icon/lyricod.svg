@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-28 -28 568 568" width="512" height="512" role="img" aria-labelledby="title desc">
+  <title id="title">Lyricod icon</title>
+  <desc id="desc">Pink-to-purple rounded square with a musical note and a lyric line that is partly lit. The icon has transparent margins.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff94bc"/>
+      <stop offset=".29" stop-color="#db71df"/>
+      <stop offset=".67" stop-color="#9a51ea"/>
+      <stop offset="1" stop-color="#5f3df0"/>
+    </linearGradient>
+    <linearGradient id="note" x1="0" y1="0" x2=".75" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#faedff"/>
+    </linearGradient>
+    <linearGradient id="rim" gradientUnits="userSpaceOnUse" x1="76" y1="10" x2="436" y2="10">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset=".18" stop-color="#fff" stop-opacity=".3"/>
+      <stop offset=".65" stop-color="#fff" stop-opacity=".23"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="iconShape"><rect width="512" height="512" rx="108"/></clipPath>
+    <clipPath id="lyricBar"><rect x="73" y="313" width="369" height="37" rx="18.5"/></clipPath>
+  </defs>
+  <g clip-path="url(#iconShape)">
+    <rect width="512" height="512" rx="108" fill="url(#background)"/>
+    <!-- A single restrained rim highlight; there is no reflection inside the icon. -->
+    <path d="M76 18 Q92 10 109 10 H403 Q420 10 436 18" fill="none" stroke="url(#rim)" stroke-width="2.4" stroke-linecap="round"/>
+    <!-- Shifted 10 units: note leftmost edge now lines up with lyric bars at x=73. -->
+    <path d="M144 117c0-9 5-16 14-19l65-23c13-5 24 2 24 15v35c0 11-6 18-16 22l-61 21v56c0 29-30 51-61 51-27 0-46-14-46-36 0-25 24-45 52-45 12 0 22 4 29 10v-87z" transform="translate(10 0)" fill="url(#note)"/>
+    <!-- Solid sung portion ends sharply at 60.7%; the remaining 39.3% is white at 37% opacity. -->
+    <g clip-path="url(#lyricBar)">
+      <rect x="73" y="313" width="369" height="37" fill="#fff" opacity=".37"/>
+      <rect x="73" y="313" width="224" height="37" fill="#fff"/>
+    </g>
+    <rect x="73" y="381" width="251" height="31" rx="15.5" fill="#fff" opacity=".30"/>
+  </g>
+</svg>
