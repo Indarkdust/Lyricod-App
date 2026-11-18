@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- What the tray icon opens, laid out like the macOS app's menu-bar panel (and Windows' own quick
-     settings): now playing, the desktop and island tiles, this song's lyrics and timing, and a
-     footer. Opens above the notification area and closes when it loses focus. -->
+<!-- What the tray icon opens, laid out like Windows' own quick settings: now playing, the desktop
+     and island tiles, this song's lyrics and timing, and a footer. Opens above the notification
+     area and closes when it loses focus. -->
 <Window
     x:Class="Lyricod.TrayPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"

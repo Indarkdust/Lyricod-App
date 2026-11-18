@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The whole song over the album art. Narrow: lyrics with a control bar at the bottom. Wide or
-     full screen: a large cover with the controls beside the lyrics, like the macOS app. -->
+     full screen: a large cover with the controls beside the lyrics. -->
 <Window
     x:Class="Lyricod.LyricsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +8,8 @@
     Title="Lyricod">
 
     <Grid x:Name="Root" RequestedTheme="Dark" Background="#141416">
-        <!-- Background, as on the Mac: the softened cover slowly turning (ArtworkDrift), or the
-             album's colour, under a shade so white text reads on any cover. -->
+        <!-- Background: the softened cover slowly turning (ArtworkDrift), or the album's colour,
+             under a shade so white text reads on any cover. -->
         <Grid x:Name="ArtHost" />
         <Rectangle x:Name="BackdropColour" Visibility="Collapsed" />
         <Rectangle x:Name="BackdropShade" Fill="#59000000" />
@@ -29,7 +29,7 @@
             <Grid x:Name="TitleBar" Grid.ColumnSpan="2" Background="Transparent" Margin="0,0,330,0" />
             <StackPanel x:Name="TopButtons" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="4"
                         HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,4,148,0">
-                <!-- On: bright; off: dimmed, as on the Mac. -->
+                <!-- On: bright; off: dimmed. -->
                 <Button x:Name="TranslationButton" Click="OnTranslation" Padding="8,5" Background="Transparent" BorderThickness="0">
                     <FontIcon Glyph="&#xF2B7;" FontSize="14" />
                 </Button>
