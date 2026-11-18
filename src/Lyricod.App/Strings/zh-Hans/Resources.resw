@@ -24,7 +24,7 @@
   <data name="LyricsRights" xml:space="preserve"><value>歌词版权归各自的权利人所有，仅供个人使用。</value></data>
   <data name="FontHeader" xml:space="preserve"><value>字体</value></data>
   <data name="MiSansName" xml:space="preserve"><value>MiSans（小米）</value></data>
-  <data name="MiSansDetail" xml:space="preserve"><value>歌词默认使用微软雅黑。你可以在「设置 › 歌词」中下载小米 MiSans 字体。</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>歌词默认使用微软雅黑。你可以在「设置 › 通用」中下载小米 MiSans 字体。</value></data>
   <data name="ViewLicence" xml:space="preserve"><value>查看 MiSans 许可协议</value></data>
   <data name="BuiltWith" xml:space="preserve"><value>使用的组件</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>托盘图标和窗口辅助功能。MIT 许可证。</value></data>
@@ -351,7 +351,7 @@
   <data name="FontInUse" xml:space="preserve"><value>正在使用</value></data>
   <data name="FontPartial" xml:space="preserve"><value>下载未完成</value></data>
   <data name="WenKaiName" xml:space="preserve"><value>霞鹜文楷 Lite（LXGW）</value></data>
-  <data name="WenKaiDetail" xml:space="preserve"><value>开源字体，基于 Fontworks 的 Klee One，遵循 SIL 开源字体许可协议。可在「设置 › 歌词」中下载。</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>开源字体，基于 Fontworks 的 Klee One，遵循 SIL 开源字体许可协议。可在「设置 › 通用」中下载。</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>下载并安装</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>更新内容</value></data>
   <data name="UpdateRestart" xml:space="preserve"><value>重启并更新</value></data>

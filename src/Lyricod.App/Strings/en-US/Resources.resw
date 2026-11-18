@@ -24,7 +24,7 @@
   <data name="LyricsRights" xml:space="preserve"><value>Lyrics are the property of their respective copyright holders and are shown for personal use only.</value></data>
   <data name="FontHeader" xml:space="preserve"><value>Font</value></data>
   <data name="MiSansName" xml:space="preserve"><value>MiSans by Xiaomi</value></data>
-  <data name="MiSansDetail" xml:space="preserve"><value>Lyrics use Microsoft YaHei by default. MiSans by Xiaomi can be downloaded in Settings › Lyrics.</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>Lyrics use Microsoft YaHei by default. MiSans by Xiaomi can be downloaded in Settings › General.</value></data>
   <data name="ViewLicence" xml:space="preserve"><value>View the MiSans licence</value></data>
   <data name="BuiltWith" xml:space="preserve"><value>Built With</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>Tray icon and window helpers. MIT License.</value></data>
@@ -351,7 +351,7 @@
   <data name="FontInUse" xml:space="preserve"><value>In use</value></data>
   <data name="FontPartial" xml:space="preserve"><value>Download not finished</value></data>
   <data name="WenKaiName" xml:space="preserve"><value>LXGW WenKai Lite by LXGW</value></data>
-  <data name="WenKaiDetail" xml:space="preserve"><value>An open font based on Fontworks' Klee One, under the SIL Open Font License. It can be downloaded in Settings › Lyrics.</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>An open font based on Fontworks' Klee One, under the SIL Open Font License. It can be downloaded in Settings › General.</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and Install</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>What’s new</value></data>
   <data name="UpdateRestart" xml:space="preserve"><value>Restart to Update</value></data>
