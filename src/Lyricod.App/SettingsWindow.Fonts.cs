@@ -13,6 +13,8 @@ public sealed partial class SettingsWindow
     string? _fontDownloading;
     FontDownloadProgress? _fontProgress;
     string? _fontError, _fontListError, _fontRemoveError;
+    /// <summary>The font <see cref="_fontError"/> is about, when a download of it failed.</summary>
+    string? _fontErrorFont;
     bool _fontClosed;
     Action? _fontRefresh;
     IReadOnlyList<string>? _installedFonts;
@@ -90,7 +92,8 @@ public sealed partial class SettingsWindow
             }
             bool busy = _fontDownload != null, downloadable = Fonts.IsDownloadable(choice);
             bool wenKai = choice == Fonts.WenKai;
-            string? problem = _fontError ?? (downloadable ? Fonts.Error : null);
+            // A failed download is shown under that font only, not under one chosen since.
+            string? problem = (_fontErrorFont == null || _fontErrorFont == choice ? _fontError : null) ?? (downloadable ? Fonts.Error : null);
             info.Visibility = downloadable || busy || problem != null ? Visibility.Visible : Visibility.Collapsed;
             description.Text = L.Get(wenKai ? "WenKaiDownloadDetail" : "MiSansDownloadDetail");
             licence.NavigateUri = new Uri(wenKai ? WenKaiFont.LicenceUrl : MiSansArchive.LicenceUrl);
@@ -130,7 +133,7 @@ public sealed partial class SettingsWindow
         void Select(string name)
         {
             var match = options.FindIndex(o => o.Name.Equals(name, StringComparison.CurrentCultureIgnoreCase));
-            if (match >= 0) { _fontError = null; _settings.LyricsFont = options[match].Value; }
+            if (match >= 0) { _fontError = _fontErrorFont = null; _settings.LyricsFont = options[match].Value; }
             displayedChoice = null;
             Sync();
         }
@@ -164,11 +167,13 @@ public sealed partial class SettingsWindow
         {
             try
             {
-                // Only the font in use falls back to the default; removing another leaves the choice alone.
-                if (_settings.LyricsFont == font) _settings.LyricsFont = "";
+                // Only the font in use falls back to the default; removing another leaves the choice
+                // and the font in use alone.
+                bool inUse = _settings.LyricsFont == font;
+                if (inUse) _settings.LyricsFont = "";
                 if (font == Fonts.WenKai) WenKaiDownload.Remove(); else MiSansDownload.Remove();
                 _fontRemoveError = null;
-                Fonts.Reload();
+                if (inUse) Fonts.Reload();
             }
             catch (Exception e) { _fontRemoveError = L.Format("FontRemoveFailed", Fonts.NameOf(font)) + " " + e.Message; }
             RefreshFontPane();
@@ -177,10 +182,11 @@ public sealed partial class SettingsWindow
         {
             try
             {
-                _fontError = null;
-                string choice = _settings.LyricsFont;
-                if (!Fonts.IsDownloadable(choice) || IsDownloaded(choice)) { Fonts.Reload(); RefreshFontPane(); }
-                else _ = DownloadFont(choice);
+                // The font whose download failed, or else the chosen one, which may not have loaded.
+                string font = _fontErrorFont ?? _settings.LyricsFont;
+                _fontError = _fontErrorFont = null;
+                if (!Fonts.IsDownloadable(font) || IsDownloaded(font)) { Fonts.Reload(); RefreshFontPane(); }
+                else _ = DownloadFont(font);
             }
             catch (Exception e) { _fontError = e.Message; RefreshFontPane(); }
         };
@@ -219,7 +225,7 @@ public sealed partial class SettingsWindow
         {
             _fontDownload = stop;
             _fontDownloading = font;
-            _fontError = null;
+            _fontError = _fontErrorFont = null;
             _fontProgress = null;
             RefreshFontPane();
             var progress = new FontProgress(p => FontUi(() =>
@@ -230,13 +236,14 @@ public sealed partial class SettingsWindow
             }));
             Task work = font == Fonts.WenKai ? WenKaiDownload.DownloadAsync(progress, stop.Token) : MiSansDownload.DownloadAsync(progress, stop.Token);
             await work.ConfigureAwait(false);
-            FontUi(() => Fonts.Reload(), evenIfClosed: true);
+            // Load it if it's the font chosen; a font downloaded for later only needs the pane refreshed.
+            FontUi(() => { if (_settings.LyricsFont == font) Fonts.Reload(); }, evenIfClosed: true);
         }
         catch (OperationCanceledException)
         {
-            if (!stop.IsCancellationRequested) FontUi(() => _fontError = L.Get("FontDownloadTimeout"));
+            if (!stop.IsCancellationRequested) FontUi(() => { _fontError = L.Get("FontDownloadTimeout"); _fontErrorFont = font; });
         }
-        catch (Exception e) { FontUi(() => _fontError = L.Format("FontDownloadFailed", Fonts.NameOf(font)) + " " + e.Message); }
+        catch (Exception e) { FontUi(() => { _fontError = L.Format("FontDownloadFailed", Fonts.NameOf(font)) + " " + e.Message; _fontErrorFont = font; }); }
         finally { FontUi(() => { _fontDownload = null; _fontDownloading = null; RefreshFontPane(); }); }
     }
 

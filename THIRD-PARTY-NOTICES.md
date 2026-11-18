@@ -16,4 +16,4 @@ Lyricod for Windows is licensed under the Apache License 2.0 (see `LICENSE`). It
 - **LXGW WenKai Lite** (霞鹜文楷 Lite) by LXGW is not included. If you choose it in Settings › Lyrics, Lyricod downloads it, unchanged, from its release on GitHub ([lxgw/LxgwWenKai-Lite](https://github.com/lxgw/LxgwWenKai-Lite)). SIL Open Font License 1.1, © 2021-2026 LXGW, with Reserved Font Names; based on Klee One, © 2020 The Klee Project Authors (`licenses/LXGWWenKaiLite-OFL.txt`, also saved next to the font). Klee is a trademark of Fontworks.
 - The installers are built with **Inno Setup** by Jordan Russell and Martijn Laan.
 
-Lyrics are fetched from NetEase Cloud Music, QQ Music and LRCLIB, and belong to their copyright holders. Lyricod is not affiliated with Microsoft, NetEase, Tencent or Xiaomi.
+Lyrics are fetched from NetEase Cloud Music, QQ Music and LRCLIB, and belong to their copyright holders. Lyricod is not affiliated with Microsoft, NetEase, Tencent, Xiaomi or Fontworks.

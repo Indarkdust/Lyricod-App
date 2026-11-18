@@ -22,7 +22,8 @@ static class Fonts
     static string _choice = "";
     /// <summary>The chosen downloadable font, once it's on disk and loads; null otherwise.</summary>
     static string? _download, _hash, _appFont;
-    static bool _resolved;
+    /// <summary>The downloadable font <see cref="_download"/>, <see cref="_hash"/> and <see cref="Error"/> are about.</summary>
+    static string? _resolvedFor;
 
     public static event Action? Changed;
     public static string? Error { get; private set; }
@@ -86,15 +87,15 @@ static class Fonts
     {
         _choice = choice;
         if (IsDownloadable(choice)) Resolve();
+        else { _resolvedFor = null; _download = _hash = Error = null; }
         Families.Clear();
         Notify();
     }
 
-    // Cache the probe until the files change or the user retries.
+    /// <summary>Probes the chosen font again, after its files changed or on a retry.</summary>
     public static void Reload()
     {
-        _resolved = false;
-        _download = _hash = Error = null;
+        _resolvedFor = null;
         Apply(_choice);
     }
 
@@ -113,8 +114,10 @@ static class Fonts
 
     static void Resolve()
     {
-        if (_resolved) return;
-        _resolved = true;
+        // Probed once per font chosen, until the files change or the user retries.
+        if (_resolvedFor == _choice) return;
+        _resolvedFor = _choice;
+        _download = _hash = Error = null;
         bool wenKai = _choice == WenKai;
         if (!(wenKai ? WenKaiDownload.IsDownloaded : MiSansDownload.IsDownloaded)) return;
         try
@@ -139,14 +142,18 @@ static class Fonts
         string file = new Uri(path).AbsoluteUri;
         foreach (string family in families)
             if (Loads(file + "#" + family)) return file + "#" + family;
-        Directory.CreateDirectory(Path.GetDirectoryName(appCopy)!);
-        string temp = appCopy + ".tmp";
-        try
+        // A copy already there is left alone: Windows may have it open from earlier.
+        if (!File.Exists(appCopy) || new FileInfo(appCopy).Length != new FileInfo(path).Length)
         {
-            File.Copy(path, temp, true);
-            File.Move(temp, appCopy, true);
+            Directory.CreateDirectory(Path.GetDirectoryName(appCopy)!);
+            string temp = appCopy + ".tmp";
+            try
+            {
+                File.Copy(path, temp, true);
+                File.Move(temp, appCopy, true);
+            }
+            finally { File.Delete(temp); }
         }
-        finally { File.Delete(temp); }
         foreach (string family in families)
         {
             string app = "ms-appx:///Fonts/" + Path.GetFileName(appCopy) + "#" + family;
