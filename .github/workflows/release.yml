@@ -1,6 +1,6 @@
 name: Windows release
 
-# Publishes Lyricod for Windows for a tag vX.Y.Z:
+# Publishes Lyricod for a tag vX.Y.Z:
 # builds x64 and ARM64 installers and zips, and creates a draft GitHub release with the notes in
 # release-notes/X.Y.Z.md. Check the draft, then publish it. The tag must match
 # VERSION.
@@ -97,5 +97,5 @@ jobs:
           $version = '${{ steps.version.outputs.version }}'
           $assets = (Get-ChildItem publish/* -Include *.zip, *-setup.exe).FullName
           if ($assets.Count -ne 4) { throw "Expected two zips and two installers, found $($assets.Count) assets" }
-          gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "Lyricod for Windows $version" --notes-file "release-notes/$version.md"
+          gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "Lyricod $version" --notes-file "release-notes/$version.md"
           if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed' }

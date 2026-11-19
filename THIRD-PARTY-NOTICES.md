@@ -1,6 +1,6 @@
 # Third-party notices
 
-Lyricod for Windows is licensed under the Apache License 2.0 (see `LICENSE`). It uses, or includes parts of, the following, each under its own licence. The full texts are in the `licenses` folder, here in the source and next to `Lyricod.exe` in the `app` folder of every download.
+Lyricod is licensed under the Apache License 2.0 (see `LICENSE`). It uses, or includes parts of, the following, each under its own licence. The full texts are in the `licenses` folder, here in the source and next to `Lyricod.exe` in the `app` folder of every download.
 
 - **Windows App SDK** (WinUI, Foundation, InteractiveExperiences) by Microsoft: the downloads include its runtime, redistributed under the Microsoft Software License Terms for the Windows App SDK (`licenses/WindowsAppSDK-LICENSE.txt`), with its third-party notices (`licenses/WindowsAppSDK-NOTICE.txt`).
 - **WebView2** loader by Microsoft (`WebView2Loader.dll`, `Microsoft.Web.WebView2.Core.dll`, which come with the Windows App SDK): BSD-style licence, © Microsoft Corporation (`licenses/WebView2-LICENSE.txt`, `licenses/WebView2-NOTICE.txt`).

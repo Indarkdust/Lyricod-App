@@ -1,4 +1,4 @@
-# Lyricod for Windows
+# Lyricod
 
 ## English | [简体中文](README.zh-CN.md)
 
@@ -137,4 +137,4 @@ Lyrics belong to their respective copyright holders. Lyricod is not affiliated w
 
 ## License
 
-Lyricod for Windows is licensed under the [Apache License 2.0](LICENSE). Third-party code, assets, and licences are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Lyricod is licensed under the [Apache License 2.0](LICENSE). Third-party code, assets, and licences are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

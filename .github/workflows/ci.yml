@@ -1,6 +1,6 @@
 name: Windows
 
-# Builds and tests Lyricod for Windows on every branch push and pull request. Each build keeps
+# Builds and tests Lyricod on every branch push and pull request. Each build keeps
 # just its portable zip, for as long as the repository's artifact setting says: Actions storage is
 # small. Tags are built by release.yml, whose downloads go on the release itself.
 on:

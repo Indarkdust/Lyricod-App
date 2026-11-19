@@ -1,4 +1,4 @@
-# Lyricod for Windows
+# Lyricod
 
 [English](README.md) | 简体中文
 
@@ -137,4 +137,4 @@ README 中的截图和演示动图可能包含歌曲歌词、专辑封面及其�
 
 ## 许可
 
-Lyricod for Windows 采用 [Apache License 2.0](LICENSE)。第三方代码、资源及其许可见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+Lyricod 采用 [Apache License 2.0](LICENSE)。第三方代码、资源及其许可见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
