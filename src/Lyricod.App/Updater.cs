@@ -23,9 +23,16 @@ public sealed partial class UpdateChecker
     static readonly Uri? TestFeed = Environment.GetEnvironmentVariable("LYRICOD_UPDATE_FEED") is { Length: > 0 } feed
         && Uri.TryCreate(feed, UriKind.Absolute, out var uri) ? uri : null;
     static readonly string BaseDirectory = Path.TrimEndingDirectorySeparator(AppContext.BaseDirectory);
+    static readonly bool ParentLauncher = File.Exists(Path.Combine(BaseDirectory, "..", "Lyricod.exe"));
     public static InstallKind Kind { get; } = UpdateFiles.DetectKind(Path.GetFileName(BaseDirectory),
-        File.Exists(Path.Combine(BaseDirectory, "unins000.exe")), File.Exists(Path.Combine(BaseDirectory, "..", "Lyricod.exe")));
-    static string? PortableRoot => Kind == InstallKind.Portable ? Path.GetDirectoryName(BaseDirectory) : null;
+        File.Exists(Path.Combine(BaseDirectory, "unins000.exe")), ParentLauncher, File.Exists(Path.Combine(BaseDirectory, "..", "unins000.exe")));
+    /// <summary>The folder with the launcher and the app folder, where the launcher can swap in a new version:
+    /// a portable copy, or an installed one laid out the same way. An installed copy from before that has none.</summary>
+    static string? LauncherRoot { get; } = UpdateFiles.HasLauncher(Path.GetFileName(BaseDirectory), ParentLauncher) ? Path.GetDirectoryName(BaseDirectory) : null;
+    /// <summary>Only a portable copy stages its whole download (the zip) there; an installed one runs Setup.</summary>
+    static string? PortableRoot => Kind == InstallKind.Portable ? LauncherRoot : null;
+    /// <summary>An installed copy has Setup as another way to update when the launcher's doesn't work.</summary>
+    static bool HasSetup => Kind == InstallKind.Installer;
     static string UpdatesDirectory => Path.Combine(Settings.DataDir, "Updates");
     UpdateAsset? Asset => Available is { } release ? UpdateFiles.SelectAsset(release, Kind, RuntimeInformation.ProcessArchitecture, TestFeed) : null;
     static string? Arch => UpdateFiles.ArchName(RuntimeInformation.ProcessArchitecture);
@@ -33,7 +40,9 @@ public sealed partial class UpdateChecker
     /// carries a release's version number but not its files, so it only tries a patch against a test feed.</summary>
     UpdateAsset? Patch => Available is { } release && release.Version != _patchRefused && (TestBuild == null || TestFeed != null)
         && UpdateCheck.ParseVersion(Version) is { } running
-        ? UpdateFiles.SelectPatch(release, Kind, RuntimeInformation.ProcessArchitecture, running, TestFeed) : null;
+        ? UpdateFiles.SelectPatch(release, Kind, LauncherRoot != null, RuntimeInformation.ProcessArchitecture, running, TestFeed) : null;
+    /// <summary>The hash of the release's whole zip, which a patch names as what it was made from.</summary>
+    string? PatchBase => Available is { } release ? UpdateFiles.PatchBase(release, RuntimeInformation.ProcessArchitecture, TestFeed) : null;
     public bool CanInstall => !_notWritable && Asset != null;
     public UpdateState State { get; private set; }
     public UpdateProgress? Progress { get; private set; }
@@ -64,7 +73,7 @@ public sealed partial class UpdateChecker
             var running = UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0);
             // Started by an update: the old copy is the launcher's to remove.
             bool keepOldCopies = Platform.UpdateHealth.Pending;
-            await Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, running, keepOldCopies));
+            await Task.Run(() => PortableUpdate.Cleanup(LauncherRoot, UpdatesDirectory, running, keepOldCopies));
         }
         catch (Exception) { }
         finally { _files.Release(); }
@@ -101,6 +110,7 @@ public sealed partial class UpdateChecker
     {
         if (Available is not { } release || Asset is not { } asset) return;
         var patch = Patch;
+        string? patchBase = PatchBase;
         using var stop = new CancellationTokenSource();
         _download = stop;
         State = UpdateState.Downloading;
@@ -130,7 +140,7 @@ public sealed partial class UpdateChecker
                     Notify();
                 }));
                 string directory = Path.Combine(UpdatesDirectory, release.Version.ToString(3));
-                if (patch != null && PortableRoot is { } folder && Arch is { } arch && UpdateCheck.ParseVersion(Version) is { } running)
+                if (patch != null && patchBase != null && LauncherRoot is { } folder && Arch is { } arch && UpdateCheck.ParseVersion(Version) is { } running)
                 {
                     // A patch that can't be had or can't be used isn't a failure: the whole download doesn't
                     // depend on it. The connection failing is one, and would fail the whole download too.
@@ -139,7 +149,7 @@ public sealed partial class UpdateChecker
                         string small = await UpdateDownload.DownloadAsync(http, patch, directory, Version, progress, stop.Token, TestFeed).ConfigureAwait(false);
                         try
                         {
-                            await UpdatePatch.StageAsync(small, folder, running, release.Version, arch, asset.Sha256!, stop.Token).ConfigureAwait(false);
+                            await UpdatePatch.StageAsync(small, folder, running, release.Version, arch, patchBase, stop.Token).ConfigureAwait(false);
                             return (small, patch);
                         }
                         catch (Exception e) when (e is not OperationCanceledException) { RefusePatch(release, e); }
@@ -188,6 +198,7 @@ public sealed partial class UpdateChecker
     {
         if (_readyPath is not { } path || _readyAsset is not { } ready || Available is not { } release || Asset is not { } asset) return;
         bool patched = ready.Name != asset.Name;
+        string? patchBase = PatchBase;
         State = UpdateState.Applying;
         Error = null;
         Notify();
@@ -199,15 +210,17 @@ public sealed partial class UpdateChecker
                 start = await Task.Run(async () =>
                 {
                     if (!await UpdateDownload.VerifyAsync(path, ready, CancellationToken.None).ConfigureAwait(false)) throw new DamagedUpdateException();
-                    if (PortableRoot is not { } root) return new ProcessStartInfo(path)
+                    // An installed copy's whole download is Setup, which does the rest itself.
+                    if (!patched && PortableRoot == null) return new ProcessStartInfo(path)
                     {
                         UseShellExecute = false,
                         Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /relaunch=1",
                     };
+                    if (LauncherRoot is not { } root) throw new InvalidDataException("No launcher for this copy.");
                     // Restage from the checked download in case the staged files changed while waiting.
                     if (!patched) await PortableUpdate.StageAsync(path, root, release.Version, CancellationToken.None).ConfigureAwait(false);
-                    else if (Arch is { } arch && UpdateCheck.ParseVersion(Version) is { } running)
-                        await UpdatePatch.StageAsync(path, root, running, release.Version, arch, asset.Sha256!, CancellationToken.None).ConfigureAwait(false);
+                    else if (patchBase != null && Arch is { } arch && UpdateCheck.ParseVersion(Version) is { } running)
+                        await UpdatePatch.StageAsync(path, root, running, release.Version, arch, patchBase, CancellationToken.None).ConfigureAwait(false);
                     else throw new InvalidDataException("No patch for this copy.");
                     var launcher = new ProcessStartInfo(Path.Combine(root, "Lyricod.exe.new")) { WorkingDirectory = root, UseShellExecute = false };
                     launcher.ArgumentList.Add("--apply-update");
@@ -219,20 +232,38 @@ public sealed partial class UpdateChecker
             {
                 // The patch was fine when it was downloaded; this copy has changed since. The whole download
                 // doesn't depend on it: fetch that, and the restart is offered again.
-                RefusePatch(release, e);
-                _readyPath = null;
-                _readyAsset = null;
-                State = UpdateState.Idle;
-                await DownloadAsync();
+                await UseWholeDownloadAsync(release, e);
                 return;
             }
-            await Task.Run(() =>
+            // Setup doesn't use the launcher, so it can work where the launcher's swap didn't: note the try,
+            // and a start that finds the note with the old version still running leaves the patch be.
+            bool noted = patched && HasSetup;
+            try
             {
-                using var helper = Process.Start(start) ?? throw new IOException("Could not start the update.");
-            });
+                await Task.Run(() =>
+                {
+                    if (noted) UpdateAttempt.Write(UpdatesDirectory, release.Version);
+                    using var helper = Process.Start(start) ?? throw new IOException("Could not start the update.");
+                });
+            }
+            catch (Exception e) when (noted)
+            {
+                UpdateAttempt.Clear(UpdatesDirectory);
+                await UseWholeDownloadAsync(release, e);
+                return;
+            }
             ((App)Microsoft.UI.Xaml.Application.Current).QuitForUpdate();
         }
         catch (Exception e) { Fail(e is DamagedUpdateException ? "UpdateDamaged" : "UpdateApplyFailed"); }
+    }
+
+    async Task UseWholeDownloadAsync(AppRelease release, Exception e)
+    {
+        RefusePatch(release, e);
+        _readyPath = null;
+        _readyAsset = null;
+        State = UpdateState.Idle;
+        await DownloadAsync();
     }
 
     void RefusePatch(AppRelease release, Exception e)

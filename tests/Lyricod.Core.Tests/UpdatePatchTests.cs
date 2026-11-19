@@ -262,28 +262,39 @@ public sealed class UpdatePatchTests : IDisposable
     };
 
     [Fact]
-    public void ThePatchChosenIsTheOneFromTheRunningVersionForThePortableCopy()
+    public void ThePatchChosenIsTheOneFromTheRunningVersionForACopyWithTheLauncher()
     {
         var release = Release(("Lyricod-1.2.3-windows-x64.zip", 4000), ("Lyricod-1.2.3-windows-x64-setup.exe", 3000),
             ("patch-1.2.2-to-1.2.3-windows-x64.zip", 300), ("patch-1.2.1-to-1.2.3-windows-x64.zip", 400),
             ("patch-1.2.2-to-1.2.3-windows-arm64.zip", 500));
-        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.X64, new(1, 2, 2))?.Size);
-        Assert.Equal(400, UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.X64, new(1, 2, 1))?.Size);
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.X64, new(1, 2, 0)));
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Installer, Architecture.X64, new(1, 2, 2)));
+        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2))?.Size);
+        Assert.Equal(400, UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.X64, new(1, 2, 1))?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.X64, new(1, 2, 0)));
+        // An installed copy takes the same patch once it has the launcher; one from before that never does.
+        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Installer, true, Architecture.X64, new(1, 2, 2))?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Installer, false, Architecture.X64, new(1, 2, 2)));
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Unknown, true, Architecture.X64, new(1, 2, 2)));
+        // It falls back on Setup, so the patch must be smaller than that, and the zip it was made from must be there.
+        var close = Release(("Lyricod-1.2.3-windows-x64.zip", 4000), ("Lyricod-1.2.3-windows-x64-setup.exe", 3000), ("patch-1.2.2-to-1.2.3-windows-x64.zip", 3500));
+        Assert.Equal(3500, UpdateFiles.SelectPatch(close, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2))?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(close, InstallKind.Installer, true, Architecture.X64, new(1, 2, 2)));
+        var zipless = Release(("Lyricod-1.2.3-windows-x64-setup.exe", 3000), ("patch-1.2.2-to-1.2.3-windows-x64.zip", 300));
+        Assert.Null(UpdateFiles.SelectPatch(zipless, InstallKind.Installer, true, Architecture.X64, new(1, 2, 2)));
+        Assert.Equal(Full, UpdateFiles.PatchBase(release, Architecture.X64));
+        Assert.Null(UpdateFiles.PatchBase(zipless, Architecture.X64));
         // No whole zip for ARM64 to fall back on.
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.Arm64, new(1, 2, 2)));
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.Arm64, new(1, 2, 2)));
         // A patch as big as the whole download is no use.
         var big = Release(("Lyricod-1.2.3-windows-x64.zip", 4000), ("patch-1.2.2-to-1.2.3-windows-x64.zip", 4000));
-        Assert.Null(UpdateFiles.SelectPatch(big, InstallKind.Portable, Architecture.X64, new(1, 2, 2)));
+        Assert.Null(UpdateFiles.SelectPatch(big, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2)));
         // As for the whole download: a size, GitHub's hash, and this repository's own downloads.
         var patch = new UpdateAsset("patch-1.2.2-to-1.2.3-windows-x64.zip", 300, new("https://github.com/Indarkdust/Lyricod-App/releases/download/v1.2.3/patch-1.2.2-to-1.2.3-windows-x64.zip"), Full);
         foreach (var bad in new[] { patch with { Size = 0 }, patch with { Sha256 = null }, patch with { Sha256 = "abc" }, patch with { Url = new("https://example.com/patch.zip") } })
-            Assert.Null(UpdateFiles.SelectPatch(release with { Assets = [release.Assets[0], bad] }, InstallKind.Portable, Architecture.X64, new(1, 2, 2)));
+            Assert.Null(UpdateFiles.SelectPatch(release with { Assets = [release.Assets[0], bad] }, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2)));
         var feed = new Uri("http://vm.test:8000/releases.json");
         var fed = release with { Assets = [.. release.Assets.Select(a => a with { Url = new("http://vm.test:8000/" + a.Name) })] };
-        Assert.Null(UpdateFiles.SelectPatch(fed, InstallKind.Portable, Architecture.X64, new(1, 2, 2)));
-        Assert.Equal(300, UpdateFiles.SelectPatch(fed, InstallKind.Portable, Architecture.X64, new(1, 2, 2), feed)?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(fed, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2)));
+        Assert.Equal(300, UpdateFiles.SelectPatch(fed, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2), feed)?.Size);
         // The whole download is still chosen as before, never a patch.
         Assert.Equal("Lyricod-1.2.3-windows-x64.zip", UpdateFiles.SelectAsset(release, InstallKind.Portable, Architecture.X64)?.Name);
     }

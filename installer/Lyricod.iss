@@ -1,5 +1,9 @@
 ; Build from the repository root with ISCC /DAppVersion=X.Y.Z /DArch=x64
-; /DSourceDir=<absolute publish directory> installer/Lyricod.iss.
+; /DSourceDir=<absolute path of the portable folder> installer/Lyricod.iss.
+; SourceDir is the Lyricod folder of the same release's portable zip: Lyricod.exe (the launcher),
+; README.txt and app. An installed copy has exactly the zip's files, so it updates the way the
+; portable copy does (the small patches, swapped in by the launcher); Setup is for the first
+; install, and for an update when no patch can be used.
 #ifndef AppVersion
   #error AppVersion must be supplied
 #endif
@@ -34,7 +38,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\publish
 OutputBaseFilename=Lyricod-{#AppVersion}-windows-{#Arch}-setup
 SetupIconFile=..\src\Lyricod.App\Assets\Lyricod.ico
-UninstallDisplayIcon={app}\Assets\Lyricod.ico
+UninstallDisplayIcon={app}\app\Assets\Lyricod.ico
 UninstallDisplayName=Lyricod {#AppVersion}
 WizardStyle=modern
 Compression=lzma2
@@ -55,13 +59,14 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{userprograms}\Lyricod"; Filename: "{app}\Lyricod.exe"; WorkingDir: "{app}"
-Name: "{userdesktop}\Lyricod"; Filename: "{app}\Lyricod.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+; Straight to Lyricod, not the launcher: a window then belongs to the program a pinned shortcut names.
+Name: "{userprograms}\Lyricod"; Filename: "{app}\app\Lyricod.exe"; WorkingDir: "{app}\app"
+Name: "{userdesktop}\Lyricod"; Filename: "{app}\app\Lyricod.exe"; WorkingDir: "{app}\app"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\Lyricod.exe"; Description: "Launch Lyricod"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\app\Lyricod.exe"; Description: "Launch Lyricod"; Flags: nowait postinstall skipifsilent
 ; Lyricod's own updater runs Setup silently with /relaunch=1 after quitting: open it again afterwards.
-Filename: "{app}\Lyricod.exe"; Flags: nowait; Check: RelaunchAfterUpdate
+Filename: "{app}\app\Lyricod.exe"; Flags: nowait; Check: RelaunchAfterUpdate
 
 [Registry]
 ; Startup.cs writes this value itself. Do not enable or disable it during upgrades.
@@ -71,9 +76,17 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: 
 ; In particular, do not add a recursive [UninstallDelete] entry for user data.
 
 [UninstallDelete]
-; Downloaded fonts (MiSans, LXGW WenKai) may be copied beside the app, including the portable launcher layout.
+; Uninstall only removes what Setup put there. Lyricod's own updates replace the app folder without
+; Setup, so that folder goes whole (downloaded fonts copied beside the app are in it too), and so
+; does whatever an update left half-way.
+Type: filesandordirs; Name: "{app}\app"
+Type: filesandordirs; Name: "{app}\app.new"
+Type: filesandordirs; Name: "{app}\app.old-*"
+Type: files; Name: "{app}\Lyricod.exe.new"
+Type: files; Name: "{app}\Lyricod.exe.old-*"
+Type: files; Name: "{app}\README.txt.new"
+; From a version installed before the app folder.
 Type: filesandordirs; Name: "{app}\Fonts"
-Type: filesandordirs; Name: "{app}\app\Fonts"
 
 [UninstallRun]
 ; Uninstall can't remove a running Lyricod.exe: stop it first. (Setup closes it through
@@ -87,9 +100,10 @@ begin
 end;
 
 // Setup overwrites files but never removes the ones a newer version no longer ships, so clear the
-// previous version out first. Only in a folder Lyricod was installed in (it has Lyricod.exe and the
-// uninstaller), and the uninstaller stays: the new version adds to its log. Settings and saved
-// lyrics live in {localappdata}\Lyricod, not here.
+// previous version out first: one installed before the app folder too, whose files lie beside
+// Lyricod.exe. Only in a folder Lyricod was installed in (it has Lyricod.exe and the uninstaller),
+// and the uninstaller stays: the new version adds to its log. Settings and saved lyrics live in
+// {localappdata}\Lyricod, not here.
 procedure RemovePreviousVersion;
 var
   Dir: String;

@@ -1,8 +1,8 @@
 name: Windows release
 
 # Publishes Lyricod for a tag vX.Y.Z:
-# builds x64 and ARM64 installers and zips, makes the small updates ("patches") that take the
-# portable copy of each of the last three releases to this one, and creates a draft GitHub release
+# builds x64 and ARM64 installers and zips, makes the small updates ("patches") that take a copy
+# of each of the last three releases to this one, and creates a draft GitHub release
 # with the notes in release-notes/X.Y.Z.md. Check the draft, then publish it. The tag must match
 # VERSION.
 on:
@@ -69,8 +69,13 @@ jobs:
             dotnet publish src/Lyricod.App/Lyricod.App.csproj -c Release -p:Platform=$($target.Platform) -r $($target.Rid) -p:DebugType=none -o $out
             if ($LASTEXITCODE -ne 0) { throw "Publish failed for $($target.Rid)" }
             ./scripts/package-portable.ps1 -Version $version -Arch $target.Name -PublishFolder $out -OutputFolder publish
+            # Setup installs the very files the zip holds (launcher, README.txt, app): a patch made
+            # from two zips then fits an installed copy as it fits a portable one.
+            $stage = "publish/$($target.Name)/zip"
+            Add-Type -AssemblyName System.IO.Compression.ZipFile
+            [IO.Compression.ZipFile]::ExtractToDirectory((Resolve-Path "publish/Lyricod-$version-windows-$($target.Name).zip").Path, (New-Item -ItemType Directory $stage).FullName)
             # Resolve the payload path: ISCC otherwise resolves paths relative to the script.
-            $source = (Resolve-Path $out).Path
+            $source = (Resolve-Path "$stage/Lyricod").Path
             & $env:ISCC "/DAppVersion=$version" "/DArch=$($target.Name)" "/DSourceDir=$source" installer/Lyricod.iss
             if ($LASTEXITCODE -ne 0) { throw "Installer build failed for $($target.Name)" }
             if (-not (Test-Path "publish/Lyricod-$version-windows-$($target.Name)-setup.exe")) {
@@ -83,7 +88,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # A portable copy of one of these versions downloads only the files that changed since.
+          # A copy of one of these versions downloads only the files that changed since: a portable
+          # one, or an installed one that has the launcher (Setup installs the zip's files).
           # The tool makes no patch from a version that is from before patches. Each patch is
           # applied to the old zip here and is kept only if that gives the new one exactly, and if
           # it is under half the whole zip. Patches only save a download: a release goes ahead

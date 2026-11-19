@@ -6,13 +6,25 @@ namespace Lyricod.Core.Tests;
 public class UpdateFilesTests
 {
     [Theory]
-    [InlineData("app", true, true, InstallKind.Installer)]
-    [InlineData("Lyricod", true, false, InstallKind.Installer)]
-    [InlineData("APP", false, true, InstallKind.Portable)]
-    [InlineData("app", false, false, InstallKind.Unknown)]
-    [InlineData("publish", false, true, InstallKind.Unknown)]
-    public void DetectsLayout(string name, bool uninstall, bool launcher, InstallKind expected) =>
-        Assert.Equal(expected, UpdateFiles.DetectKind(name, uninstall, launcher));
+    [InlineData("app", true, true, false, InstallKind.Installer)]
+    [InlineData("Lyricod", true, false, false, InstallKind.Installer)]
+    [InlineData("APP", false, true, false, InstallKind.Portable)]
+    [InlineData("app", false, false, false, InstallKind.Unknown)]
+    [InlineData("publish", false, true, false, InstallKind.Unknown)]
+    // Installed with the launcher's layout: the uninstaller is beside the launcher, not beside Lyricod.
+    [InlineData("app", false, true, true, InstallKind.Installer)]
+    [InlineData("app", false, false, true, InstallKind.Unknown)]
+    [InlineData("publish", false, true, true, InstallKind.Unknown)]
+    public void DetectsLayout(string name, bool uninstall, bool launcher, bool parentUninstall, InstallKind expected) =>
+        Assert.Equal(expected, UpdateFiles.DetectKind(name, uninstall, launcher, parentUninstall));
+
+    [Theory]
+    [InlineData("app", true, true)]
+    [InlineData("App", true, true)]
+    [InlineData("app", false, false)]
+    [InlineData("Lyricod", true, false)]
+    public void TheLauncherLayoutIsAnAppFolderUnderTheLauncher(string name, bool launcher, bool expected) =>
+        Assert.Equal(expected, UpdateFiles.HasLauncher(name, launcher));
 
     [Theory]
     [InlineData("https://github.com/Indarkdust/Lyricod-App/releases/download/v1.2.3/a.zip", true)]

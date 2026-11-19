@@ -30,7 +30,18 @@ public sealed partial class UpdateChecker : IDisposable
         _queue = queue;
         // Started by an update: the old copy is the launcher's to remove once this one is up, or the next start's.
         bool keepOldCopies = Platform.UpdateHealth.Pending;
-        _cleanup = Task.Run(() => PortableUpdate.Cleanup(PortableRoot, UpdatesDirectory, UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0), keepOldCopies));
+        var running = UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0);
+        if (HasSetup && UpdateAttempt.Failed(UpdatesDirectory, running) is { } failed)
+        {
+            Log.Write($"Update: the patch to {failed.ToString(3)} didn't take last time. Setup is used for it instead.");
+            _patchRefused = failed;
+        }
+        _cleanup = Task.Run(() =>
+        {
+            PortableUpdate.Cleanup(LauncherRoot, UpdatesDirectory, running, keepOldCopies);
+            // Setup wrote the version Windows lists; after the launcher's update, Lyricod does.
+            if (HasSetup && LauncherRoot is { } root) Platform.InstalledEntry.Refresh(root, Version);
+        });
         _timer = queue.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(10);
         _timer.Tick += async (_, _) =>
