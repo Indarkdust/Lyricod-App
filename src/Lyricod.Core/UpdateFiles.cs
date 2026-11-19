@@ -19,9 +19,24 @@ public static class UpdateFiles
             && url.Scheme == testFeed.Scheme && url.Host.Equals(testFeed.Host, StringComparison.OrdinalIgnoreCase) && url.Port == testFeed.Port;
     }
 
+    public static string? ArchName(Architecture architecture) =>
+        architecture switch { Architecture.X64 => "x64", Architecture.Arm64 => "arm64", _ => null };
+
+    /// <summary>
+    /// The small download that takes exactly version <paramref name="running"/> to the release: only for the
+    /// portable copy, and only when the release also has the whole zip to fall back on.
+    /// </summary>
+    public static UpdateAsset? SelectPatch(AppRelease release, InstallKind kind, Architecture architecture, Version running, Uri? testFeed = null)
+    {
+        if (kind != InstallKind.Portable || ArchName(architecture) is not { } arch
+            || SelectAsset(release, kind, architecture, testFeed) is not { } whole) return null;
+        string name = UpdatePatch.AssetName(release.Version, arch, running);
+        return release.Assets.FirstOrDefault(a => a.Name == name && a.Size > 0 && a.Size < whole.Size && ValidHash(a.Sha256) && IsAllowedUrl(a.Url, testFeed));
+    }
+
     public static UpdateAsset? SelectAsset(AppRelease release, InstallKind kind, Architecture architecture, Uri? testFeed = null)
     {
-        string? arch = architecture switch { Architecture.X64 => "x64", Architecture.Arm64 => "arm64", _ => null };
+        string? arch = ArchName(architecture);
         string? suffix = kind switch { InstallKind.Installer => "-setup.exe", InstallKind.Portable => ".zip", _ => null };
         if (arch == null || suffix == null) return null;
         string name = $"Lyricod-{release.Version.ToString(3)}-windows-{arch}{suffix}";

@@ -20,7 +20,7 @@ public static class PortableUpdate
     public static async Task StageAsync(string zip, string root, Version version, CancellationToken stop)
     {
         CheckWritable(root);
-        foreach (string name in StagedNames) Delete(Path.Combine(root, name));
+        ClearStage(root);
         try
         {
             using var archive = ZipFile.OpenRead(zip);
@@ -51,8 +51,18 @@ public static class PortableUpdate
         }
         catch
         {
-            foreach (string name in StagedNames) TryDelete(Path.Combine(root, name));
+            ClearStage(root, quietly: true);
             throw;
+        }
+    }
+
+    /// <summary>Removes what an earlier staging left; quietly, after a failure that is the thing to report.</summary>
+    internal static void ClearStage(string root, bool quietly = false)
+    {
+        foreach (string name in StagedNames)
+        {
+            if (quietly) TryDelete(Path.Combine(root, name));
+            else Delete(Path.Combine(root, name));
         }
     }
 

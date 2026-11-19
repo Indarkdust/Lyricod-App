@@ -1,8 +1,9 @@
 name: Windows release
 
 # Publishes Lyricod for a tag vX.Y.Z:
-# builds x64 and ARM64 installers and zips, and creates a draft GitHub release with the notes in
-# release-notes/X.Y.Z.md. Check the draft, then publish it. The tag must match
+# builds x64 and ARM64 installers and zips, makes the small updates ("patches") that take the
+# portable copy of each of the last three releases to this one, and creates a draft GitHub release
+# with the notes in release-notes/X.Y.Z.md. Check the draft, then publish it. The tag must match
 # VERSION.
 on:
   push:
@@ -77,6 +78,29 @@ jobs:
             }
           }
           Get-ChildItem publish/* -Include *.zip, *-setup.exe | Select-Object Name, Length
+      - name: Make patches from the last releases
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A portable copy of one of these versions downloads only the files that changed since.
+          # Each patch is applied to the old zip here and must give the new one exactly; one that
+          # is more than half the whole zip is left out. Older copies get the whole download.
+          $version = '${{ steps.version.outputs.version }}'
+          $tags = gh release list --repo $env:GITHUB_REPOSITORY --exclude-drafts --exclude-pre-releases --limit 20 --json tagName --jq '.[].tagName'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not list the releases' }
+          $earlier = @($tags | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' -and [version]$_.Substring(1) -lt [version]$version } |
+            Sort-Object { [version]$_.Substring(1) } -Descending | Select-Object -First 3)
+          foreach ($tag in $earlier) {
+            foreach ($arch in 'x64', 'arm64') {
+              $old = "Lyricod-$($tag.Substring(1))-windows-$arch.zip"
+              gh release download $tag --repo $env:GITHUB_REPOSITORY --pattern $old --dir publish/earlier
+              if ($LASTEXITCODE -ne 0) { throw "Could not download $old" }
+              dotnet run --project tools/Lyricod.Patch -c Release -- "publish/earlier/$old" "publish/Lyricod-$version-windows-$arch.zip" publish
+              if ($LASTEXITCODE -ne 0) { throw "No patch from $tag for $arch" }
+            }
+          }
+          Get-ChildItem publish/*-patch-from-*.zip | Select-Object Name, Length
       - name: Upload downloads for testing
         if: github.event_name == 'workflow_dispatch' && inputs.dry_run
         uses: actions/upload-artifact@v7
@@ -96,6 +120,7 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.version }}'
           $assets = (Get-ChildItem publish/* -Include *.zip, *-setup.exe).FullName
-          if ($assets.Count -ne 4) { throw "Expected two zips and two installers, found $($assets.Count) assets" }
+          $whole = @($assets | Where-Object { $_ -notmatch '-patch-from-' })
+          if ($whole.Count -ne 4) { throw "Expected two zips and two installers, found $($whole.Count)" }
           gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "Lyricod $version" --notes-file "release-notes/$version.md"
           if ($LASTEXITCODE -ne 0) { throw 'Draft release creation failed' }
