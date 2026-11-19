@@ -33,6 +33,7 @@ public partial class App : Application
         AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Write("unhandled: " + e.ExceptionObject);
         TaskScheduler.UnobservedTaskException += (_, e) => Log.Write("unobserved task: " + e.Exception);
         UnhandledException += (_, e) => Log.Write("unhandled (XAML): " + e.Exception);
+        UpdateChecker.StartedByLauncher();
         InitializeComponent();
     }
 

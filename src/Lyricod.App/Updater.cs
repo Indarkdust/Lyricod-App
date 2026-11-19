@@ -34,6 +34,13 @@ public sealed partial class UpdateChecker
     /// <summary>An installed copy has Setup as another way to update when the launcher's doesn't work.</summary>
     static bool HasSetup => Kind == InstallKind.Installer;
     static string UpdatesDirectory => Path.Combine(Settings.DataDir, "Updates");
+
+    /// <summary>The launcher started this Lyricod, so its swap worked: whatever becomes of this start, Setup
+    /// (which can't put the old version back) is not the answer to it. Called first, before anything that can fail.</summary>
+    public static void StartedByLauncher()
+    {
+        if (HasSetup && Platform.UpdateHealth.Pending) UpdateAttempt.Clear(UpdatesDirectory);
+    }
     UpdateAsset? Asset => Available is { } release ? UpdateFiles.SelectAsset(release, Kind, RuntimeInformation.ProcessArchitecture, TestFeed) : null;
     static string? Arch => UpdateFiles.ArchName(RuntimeInformation.ProcessArchitecture);
     /// <summary>The small download that takes this very version to the release, when it has one. A test build
@@ -214,6 +221,8 @@ public sealed partial class UpdateChecker
                     if (!patched && PortableRoot == null) return new ProcessStartInfo(path)
                     {
                         UseShellExecute = false,
+                        // Not Lyricod's own folder, which Setup moves aside: a folder a process works in can't be moved.
+                        WorkingDirectory = Path.GetDirectoryName(path)!,
                         Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /relaunch=1",
                     };
                     if (LauncherRoot is not { } root) throw new InvalidDataException("No launcher for this copy.");

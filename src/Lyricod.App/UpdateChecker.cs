@@ -31,10 +31,7 @@ public sealed partial class UpdateChecker : IDisposable
         // Started by an update: the old copy is the launcher's to remove once this one is up, or the next start's.
         bool keepOldCopies = Platform.UpdateHealth.Pending;
         var running = UpdateCheck.ParseVersion(Version) ?? new(0, 0, 0);
-        // The launcher started this Lyricod, so its swap worked: whatever becomes of this start, Setup
-        // (which can't put the old version back) is not the answer to it.
-        if (HasSetup && keepOldCopies) UpdateAttempt.Clear(UpdatesDirectory);
-        else if (HasSetup && UpdateAttempt.Failed(UpdatesDirectory, running) is { } failed)
+        if (HasSetup && !keepOldCopies && UpdateAttempt.Failed(UpdatesDirectory, running) is { } failed)
         {
             Log.Write($"Update: the patch to {failed.ToString(3)} wasn't swapped in last time. Setup is used for it instead.");
             _patchRefused = failed;
