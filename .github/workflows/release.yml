@@ -84,9 +84,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           # A portable copy of one of these versions downloads only the files that changed since.
-          # Each patch is applied to the old zip here and is kept only if that gives the new one
-          # exactly, and if it is under half the whole zip. Patches only save a download: a
-          # release goes ahead without any that can't be made, and those copies get the whole zip.
+          # The tool makes no patch from a version that is from before patches. Each patch is
+          # applied to the old zip here and is kept only if that gives the new one exactly, and if
+          # it is under half the whole zip. Patches only save a download: a release goes ahead
+          # without any that can't be made, and those copies get the whole zip.
           $version = '${{ steps.version.outputs.version }}'
           $tags = gh release list --repo $env:GITHUB_REPOSITORY --exclude-drafts --exclude-pre-releases --limit 20 --json tagName --jq '.[].tagName'
           if ($LASTEXITCODE -ne 0) { Write-Host '::warning::No patches: the releases could not be listed'; $tags = @() }
@@ -98,7 +99,11 @@ jobs:
               gh release download $tag --repo $env:GITHUB_REPOSITORY --pattern $old --dir publish/earlier
               if ($LASTEXITCODE -ne 0) { Write-Host "::warning::No patch from $tag for ${arch}: $old could not be downloaded"; continue }
               dotnet run --project tools/Lyricod.Patch -c Release -- "publish/earlier/$old" "publish/Lyricod-$version-windows-$arch.zip" publish
-              if ($LASTEXITCODE -ne 0) { Write-Host "::warning::No patch from $tag for ${arch}: the tool refused it" }
+              if ($LASTEXITCODE -ne 0) {
+                Write-Host "::warning::No patch from $tag for ${arch}: the tool refused it"
+                # The tool removes what it didn't prove; nothing unproved must reach the release.
+                Remove-Item "publish/patch-$($tag.Substring(1))-to-$version-windows-$arch.zip" -ErrorAction SilentlyContinue
+              }
             }
           }
           $global:LASTEXITCODE = 0

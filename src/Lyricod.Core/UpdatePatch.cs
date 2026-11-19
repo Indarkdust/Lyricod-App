@@ -23,7 +23,9 @@ public sealed record PatchManifest(Version From, Version To, string Arch, string
 /// </summary>
 public static class UpdatePatch
 {
-    const string ManifestName = "patch.json", Carried = "files/";
+    /// <summary>The list inside every patch. The release tool looks for this name in an older build to tell whether it knows patches.</summary>
+    public const string ManifestName = "patch.json";
+    const string Carried = "files/";
     const int MaxFiles = 5000, MaxManifest = 4 * 1024 * 1024;
     const long MaxTotal = 1L << 30;
     static readonly string[] Needed = ["Lyricod.exe", "README.txt", "app/Lyricod.exe"];

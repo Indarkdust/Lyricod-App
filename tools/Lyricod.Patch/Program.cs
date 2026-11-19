@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
 using Lyricod.Core;
 
@@ -8,8 +9,10 @@ using Lyricod.Core;
 // the app applies it, it must give every file of the new one and nothing else.
 //   dotnet run --project tools/Lyricod.Patch -- <old zip> <new zip> <output folder>
 // The zips are named as released (Lyricod-1.2.3-windows-x64.zip; a test build's label is allowed).
-// A patch more than half the size of the new zip is not kept: the whole download serves as well.
-// Exit code 0 when a patch was made or left out as too big, 1 when something is wrong.
+// No patch is made from a version that wouldn't know what to do with one, and one more than half the
+// size of the new zip is not kept: the whole download serves as well. Whatever happens, a patch is
+// left in the output folder only if it was proved.
+// Exit code 0 when a patch was made or rightly not made, 1 when something is wrong.
 if (args.Length != 3)
 {
     Console.Error.WriteLine("Usage: Lyricod.Patch <old zip> <new zip> <output folder>");
@@ -19,7 +22,14 @@ var (from, oldArch) = Named(args[0]);
 var (to, arch) = Named(args[1]);
 if (oldArch != arch) return Fail($"The zips are for {oldArch} and {arch}.");
 if (to <= from) return Fail($"{to} isn't newer than {from}.");
+if (!KnowsPatches(args[0]))
+{
+    Console.WriteLine($"No patch from {from.ToString(3)}: that version is from before patches and would never ask for one.");
+    return 0;
+}
 string work = Path.Combine(Path.GetTempPath(), "lyricod-patch-" + Guid.NewGuid());
+string? patch = null;
+bool proved = false;
 try
 {
     string before = Path.Combine(work, "old"), after = Path.Combine(work, "new");
@@ -29,7 +39,7 @@ try
     string full;
     using (var zip = File.OpenRead(args[1])) full = Convert.ToHexStringLower(SHA256.HashData(zip));
     Directory.CreateDirectory(args[2]);
-    string patch = Path.Combine(args[2], UpdatePatch.AssetName(to, arch, from));
+    patch = Path.Combine(args[2], UpdatePatch.AssetName(to, arch, from));
     File.Delete(patch);
     var manifest = UpdatePatch.Create(installed, wanted, patch, from, to, arch, full);
     long size = new FileInfo(patch).Length, whole = new FileInfo(args[1]).Length;
@@ -43,24 +53,34 @@ try
         .Append(("Lyricod.exe", Hash(Path.Combine(installed, "Lyricod.exe.new")))).Append(("README.txt", Hash(Path.Combine(installed, "README.txt.new"))));
     var expected = Tree(wanted);
     var wrong = made.Except(expected).Concat(expected.Except(made)).Select(f => f.Item1).Distinct().ToList();
-    if (wrong.Count > 0)
-    {
-        File.Delete(patch);
-        return Fail("The patch doesn't make the new version: " + string.Join(", ", wrong.Take(10)));
-    }
+    if (wrong.Count > 0) return Fail("The patch doesn't make the new version: " + string.Join(", ", wrong.Take(10)));
     Console.WriteLine("Applied to the old zip, it makes the new one exactly.");
-    if (size * 2 > whole)
-    {
-        File.Delete(patch);
-        Console.WriteLine("Left out: more than half the whole zip.");
-    }
+    if (size * 2 > whole) Console.WriteLine("Left out: more than half the whole zip.");
+    else proved = true;
     return 0;
 }
 catch (Exception e) { return Fail(e.Message); }
 finally
 {
+    // Half-made, unproved or too big: the release publishes whatever patch it finds here.
+    if (!proved && patch != null)
+    {
+        try { File.Delete(patch); }
+        catch (Exception) { }
+    }
     try { Directory.Delete(work, true); }
     catch (Exception) { }
+}
+
+// A version knows patches if its own code names the list every patch carries.
+static bool KnowsPatches(string zip)
+{
+    using var archive = ZipFile.OpenRead(zip);
+    var core = archive.GetEntry("Lyricod/app/Lyricod.Core.dll") ?? throw new InvalidDataException($"{Path.GetFileName(zip)} has no Lyricod.Core.dll.");
+    using var source = core.Open();
+    using var bytes = new MemoryStream();
+    source.CopyTo(bytes);
+    return bytes.GetBuffer().AsSpan(0, (int)bytes.Length).IndexOf(Encoding.Unicode.GetBytes(UpdatePatch.ManifestName)) >= 0;
 }
 
 static (Version Version, string Arch) Named(string zip)
