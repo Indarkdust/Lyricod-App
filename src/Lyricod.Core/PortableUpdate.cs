@@ -62,7 +62,18 @@ public static class PortableUpdate
         foreach (string name in StagedNames)
         {
             if (quietly) TryDelete(Path.Combine(root, name));
-            else Delete(Path.Combine(root, name));
+            else DeleteOrSetAside(Path.Combine(root, name));
+        }
+    }
+
+    /// <summary>A launcher that put the old version back runs on from Lyricod.exe.new while its message is
+    /// up. It can't be deleted then, but Windows lets it be renamed: it goes with the other old copies later.</summary>
+    static void DeleteOrSetAside(string path)
+    {
+        try { Delete(path); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException && Path.GetFileName(path) == "Lyricod.exe.new" && File.Exists(path))
+        {
+            File.Move(path, Path.Combine(Path.GetDirectoryName(path)!, "Lyricod.exe.old-" + Guid.NewGuid().ToString("N")));
         }
     }
 
