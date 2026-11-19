@@ -119,13 +119,8 @@ public class RomanizerTests
     [Fact]
     public void PinyinAndRomanisedKoreanAreSungWhenTheirCharactersAre()
     {
-        static LyricLine ByCharacter(string text) => new()
-        {
-            Start = 1, End = 1 + text.Length, Text = text,
-            Words = [.. text.Select((c, i) => new LyricWord(1 + i, 1, c.ToString()))],
-        };
         // Pinyin: a syllable for each character, a mark with the syllable before it.
-        var chinese = new Lyrics([ByCharacter("重新来过，我")], "test");
+        var chinese = new Lyrics([RomajiByWordTests.ByCharacter("重新来过，我")], "test");
         new Romanizer().Fill(chinese);
         var pinyin = chinese.Lines[0].Pronunciation!;
         Assert.Equal("chóng xīn lái guò, wǒ", pinyin.Text);
@@ -133,7 +128,7 @@ public class RomanizerTests
             pinyin.Words);
 
         // Korean: a word for each run of Hangul, over all of its syllables.
-        var korean = new Lyrics([ByCharacter("같이 가요")], "test");
+        var korean = new Lyrics([RomajiByWordTests.ByCharacter("같이 가요")], "test");
         new Romanizer().Fill(korean);
         var roman = korean.Lines[0].Pronunciation!;
         Assert.Equal("gachi gayo", roman.Text);

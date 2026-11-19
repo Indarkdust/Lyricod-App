@@ -17,9 +17,8 @@ public unsafe class DisplayCaptureExclusionTests
     [Fact]
     public void MissingDisplayInterfaceFallsBack()
     {
-        nint other = (nint)ComInterfaceMarshaller<ICaptureWindowIds>.ConvertToUnmanaged(new CaptureWindowIds(123));
-        try { Assert.False(DisplayCaptureExclusion.TryExcludeWindow(other, 123, 26100, out _)); }
-        finally { ComInterfaceMarshaller<ICaptureWindowIds>.Free((void*)other); }
+        using var other = new Native<ICaptureWindowIds>(new CaptureWindowIds(123));
+        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(other, 123, 26100, out _));
     }
 
     [Theory]
@@ -29,68 +28,46 @@ public unsafe class DisplayCaptureExclusionTests
     {
         Assert.Equal(8, Marshal.SizeOf<CaptureWindowId>());
         var session = new TestDisplaySession { UseGetMany = useGetMany };
-        nint native = (nint)ComInterfaceMarshaller<ITestDisplaySession>.ConvertToUnmanaged(session);
+        using var native = new Native<ITestDisplaySession>(session);
         nint window = unchecked((nint)0x1234ABCDFFFF1234L);
-        try
-        {
-            Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, 26100, out ulong first));
-            Assert.Equal(unchecked((ulong)(nuint)window), session.Window);
-            Assert.Equal(1ul, first); // the configuration Windows says leaves the window out
-            // A new session/monitor gets its own exclusion, including the same full-width HWND.
-            Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, 28000, out ulong second));
-            Assert.Equal(2, session.Calls);
-            Assert.Equal(2ul, second);
-        }
-        finally { ComInterfaceMarshaller<ITestDisplaySession>.Free((void*)native); }
+        Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, 26100, out ulong first));
+        Assert.Equal(unchecked((ulong)(nuint)window), session.Window);
+        Assert.Equal(1ul, first); // the configuration Windows says leaves the window out
+        // A new session/monitor gets its own exclusion, including the same full-width HWND.
+        Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, 28000, out ulong second));
+        Assert.Equal(2, session.Calls);
+        Assert.Equal(2ul, second);
     }
 
     [Fact]
     public void RejectedExclusionDoesNotReportSuccess()
     {
         var session = new TestDisplaySession { Result = unchecked((int)0x80070005) };
-        nint native = (nint)ComInterfaceMarshaller<ITestDisplaySession>.ConvertToUnmanaged(session);
-        try { Assert.False(DisplayCaptureExclusion.TryExcludeWindow(native, 123, 26100, out _)); }
-        finally { ComInterfaceMarshaller<ITestDisplaySession>.Free((void*)native); }
+        using var native = new Native<ITestDisplaySession>(session);
+        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(native, 123, 26100, out _));
     }
 
     [Fact]
     public void AvailableOnlyWhereTheSessionHasTheDisplayInterface()
     {
-        nint native = (nint)ComInterfaceMarshaller<ITestDisplaySession>.ConvertToUnmanaged(new TestDisplaySession());
-        nint other = (nint)ComInterfaceMarshaller<ICaptureWindowIds>.ConvertToUnmanaged(new CaptureWindowIds(123));
-        try
-        {
-            Assert.True(DisplayCaptureExclusion.IsAvailable(native, 26100));
-            Assert.False(DisplayCaptureExclusion.IsAvailable(native, 26099));
-            Assert.False(DisplayCaptureExclusion.IsAvailable(other, 26100));
-            Assert.False(DisplayCaptureExclusion.IsAvailable(0, 26100));
-        }
-        finally
-        {
-            ComInterfaceMarshaller<ITestDisplaySession>.Free((void*)native);
-            ComInterfaceMarshaller<ICaptureWindowIds>.Free((void*)other);
-        }
+        using var native = new Native<ITestDisplaySession>(new TestDisplaySession());
+        using var other = new Native<ICaptureWindowIds>(new CaptureWindowIds(123));
+        Assert.True(DisplayCaptureExclusion.IsAvailable(native, 26100));
+        Assert.False(DisplayCaptureExclusion.IsAvailable(native, 26099));
+        Assert.False(DisplayCaptureExclusion.IsAvailable(other, 26100));
+        Assert.False(DisplayCaptureExclusion.IsAvailable(0, 26100));
     }
 
     [Fact]
     public void FrameSaysItsCaptureConfiguration()
     {
-        nint frame = (nint)ComInterfaceMarshaller<ITestFrame3>.ConvertToUnmanaged(new TestFrame { Iteration = 7 });
-        nint other = (nint)ComInterfaceMarshaller<ICaptureWindowIds>.ConvertToUnmanaged(new CaptureWindowIds(123));
-        nint failing = (nint)ComInterfaceMarshaller<ITestFrame3>.ConvertToUnmanaged(new TestFrame { Result = unchecked((int)0x80004005) });
-        try
-        {
-            Assert.Equal(7ul, DisplayCaptureExclusion.FrameIteration(frame));
-            Assert.Null(DisplayCaptureExclusion.FrameIteration(other)); // older Windows: frames don't say
-            Assert.Null(DisplayCaptureExclusion.FrameIteration(failing));
-            Assert.Null(DisplayCaptureExclusion.FrameIteration(0));
-        }
-        finally
-        {
-            ComInterfaceMarshaller<ITestFrame3>.Free((void*)frame);
-            ComInterfaceMarshaller<ICaptureWindowIds>.Free((void*)other);
-            ComInterfaceMarshaller<ITestFrame3>.Free((void*)failing);
-        }
+        using var frame = new Native<ITestFrame3>(new TestFrame { Iteration = 7 });
+        using var other = new Native<ICaptureWindowIds>(new CaptureWindowIds(123));
+        using var failing = new Native<ITestFrame3>(new TestFrame { Result = unchecked((int)0x80004005) });
+        Assert.Equal(7ul, DisplayCaptureExclusion.FrameIteration(frame));
+        Assert.Null(DisplayCaptureExclusion.FrameIteration(other)); // older Windows: frames don't say
+        Assert.Null(DisplayCaptureExclusion.FrameIteration(failing));
+        Assert.Null(DisplayCaptureExclusion.FrameIteration(0));
     }
 
     [Fact]
@@ -105,6 +82,14 @@ public unsafe class DisplayCaptureExclusionTests
         Assert.Equal(0, iterator.MoveNext(out byte more));
         Assert.Equal((byte)0, more);
         Assert.Equal(unchecked((int)0x8000000B), iterator.GetCurrent(out _));
+    }
+
+    /// <summary>A native pointer to a managed object, freed when the test ends.</summary>
+    sealed class Native<T>(T managed) : IDisposable
+    {
+        readonly nint _pointer = (nint)ComInterfaceMarshaller<T>.ConvertToUnmanaged(managed);
+        public static implicit operator nint(Native<T> native) => native._pointer;
+        public void Dispose() => ComInterfaceMarshaller<T>.Free((void*)_pointer);
     }
 }
 

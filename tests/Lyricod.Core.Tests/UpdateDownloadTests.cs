@@ -23,11 +23,14 @@ public sealed class UpdateDownloadTests : IDisposable
         return Task.FromResult(response);
     }
 
-    /// <summary>A range answer whose body ends before it has sent anything.</summary>
-    static Task<HttpResponseMessage> Empty(int from)
+    /// <summary>Headed as the payload from <paramref name="from"/> on; <paramref name="body"/> is what really arrives.</summary>
+    static Task<HttpResponseMessage> Send(int from, Stream body)
     {
-        var response = new HttpResponseMessage(HttpStatusCode.PartialContent) { Content = new StreamContent(new MemoryStream()) { Headers = { ContentLength = Payload.Length - from } } };
-        response.Content.Headers.ContentRange = new(from, Payload.Length - 1, Payload.Length);
+        var response = new HttpResponseMessage(from == 0 ? HttpStatusCode.OK : HttpStatusCode.PartialContent)
+        {
+            Content = new StreamContent(body) { Headers = { ContentLength = Payload.Length - from } },
+        };
+        if (from > 0) response.Content.Headers.ContentRange = new(from, Payload.Length - 1, Payload.Length);
         return Task.FromResult(response);
     }
 
@@ -41,14 +44,14 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task DownloadsChecksAndReusesOnlyVerifiedFiles()
     {
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             calls++;
             Assert.Equal(Asset.Url, request.RequestUri);
             Assert.Equal(UpdateCheck.UserAgent("1.0.0"), request.Headers.UserAgent.ToString());
             return Ok();
         }));
-        var progress = new ProgressLog();
+        var progress = new ProgressLog<UpdateProgress>();
         string path = await UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", progress, TestContext.Current.CancellationToken);
         Assert.Equal(Payload, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
         Assert.False(File.Exists(path + ".part"));
@@ -74,7 +77,7 @@ public sealed class UpdateDownloadTests : IDisposable
             _ => Asset,
         };
         int calls = 0;
-        using var client = new HttpClient(new Handler((_, _) =>
+        using var client = new HttpClient(new StubHandler((_, _) =>
         {
             calls++;
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -91,17 +94,17 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task ADroppedDownloadCarriesOnFromItsPart()
     {
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             if (++calls == 1)
             {
                 Assert.Null(request.Headers.Range);
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new DroppedStream(Payload[..5])) { Headers = { ContentLength = Payload.Length } } });
+                return Send(0, new DroppedStream(Payload[..5]));
             }
             Assert.Equal("bytes=5-", request.Headers.Range?.ToString());
             return Rest(5);
         }));
-        var progress = new ProgressLog();
+        var progress = new ProgressLog<UpdateProgress>();
         string path = await Download(client, Asset, progress);
         Assert.Equal(2, calls);
         Assert.Equal(Payload, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
@@ -115,11 +118,10 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task ASecondCallCarriesOnFromThePartTheFirstLeft()
     {
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             calls++;
-            if (request.Headers.Range == null)
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new DroppedStream(Payload[..5])) { Headers = { ContentLength = Payload.Length } } });
+            if (request.Headers.Range == null) return Send(0, new DroppedStream(Payload[..5]));
             Assert.Equal("bytes=5-", request.Headers.Range.ToString());
             return calls < 5 ? Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)) : Rest(5);
         }));
@@ -138,7 +140,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Directory.CreateDirectory(_directory);
         await File.WriteAllBytesAsync(In(Asset.Name + ".part"), Payload[..5], TestContext.Current.CancellationToken);
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             calls++;
             Assert.Equal("bytes=5-", request.Headers.Range?.ToString());
@@ -158,7 +160,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Directory.CreateDirectory(_directory);
         await File.WriteAllBytesAsync(In(Asset.Name + ".part"), new byte[length], TestContext.Current.CancellationToken);
         var ranges = new List<string?>();
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             ranges.Add(request.Headers.Range?.ToString());
             return request.Headers.Range == null ? Ok() : Rest(5);
@@ -179,7 +181,7 @@ public sealed class UpdateDownloadTests : IDisposable
     {
         Directory.CreateDirectory(_directory);
         await File.WriteAllBytesAsync(In(Asset.Name + ".part"), Payload[..5], TestContext.Current.CancellationToken);
-        using var client = new HttpClient(new Handler((_, _) =>
+        using var client = new HttpClient(new StubHandler((_, _) =>
         {
             var response = new HttpResponseMessage(HttpStatusCode.PartialContent) { Content = new ByteArrayContent(Payload[5..]) };
             response.Content.Headers.TryAddWithoutValidation("Content-Range", range);
@@ -195,7 +197,7 @@ public sealed class UpdateDownloadTests : IDisposable
     {
         Directory.CreateDirectory(_directory);
         await File.WriteAllBytesAsync(In(Asset.Name + ".part"), Payload[..5], TestContext.Current.CancellationToken);
-        using var client = new HttpClient(new Handler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent("sign in"u8.ToArray()) })));
+        using var client = new HttpClient(new StubHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent("sign in"u8.ToArray()) })));
         await Assert.ThrowsAsync<DamagedUpdateException>(() => Download(client, Asset));
         Assert.Equal(Payload[..5], await File.ReadAllBytesAsync(In(Asset.Name + ".part"), TestContext.Current.CancellationToken));
     }
@@ -206,7 +208,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Directory.CreateDirectory(_directory);
         await File.WriteAllBytesAsync(In(Asset.Name + ".part"), Payload[..5], TestContext.Current.CancellationToken);
         var ranges = new List<string?>();
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             ranges.Add(request.Headers.Range?.ToString());
             int from = (int)request.Headers.Range!.Ranges.Single().From!.Value;
@@ -223,17 +225,12 @@ public sealed class UpdateDownloadTests : IDisposable
         // Three bytes and a drop, time after time, with a busy server twice in between: never three
         // tries in a row with nothing new.
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             calls++;
             if (calls is 2 or 3 or 5 or 6) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable));
             int from = (int?)request.Headers.Range?.Ranges.Single().From ?? 0;
-            var response = new HttpResponseMessage(from == 0 ? HttpStatusCode.OK : HttpStatusCode.PartialContent)
-            {
-                Content = new StreamContent(new DroppedStream(Payload[from..Math.Min(from + 3, Payload.Length)])) { Headers = { ContentLength = Payload.Length - from } },
-            };
-            if (from > 0) response.Content.Headers.ContentRange = new(from, Payload.Length - 1, Payload.Length);
-            return Task.FromResult(response);
+            return Send(from, new DroppedStream(Payload[from..Math.Min(from + 3, Payload.Length)]));
         }));
         string path = await Download(client, Asset);
         // Six tries of three bytes for seventeen (the last one is cut too, with nothing left to send), and four busy answers.
@@ -246,17 +243,12 @@ public sealed class UpdateDownloadTests : IDisposable
     {
         bool stalling = true;
         var ranges = new List<string?>();
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             ranges.Add(request.Headers.Range?.ToString());
             if (!stalling) return Rest(5);
             bool first = request.Headers.Range == null;
-            var response = new HttpResponseMessage(first ? HttpStatusCode.OK : HttpStatusCode.PartialContent)
-            {
-                Content = new StreamContent(new StalledStream(first ? Payload[..5] : [])) { Headers = { ContentLength = first ? Payload.Length : Payload.Length - 5 } },
-            };
-            if (!first) response.Content.Headers.ContentRange = new(5, Payload.Length - 1, Payload.Length);
-            return Task.FromResult(response);
+            return Send(first ? 0 : 5, new StalledStream(first ? Payload[..5] : []));
         }));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken,
             stallTimeout: TimeSpan.FromMilliseconds(50), retryDelay: TimeSpan.Zero));
@@ -274,7 +266,7 @@ public sealed class UpdateDownloadTests : IDisposable
         Directory.CreateDirectory(_directory);
         await File.WriteAllBytesAsync(In(Asset.Name + ".part"), Payload[..5], TestContext.Current.CancellationToken);
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
             ++calls == 1 ? Task.FromResult(new HttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable)) : Ok()));
         string path = await Download(client, Asset);
         Assert.Equal(2, calls);
@@ -285,13 +277,13 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task ABusyServerIsTriedAgainButAMissingFileIsNot()
     {
         int calls = 0;
-        using var busy = new HttpClient(new Handler((_, _) =>
+        using var busy = new HttpClient(new StubHandler((_, _) =>
             ++calls < 3 ? Task.FromResult(new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)) : Ok()));
         await Download(busy, Asset);
         Assert.Equal(3, calls);
         File.Delete(In(Asset.Name));
         calls = 0;
-        using var missing = new HttpClient(new Handler((_, _) => { calls++; return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)); }));
+        using var missing = new HttpClient(new StubHandler((_, _) => { calls++; return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NotFound)); }));
         await Assert.ThrowsAsync<HttpRequestException>(() => Download(missing, Asset));
         Assert.Equal(1, calls);
         Assert.Empty(Directory.GetFiles(_directory));
@@ -301,12 +293,10 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task ABodyThatKeepsEndingEarlyGivesUpAndKeepsItsPart()
     {
         int calls = 0;
-        using var client = new HttpClient(new Handler((request, _) =>
+        using var client = new HttpClient(new StubHandler((request, _) =>
         {
             calls++;
-            return request.Headers.Range == null
-                ? Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new MemoryStream(Payload[..5])) { Headers = { ContentLength = Payload.Length } } })
-                : Empty(5);
+            return request.Headers.Range == null ? Send(0, new MemoryStream(Payload[..5])) : Send(5, new MemoryStream());
         }));
         // The connection's fault, not the file's: it isn't reported as damaged.
         await Assert.ThrowsAsync<HttpIOException>(() => Download(client, Asset));
@@ -319,8 +309,8 @@ public sealed class UpdateDownloadTests : IDisposable
     {
         using var stop = new CancellationTokenSource();
         int calls = 0;
-        using var client = new HttpClient(new Handler((_, _) => { calls++; return Ok(); }));
-        var progress = new ProgressLog(p => { if (p.Completed > 0) stop.Cancel(); });
+        using var client = new HttpClient(new StubHandler((_, _) => { calls++; return Ok(); }));
+        var progress = new ProgressLog<UpdateProgress>(p => { if (p.Completed > 0) stop.Cancel(); });
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", progress, stop.Token, retryDelay: TimeSpan.Zero));
         Assert.Equal([In(Asset.Name + ".part")], Directory.GetFiles(_directory));
         // All of it had arrived: the next call only checks it.
@@ -333,10 +323,10 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task AStalledDownloadIsTriedAgainThenTimesOut()
     {
         int calls = 0;
-        using var client = new HttpClient(new Handler((_, _) =>
+        using var client = new HttpClient(new StubHandler((_, _) =>
         {
             calls++;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StreamContent(new StalledStream()) { Headers = { ContentLength = Payload.Length } } });
+            return Send(0, new StalledStream());
         }));
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => UpdateDownload.DownloadAsync(client, Asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken,
             stallTimeout: TimeSpan.FromMilliseconds(50), retryDelay: TimeSpan.Zero));
@@ -347,7 +337,7 @@ public sealed class UpdateDownloadTests : IDisposable
     [Fact]
     public async Task UntrustedUrlIsNeverRequested()
     {
-        using var client = new HttpClient(new Handler((_, _) => throw new Exception("Must not send")));
+        using var client = new HttpClient(new StubHandler((_, _) => throw new Exception("Must not send")));
         await Assert.ThrowsAsync<InvalidDataException>(() => UpdateDownload.DownloadAsync(client,
             Asset with { Url = new("http://evil.test/update.zip") }, _directory, "1.0.0", null, TestContext.Current.CancellationToken));
     }
@@ -356,7 +346,7 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task TestFeedCanDownloadOverHttp()
     {
         var asset = Asset with { Url = new("http://vm.test:8000/update.zip") };
-        using var client = new HttpClient(new Handler((_, _) => Ok()));
+        using var client = new HttpClient(new StubHandler((_, _) => Ok()));
         string path = await UpdateDownload.DownloadAsync(client, asset, _directory, "1.0.0", null, TestContext.Current.CancellationToken,
             new("http://vm.test:8000/releases.json"));
         Assert.True(await UpdateDownload.VerifyAsync(path, asset, TestContext.Current.CancellationToken));
@@ -366,7 +356,7 @@ public sealed class UpdateDownloadTests : IDisposable
     public async Task RejectsAnInsecureFinalResponse()
     {
         int calls = 0;
-        using var client = new HttpClient(new Handler((_, _) =>
+        using var client = new HttpClient(new StubHandler((_, _) =>
         {
             calls++;
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -416,17 +406,6 @@ public sealed class UpdateDownloadTests : IDisposable
     }
 
     public void Dispose() { if (Directory.Exists(_directory)) Directory.Delete(_directory, true); }
-
-    sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> send) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => send(request, cancellationToken);
-    }
-
-    sealed class ProgressLog(Action<UpdateProgress>? report = null) : IProgress<UpdateProgress>
-    {
-        public List<UpdateProgress> Values { get; } = [];
-        public void Report(UpdateProgress value) { Values.Add(value); report?.Invoke(value); }
-    }
 
     /// <summary>Sends its bytes, then the connection is gone.</summary>
     sealed class DroppedStream(byte[] sent) : MemoryStream(sent)

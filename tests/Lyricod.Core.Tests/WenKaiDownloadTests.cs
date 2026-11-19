@@ -23,8 +23,8 @@ public class WenKaiDownloadTests : IDisposable
     string Published => Path.Combine(_dir, Test.FileName);
     string Part => Published + ".part";
 
-    Task Download(Server server, IProgress<FontDownloadProgress>? progress = null, CancellationToken stop = default) =>
-        FontFileDownload.DownloadAsync(new HttpClient(server), Test, _dir, progress, stop);
+    Task Download(Server server, IProgress<FontDownloadProgress>? progress = null) =>
+        FontFileDownload.DownloadAsync(new HttpClient(server), Test, _dir, progress, TestContext.Current.CancellationToken);
 
     void LeavePart(int bytes)
     {
@@ -36,13 +36,13 @@ public class WenKaiDownloadTests : IDisposable
     public async Task DownloadsTheWholeFileAndPublishesItOnlyWhenItMatches()
     {
         var server = new Server();
-        var seen = new List<FontDownloadProgress>();
-        await Download(server, new Collect(seen));
+        var seen = new ProgressLog<FontDownloadProgress>();
+        await Download(server, seen);
         Assert.Equal(Data, File.ReadAllBytes(Published));
         Assert.False(File.Exists(Part));
         Assert.Null(server.Ranges.Single());
-        Assert.Equal(Data.Length, seen[^1].Completed);
-        Assert.Equal(Data.Length, seen[^1].Total);
+        Assert.Equal(Data.Length, seen.Values[^1].Completed);
+        Assert.Equal(Data.Length, seen.Values[^1].Total);
     }
 
     [Fact]
@@ -50,14 +50,14 @@ public class WenKaiDownloadTests : IDisposable
     {
         LeavePart(120_000);
         var server = new Server();
-        var seen = new List<FontDownloadProgress>();
-        await Download(server, new Collect(seen));
+        var seen = new ProgressLog<FontDownloadProgress>();
+        await Download(server, seen);
         Assert.Equal(Data, File.ReadAllBytes(Published));
         Assert.Equal(120_000, server.Ranges.Single()!.Ranges.Single().From);
         Assert.Equal(Data.Length - 120_000, server.Sent);
         // Progress counts the whole file, starting from what was already there.
-        Assert.True(seen[0].Completed > 120_000);
-        Assert.All(seen, p => Assert.Equal(Data.Length, p.Total));
+        Assert.True(seen.Values[0].Completed > 120_000);
+        Assert.All(seen.Values, p => Assert.Equal(Data.Length, p.Total));
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public class WenKaiDownloadTests : IDisposable
     {
         using var stop = new CancellationTokenSource();
         stop.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Download(new Server(), stop: stop.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => FontFileDownload.DownloadAsync(new HttpClient(new Server()), Test, _dir, null, stop.Token));
         Assert.False(File.Exists(Published));
     }
 
@@ -141,11 +141,6 @@ public class WenKaiDownloadTests : IDisposable
         Assert.InRange(file.Size, 10_000_000, 20_000_000);
         Assert.Contains("/v1.530/", WenKaiFont.LicenceUrl);
         Assert.Contains("/v1.530/", file.Url);
-    }
-
-    sealed class Collect(List<FontDownloadProgress> seen) : IProgress<FontDownloadProgress>
-    {
-        public void Report(FontDownloadProgress value) => seen.Add(value);
     }
 
     sealed class Server : HttpMessageHandler

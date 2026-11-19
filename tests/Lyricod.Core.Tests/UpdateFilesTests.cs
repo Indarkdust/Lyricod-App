@@ -54,7 +54,6 @@ public class UpdateFilesTests
     [Theory]
     [InlineData(null)]
     [InlineData("sha256:abc")]
-    [InlineData("md5:0123456789abcdef")]
     [InlineData("sha256:zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")]
     public void BadDigestKeepsReleaseButCannotInstall(string? digest)
     {

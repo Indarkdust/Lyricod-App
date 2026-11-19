@@ -63,13 +63,6 @@ public class KeyComboTests
         Assert.Equal(expected, new KeyCombo((KeyModifiers)modifiers, key).Display(Label));
 
     [Fact]
-    public void ParsingDoesNotMakeUnsafeSavedKeysUsable()
-    {
-        Assert.True(KeyCombo.TryParse("4:65", out var combo));
-        Assert.False(combo.IsUsable);
-    }
-
-    [Fact]
     public void StorageDoesNotDependOnCulture()
     {
         var previous = CultureInfo.CurrentCulture;

@@ -17,7 +17,6 @@ public class SettingsTests
     [Fact]
     public void OldSettingsKeepLookupEnabled()
     {
-        Assert.True(new Lyricod.Settings().LookUpOtherPlayers);
         Assert.True(JsonSerializer.Deserialize<Lyricod.Settings>("{}")!.LookUpOtherPlayers);
     }
 

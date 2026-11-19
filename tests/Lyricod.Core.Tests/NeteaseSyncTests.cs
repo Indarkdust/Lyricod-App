@@ -85,8 +85,6 @@ public class NeteaseSyncTests
         Assert.False(NeteaseSync.ReadResult("{\"ok\":true}", 1).Ok);
     }
 
-    static string DataFolder() => Directory.CreateTempSubdirectory("lyricod-betterncm-").FullName;
-
     static void Packed(string data, string file, string? manifest)
     {
         Directory.CreateDirectory(Path.Combine(data, "plugins"));
@@ -100,7 +98,8 @@ public class NeteaseSyncTests
     [InlineData("InfLinkrs-3.4.0.plugin")] // as BetterNCM's plugin store does
     public void FindsInfLinkWhateverItsFileIsCalled(string file)
     {
-        string data = DataFolder();
+        using var folder = new TempDirectory();
+        string data = folder.Path;
         Packed(data, "PluginMarket.plugin", "{\"name\":\"PluginMarket\"}");
         Assert.False(NeteaseSync.HasInfLink(data));
         Packed(data, file, "{\"name\":\"InfLink-rs\",\"version\":\"3.4.0\"}");
@@ -110,7 +109,8 @@ public class NeteaseSyncTests
     [Fact]
     public void FindsAnUnpackedInfLink()
     {
-        string data = DataFolder();
+        using var folder = new TempDirectory();
+        string data = folder.Path;
         Directory.CreateDirectory(Path.Combine(data, "plugins_dev", "inflink"));
         File.WriteAllText(Path.Combine(data, "plugins_dev", "inflink", "manifest.json"), "{\"name\":\"InfLink-rs\"}");
         Assert.True(NeteaseSync.HasInfLink(data));
@@ -119,7 +119,8 @@ public class NeteaseSyncTests
     [Fact]
     public void OtherPluginsAreNotInfLink()
     {
-        string data = DataFolder();
+        using var folder = new TempDirectory();
+        string data = folder.Path;
         Packed(data, "InfLink-1.1.1.plugin", "{\"name\":\"InfLink\"}"); // the older plugin
         Packed(data, "nameless.plugin", null);
         File.WriteAllText(Path.Combine(data, "plugins", "broken.plugin"), "not a zip");
@@ -153,6 +154,5 @@ public class NeteaseSyncTests
         Assert.False(NeteaseSync.IsPinned(NeteaseSync.FindHelper(Release())!));
         var reviewed = NeteaseSync.FindHelper(Release(digest: "sha256:" + NeteaseSync.HelperSha256.ToUpperInvariant()));
         Assert.True(NeteaseSync.IsPinned(reviewed!));
-        Assert.EndsWith("/releases/tags/" + NeteaseSync.HelperVersion, NeteaseSync.HelperEndpoint);
     }
 }

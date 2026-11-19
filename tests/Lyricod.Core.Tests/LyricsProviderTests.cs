@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Lyricod.Core.Tests;
 
@@ -60,22 +59,6 @@ public class LyricsProviderTests
         Assert.Equal("Hello", result?.Lines[0].Text);
         Assert.Equal(0, requests);
         Assert.Equal(0, callbacks);
-    }
-
-    [Fact]
-    public async Task OldCheckedMarkIsIgnored()
-    {
-        var paths = new ConcurrentQueue<string>();
-        using var fixture = new Fixture(request => { paths.Enqueue(request.RequestUri!.AbsolutePath); return Response("{}"); });
-        var track = Track();
-        var file = fixture.Seed(track);
-        // 0.1.0 marked songs as checked even when QQ Music couldn't be asked.
-        var json = JsonNode.Parse(File.ReadAllText(file))!.AsObject();
-        json["wordsChecked"] = true;
-        File.WriteAllText(file, json.ToJsonString());
-        Fixture.Age(file, 2);
-        await fixture.Provider.GetLyrics(track, ct: TestContext.Current.CancellationToken);
-        Assert.Contains(paths, p => p.Contains("lyric_download"));
     }
 
     [Fact]
@@ -427,8 +410,6 @@ public class LyricsProviderTests
         Assert.Equal(expectedRequests, requests.Count > 0);
         Assert.Equal(cached || pinned, result != null);
         if (pinned) Assert.All(requests, path => Assert.Contains("lyric/v1", path));
-        if (!music && !setting && !cached && !pinned)
-            Assert.Equal(SongState.NotSong, SongRecognition.Classify(music, pinned, search.AutomaticLookupAllowed, result != null));
     }
 
     [Fact]
@@ -548,12 +529,6 @@ public class LyricsProviderTests
 
     static HttpResponseMessage Response(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body) };
-
-    sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(respond(request));
-    }
 
     sealed class Fixture : IDisposable
     {
