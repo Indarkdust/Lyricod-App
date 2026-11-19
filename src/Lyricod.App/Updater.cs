@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Runtime.InteropServices;
 using Lyricod.Core;
 using Microsoft.UI.Dispatching;
@@ -131,20 +132,19 @@ public sealed partial class UpdateChecker
                 string directory = Path.Combine(UpdatesDirectory, release.Version.ToString(3));
                 if (patch != null && PortableRoot is { } folder && Arch is { } arch && UpdateCheck.ParseVersion(Version) is { } running)
                 {
+                    // A patch that can't be had or can't be used isn't a failure: the whole download doesn't
+                    // depend on it. The connection failing is one, and would fail the whole download too.
                     try
                     {
                         string small = await UpdateDownload.DownloadAsync(http, patch, directory, Version, progress, stop.Token, TestFeed).ConfigureAwait(false);
-                        await UpdatePatch.StageAsync(small, folder, running, release.Version, arch, asset.Sha256!, stop.Token).ConfigureAwait(false);
-                        return (small, patch);
+                        try
+                        {
+                            await UpdatePatch.StageAsync(small, folder, running, release.Version, arch, asset.Sha256!, stop.Token).ConfigureAwait(false);
+                            return (small, patch);
+                        }
+                        catch (Exception e) when (e is not OperationCanceledException) { RefusePatch(release, e); }
                     }
-                    catch (UnauthorizedAccessException) { throw new UpdateFolderException(); }
-                    // Not the network's doing: the patch is no good, or this copy isn't as it was released.
-                    // The whole download doesn't depend on either.
-                    catch (Exception e) when (e is DamagedUpdateException or InvalidDataException or FileNotFoundException or DirectoryNotFoundException)
-                    {
-                        Log.Write($"Update: the patch to {release.Version.ToString(3)} wasn't used. {e.Message}");
-                        _patchRefused = release.Version;
-                    }
+                    catch (Exception e) when (e is DamagedUpdateException or InvalidDataException || NotThere(e)) { RefusePatch(release, e); }
                 }
                 string file = await UpdateDownload.DownloadAsync(http, asset, directory, Version, progress, stop.Token, TestFeed).ConfigureAwait(false);
                 if (PortableRoot is { } portable)
@@ -193,42 +193,57 @@ public sealed partial class UpdateChecker
         Notify();
         try
         {
-            await Task.Run(async () =>
+            ProcessStartInfo start;
+            try
             {
-                if (!await UpdateDownload.VerifyAsync(path, ready, CancellationToken.None).ConfigureAwait(false)) throw new DamagedUpdateException();
-                ProcessStartInfo start;
-                if (PortableRoot is { } root)
+                start = await Task.Run(async () =>
                 {
+                    if (!await UpdateDownload.VerifyAsync(path, ready, CancellationToken.None).ConfigureAwait(false)) throw new DamagedUpdateException();
+                    if (PortableRoot is not { } root) return new ProcessStartInfo(path)
+                    {
+                        UseShellExecute = false,
+                        Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /relaunch=1",
+                    };
                     // Restage from the checked download in case the staged files changed while waiting.
                     if (!patched) await PortableUpdate.StageAsync(path, root, release.Version, CancellationToken.None).ConfigureAwait(false);
                     else if (Arch is { } arch && UpdateCheck.ParseVersion(Version) is { } running)
                         await UpdatePatch.StageAsync(path, root, running, release.Version, arch, asset.Sha256!, CancellationToken.None).ConfigureAwait(false);
                     else throw new InvalidDataException("No patch for this copy.");
-                    start = new(Path.Combine(root, "Lyricod.exe.new")) { WorkingDirectory = root, UseShellExecute = false };
-                    start.ArgumentList.Add("--apply-update");
-                    start.ArgumentList.Add(Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                }
-                else start = new(path)
-                {
-                    UseShellExecute = false,
-                    Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /relaunch=1",
-                };
+                    var launcher = new ProcessStartInfo(Path.Combine(root, "Lyricod.exe.new")) { WorkingDirectory = root, UseShellExecute = false };
+                    launcher.ArgumentList.Add("--apply-update");
+                    launcher.ArgumentList.Add(Environment.ProcessId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    return launcher;
+                });
+            }
+            catch (Exception e) when (patched)
+            {
+                // The patch was fine when it was downloaded; this copy has changed since. The whole download
+                // doesn't depend on it: fetch that, and the restart is offered again.
+                RefusePatch(release, e);
+                _readyPath = null;
+                _readyAsset = null;
+                State = UpdateState.Idle;
+                await DownloadAsync();
+                return;
+            }
+            await Task.Run(() =>
+            {
                 using var helper = Process.Start(start) ?? throw new IOException("Could not start the update.");
             });
             ((App)Microsoft.UI.Xaml.Application.Current).QuitForUpdate();
         }
-        catch (Exception e) when (patched)
-        {
-            // It was fine when it was downloaded. Whatever has changed since, the whole download doesn't depend on it.
-            Log.Write($"Update: the patch to {release.Version.ToString(3)} couldn't be applied. {e.Message}");
-            _patchRefused = release.Version;
-            _readyPath = null;
-            _readyAsset = null;
-            State = UpdateState.Idle;
-            await DownloadAsync();
-        }
         catch (Exception e) { Fail(e is DamagedUpdateException ? "UpdateDamaged" : "UpdateApplyFailed"); }
     }
+
+    void RefusePatch(AppRelease release, Exception e)
+    {
+        Log.Write($"Update: the patch to {release.Version.ToString(3)} wasn't used. {e.Message}");
+        _patchRefused = release.Version;
+    }
+
+    /// <summary>The server has no such file (any more), as opposed to being busy or out of reach.</summary>
+    static bool NotThere(Exception e) => e is HttpRequestException { StatusCode: { } status }
+        && (int)status is >= 400 and < 500 && status is not (HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests);
 
     void Fail(string key)
     {

@@ -28,8 +28,9 @@ public static class UpdatePatch
     const long MaxTotal = 1L << 30;
     static readonly string[] Needed = ["Lyricod.exe", "README.txt", "app/Lyricod.exe"];
 
+    /// <summary>Named to sort after a release's whole downloads, and not to be taken for one.</summary>
     public static string AssetName(Version to, string arch, Version from) =>
-        $"Lyricod-{to.ToString(3)}-windows-{arch}-patch-from-{from.ToString(3)}.zip";
+        $"patch-{from.ToString(3)}-to-{to.ToString(3)}-windows-{arch}.zip";
 
     public static PatchManifest Read(string json)
     {
@@ -52,9 +53,10 @@ public static class UpdatePatch
                 long size = item.GetProperty("size").GetInt64();
                 bool carried = item.TryGetProperty("new", out var flag) && flag.GetBoolean();
                 // The same rules as for the whole zip's entries: inside the portable folder, and nowhere else.
-                if (path.Contains('\\') || UpdateFiles.StagedPath("Lyricod/" + path) is not { } staged || !seen.Add(staged)
-                    || size < 0 || !UpdateFiles.ValidHash(hash) || (total += size) > MaxTotal || files.Count >= MaxFiles)
+                if (path.Contains('\\') || path.EndsWith('/') || UpdateFiles.StagedPath("Lyricod/" + path) is not { } staged || !seen.Add(staged)
+                    || size < 0 || size > MaxTotal - total || !UpdateFiles.ValidHash(hash) || files.Count >= MaxFiles)
                     throw new InvalidDataException("The patch lists a file it shouldn't.");
+                total += size;
                 files.Add(new(path, size, hash, carried));
             }
             if (Needed.Any(name => files.All(f => f.Path != name))) throw new InvalidDataException("The patch's list of files is incomplete.");
