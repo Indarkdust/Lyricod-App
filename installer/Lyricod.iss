@@ -16,6 +16,9 @@
 #if (Arch != "x64") && (Arch != "arm64")
   #error Arch must be x64 or arm64
 #endif
+#if !FileExists(SourceDir + "\app\Lyricod.exe")
+  #error SourceDir must be the Lyricod folder of the portable zip (Lyricod.exe, README.txt, app\)
+#endif
 
 [Setup]
 ; Keep this identity across versions and architectures so upgrades stay in place.
