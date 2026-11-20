@@ -125,6 +125,13 @@ public class SweepCurveTests
         // Right after the word before it, it's swept with that word.
         Assert.Equal(80, SweepCurve.From([new(10, 11, 0, 40), new(11, 11, 40, 80)])!.At(11), 6);
         Assert.Null(SweepCurve.From([new(1, 2, 0, 0)]));
+
+        // A word of no length before a rest is still sung on its time, not with the word after the rest.
+        var before = SweepCurve.From([new(10, 10, 0, 40), new(12, 13, 40, 80)])!;
+        Assert.Equal(40, before.At(10.5), 6);
+        Assert.Equal(40, before.At(11.99), 6);
+        // Right before the next word, it's swept with that word.
+        Assert.Equal(0, SweepCurve.From([new(10, 10, 0, 40), new(10.05, 11, 40, 80)])!.At(10.02), 6);
     }
 
     [Fact]

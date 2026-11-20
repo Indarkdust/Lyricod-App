@@ -62,8 +62,8 @@ public sealed class SweepCurve
         var words = new List<SweepStop>();
         foreach (var stop in stops.Where(s => s.To - s.From > 0.01))
         {
-            // A word of no length (a space, as QQ Music times one) is swept with the word after it.
-            if (words.Count > 0 && words[^1].End - words[^1].Start < Step) words[^1] = stop with { From = words[^1].From };
+            // A word of no length (a space, as QQ Music times one) is swept with the word after it, unless a rest keeps them apart.
+            if (words.Count > 0 && words[^1].End - words[^1].Start < Step && stop.Start - words[^1].End <= Bridge) words[^1] = stop with { From = words[^1].From };
             else words.Add(stop);
         }
         if (words.Count == 0) return null;
