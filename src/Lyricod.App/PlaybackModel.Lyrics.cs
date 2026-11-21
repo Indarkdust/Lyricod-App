@@ -66,7 +66,7 @@ public sealed partial class PlaybackModel
         Lyrics = null;
         CurrentIndex = null;
         BestMatchScore = null;
-        var search = new LyricsSearch(IsMusicPlayer, _settings.LookUpOtherPlayers);
+        var search = new LyricsSearch(IsMusicPlayer, _settings.LookUpOtherPlayers, MusicPlayers.OwnSource(NowPlaying?.AppId));
         var pinned = _overrides[track].Lyrics;
         IsSearching = search.AutomaticLookupAllowed || pinned != null;
         Changed?.Invoke(Change.Lyrics | Change.Line);
@@ -122,7 +122,6 @@ public sealed partial class PlaybackModel
         });
     }
 
-    /// <summary>Builds <see cref="Lyrics"/> from what the source returned, per the settings.</summary>
     void ApplyDisplayFilters()
     {
         if (_allLyrics is not { } all) { Lyrics = null; CurrentIndex = null; Changed?.Invoke(Change.Lyrics | Change.Line); return; }
@@ -133,7 +132,7 @@ public sealed partial class PlaybackModel
                 Id = i, // ids are row indices
                 Pronunciation = l.Pronunciation is { Language: { } lang } p && languages.Contains(lang) ? p : null,
             }).ToList();
-        Lyrics = lines.Count == 0 ? null : new Lyrics(lines, all.Source, all.IsSynced) { Ref = all.Ref };
+        Lyrics = lines.Count == 0 ? null : new Lyrics(lines, all.Source, all.IsSynced) { Ref = all.Ref, TranslationRef = all.TranslationRef };
         CurrentIndex = null;
         Changed?.Invoke(Change.Lyrics);
         Tick();
@@ -150,6 +149,15 @@ public sealed partial class PlaybackModel
                     break;
                 case nameof(Settings.LookUpOtherPlayers):
                     if (Track is { } track) LoadLyrics(track, ignoreCache: false);
+                    break;
+                case nameof(Settings.RomajiByWord):
+                    // Loaded again, so the source's romaji starts from how it came.
+                    _romanizer.GroupJapaneseByWord = _settings.RomajiByWord;
+                    if (Track is { } song) LoadLyrics(song, ignoreCache: false);
+                    break;
+                case nameof(Settings.SmoothSweep):
+                    SweepPainter.Smooth = _settings.SmoothSweep;
+                    ApplyOffset(); // the sweep re-plans
                     break;
                 case nameof(Settings.Offset):
                     ApplyOffset();

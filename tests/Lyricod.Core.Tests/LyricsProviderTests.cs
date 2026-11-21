@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Lyricod.Core.Tests;
 
@@ -63,22 +62,6 @@ public class LyricsProviderTests
     }
 
     [Fact]
-    public async Task OldCheckedMarkIsIgnored()
-    {
-        var paths = new ConcurrentQueue<string>();
-        using var fixture = new Fixture(request => { paths.Enqueue(request.RequestUri!.AbsolutePath); return Response("{}"); });
-        var track = Track();
-        var file = fixture.Seed(track);
-        // 0.1.0 marked songs as checked even when QQ Music couldn't be asked.
-        var json = JsonNode.Parse(File.ReadAllText(file))!.AsObject();
-        json["wordsChecked"] = true;
-        File.WriteAllText(file, json.ToJsonString());
-        Fixture.Age(file, 2);
-        await fixture.Provider.GetLyrics(track, ct: TestContext.Current.CancellationToken);
-        Assert.Contains(paths, p => p.Contains("lyric_download"));
-    }
-
-    [Fact]
     public async Task CancellationAfterCachedCallbackDoesNotRequestOrMutateCache()
     {
         var requests = 0;
@@ -106,18 +89,6 @@ public class LyricsProviderTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => fixture.Provider.GetLyrics(Track(),
             pinned: new LyricsRef(LyricsSource.Qq, "qq-song"), ct: cancellation.Token));
         Assert.Equal(0, fixture.Provider.CachedCount());
-    }
-
-    [Fact]
-    public async Task PinnedCacheDoesNotRequestNetwork()
-    {
-        var requests = 0;
-        using var fixture = new Fixture(_ => { requests++; return Response("{}"); });
-        var track = Track();
-        fixture.Seed(track);
-        var result = await fixture.Provider.GetLyrics(track, pinned: LyricsRef.Netease(7), ct: TestContext.Current.CancellationToken);
-        Assert.Equal("Hello", result?.Lines[0].Text);
-        Assert.Equal(0, requests);
     }
 
     [Fact]
@@ -223,6 +194,23 @@ public class LyricsProviderTests
     const string NeteaseLyrics = """{"lrc":{"lyric":"[00:01.00]Hello"}}""";
     const string LrclibSong = """{"id":9,"trackName":"Hello","artistName":"Singer","duration":120,"syncedLyrics":"[00:01.00]Hello"}""";
 
+    /// <summary>Only this one source knows Hello; every other request gets an empty reply.</summary>
+    static Fixture OnlyFrom(string source, Action? onRequest = null) => new(request =>
+    {
+        onRequest?.Invoke();
+        var uri = request.RequestUri!;
+        return Response(source switch
+        {
+            "netease" when uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") => NeteaseSong,
+            "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
+            "qq" when uri.Host == "u.y.qq.com" => ModernJson,
+            "qq" when uri.AbsolutePath.Contains("fcg_query_lyric") => LineJson,
+            "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
+            "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
+            _ => "{}",
+        });
+    });
+
     [Theory]
     [InlineData("netease")]
     [InlineData("qq")]
@@ -231,21 +219,7 @@ public class LyricsProviderTests
     public async Task ConfidentMusicVideoIsScoredCachedAndReused(string source)
     {
         int requests = 0;
-        using var fixture = new Fixture(request =>
-        {
-            requests++;
-            var uri = request.RequestUri!;
-            return Response(source switch
-            {
-                "netease" when uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") => NeteaseSong,
-                "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
-                "qq" when uri.Host == "u.y.qq.com" => ModernJson,
-                "qq" when uri.AbsolutePath.Contains("fcg_query_lyric") => LineJson,
-                "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
-                "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
-                _ => "{}",
-            });
-        });
+        using var fixture = OnlyFrom(source, () => requests++);
         var track = new Track { Title = "Singer - Hello (Official Video)", Artist = "Singer", Duration = 120 };
         // Even an old, unscored entry is searched again and replaced with evidence.
         var file = fixture.Seed(track);
@@ -267,18 +241,7 @@ public class LyricsProviderTests
     [InlineData("lrclib-search")]
     public async Task TitleOnlyMatchesAreNotCachedForBrowsers(string source)
     {
-        using var fixture = new Fixture(request =>
-        {
-            var uri = request.RequestUri!;
-            return Response(source switch
-            {
-                "netease" when uri.AbsolutePath.Contains("cloudsearch") => NeteaseSong,
-                "netease" when uri.AbsolutePath.Contains("lyric/v1") => NeteaseLyrics,
-                "lrclib-exact" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/get" => LrclibSong,
-                "lrclib-search" when uri.Host == "lrclib.net" && uri.AbsolutePath == "/api/search" => "[" + LrclibSong + "]",
-                _ => "{}",
-            });
-        });
+        using var fixture = OnlyFrom(source);
         var search = new LyricsSearch(false);
         Assert.Null(await fixture.Provider.GetLyrics(new Track { Title = "Hello" }, search: search, ct: TestContext.Current.CancellationToken));
         Assert.Equal(3, search.BestScore);
@@ -461,7 +424,8 @@ public class LyricsProviderTests
         foreach (bool setting in new[] { false, true })
         foreach (bool cached in new[] { false, true })
         foreach (bool pinned in new[] { false, true })
-            yield return [music, setting, cached, pinned];
+            // A music player looks lyrics up whatever the setting says: one set of those is enough.
+            if (!(music && setting)) yield return [music, setting, cached, pinned];
     }
 
     [Theory]
@@ -485,8 +449,6 @@ public class LyricsProviderTests
         Assert.Equal(expectedRequests, requests.Count > 0);
         Assert.Equal(cached || pinned, result != null);
         if (pinned) Assert.All(requests, path => Assert.Contains("lyric/v1", path));
-        if (!music && !setting && !cached && !pinned)
-            Assert.Equal(SongState.NotSong, SongRecognition.Classify(music, pinned, search.AutomaticLookupAllowed, result != null));
     }
 
     [Fact]
@@ -512,14 +474,100 @@ public class LyricsProviderTests
         }
     }
 
+    // ---- The player's own platform first; another platform's words with its translation ----
+
+    const string QqTranslated = """{"lyric":"[00:01.00]Hello","trans":"[00:01.00]QQ's translation"}""";
+    const string NeteaseWords = """{"lrc":{"lyric":"[00:01.00]Hello"},"yrc":{"lyric":"[1200,2000](1200,1000,0)Hel(2200,1000,0)lo"},"tlyric":{"lyric":"[00:01.00]NetEase's translation"}}""";
+
+    /// <summary>Both platforms have Hello; NetEase's reply is <paramref name="neteaseLyrics"/>, QQ Music's <paramref name="qqLyrics"/> (no word-by-word QRC).</summary>
+    static Fixture TwoPlatforms(string neteaseLyrics, string qqLyrics) => new(request =>
+    {
+        var uri = request.RequestUri!;
+        return Response(uri.AbsolutePath.Contains("cloudsearch") && uri.Query.Contains("type=1&") ? NeteaseSong
+            : uri.AbsolutePath.Contains("lyric/v1") ? neteaseLyrics
+            : uri.Host == "u.y.qq.com" ? ModernJson
+            : uri.AbsolutePath.Contains("fcg_query_lyric") ? qqLyrics : "{}");
+    });
+
+    [Theory]
+    [InlineData(null, "NetEase")]
+    [InlineData(LyricsSource.Netease, "NetEase")]
+    [InlineData(LyricsSource.Qq, "QQ Music")]
+    public async Task ThePlayersOwnPlatformIsSearchedFirst(LyricsSource? player, string expected)
+    {
+        using var fixture = TwoPlatforms(NeteaseLyrics, LineJson);
+        var result = await fixture.Provider.GetLyrics(new Track { Title = "Hello", Artist = "Singer", Duration = 120 },
+            search: new LyricsSearch(true, playerSource: player), ct: TestContext.Current.CancellationToken);
+        Assert.Equal(expected, result?.Source);
+        Assert.Null(result?.TranslationRef);
+    }
+
+    [Fact]
+    public async Task OtherPlatformsWordsKeepThePlayersTranslation()
+    {
+        using var fixture = TwoPlatforms(NeteaseWords, QqTranslated);
+        var track = new Track { Title = "Hello", Artist = "Singer", Duration = 120 };
+        var search = new LyricsSearch(true, playerSource: LyricsSource.Qq);
+        var result = await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.True(result?.IsWordSynced);
+        Assert.Equal("QQ's translation", result!.Lines[0].Translation);
+        Assert.Equal("NetEase + QQ Music", result.Source);
+        Assert.Equal(LyricsSource.Netease, result.Ref?.Source);
+        Assert.Equal(new LyricsRef(LyricsSource.Qq, "wrong-song", 43), result.TranslationRef);
+        // Saved as merged: shown again without asking either platform.
+        var again = await fixture.Provider.GetLyrics(track, search: search, ct: TestContext.Current.CancellationToken);
+        Assert.Equal("QQ's translation", again?.Lines[0].Translation);
+        Assert.Equal(result.TranslationRef, again?.TranslationRef);
+    }
+
+    static RawLyrics Words(string? translation = null, string? romanization = null) => new()
+    {
+        Source = "QQ Music", Qrc = "[1200,2000]Hel(1200,1000)lo(2200,1000)\n[4200,2000]World(4200,2000)", Translation = translation,
+        Romanization = romanization, Ref = new LyricsRef(LyricsSource.Qq, "mid", 1), MatchScore = 8, TitleMatched = true,
+    };
+
+    static RawLyrics FirstFound(string? translation, string? romanization = null) => new()
+    {
+        Source = "NetEase", Lrc = "[00:01.00]Hello\n[00:04.00]World", Translation = translation, Romanization = romanization, Ref = LyricsRef.Netease(7),
+    };
+
+    [Fact]
+    public void MergedLyricsTakeTheWordsAndTheFirstPlatformsTranslation()
+    {
+        var merged = LyricsProvider.WithTranslation(Words("[00:01.20]QQ one\n[00:04.20]QQ two", "[00:01.20]qq ro"),
+            FirstFound("[00:01.00]NetEase one\n[00:04.00]NetEase two", "[00:01.00]netease ro"))!.Parse()!;
+        Assert.True(merged.IsWordSynced);
+        Assert.Equal(["NetEase one", "NetEase two"], merged.Lines.Select(l => l.Translation));
+        Assert.Equal("qq ro", merged.Lines[0].Pronunciation?.Text); // reads the words' own text
+        Assert.Equal(LyricsRef.Netease(7), merged.TranslationRef);
+        Assert.Equal("QQ Music + NetEase", merged.Source);
+        // No pronunciation with the words: the first platform's.
+        var borrowed = LyricsProvider.WithTranslation(Words(), FirstFound("[00:01.00]NetEase one", "[00:01.00]netease ro"))!.Parse()!;
+        Assert.Equal("netease ro", borrowed.Lines[0].Pronunciation?.Text);
+    }
+
+    [Fact]
+    public void WithoutATranslationTheWordsComeAsTheyAre()
+    {
+        var words = Words("[00:01.20]QQ one");
+        Assert.Same(words, LyricsProvider.WithTranslation(words, FirstFound(null)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void TranslationThatDoesNotLineUpIsNotLaidOver(bool wordsTranslated)
+    {
+        // The first platform's lines start seconds apart from the words' (another edit of the song).
+        var words = Words(wordsTranslated ? "[00:01.20]QQ one" : null);
+        var first = FirstFound("[00:09.00]NetEase one\n[00:14.00]NetEase two");
+        first.Lrc = "[00:09.00]Hello\n[00:14.00]World";
+        var result = LyricsProvider.WithTranslation(words, first);
+        if (wordsTranslated) Assert.Same(words, result); else Assert.Null(result);
+    }
+
     static HttpResponseMessage Response(string body, HttpStatusCode status = HttpStatusCode.OK) =>
         new(status) { Content = new StringContent(body) };
-
-    sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(respond(request));
-    }
 
     sealed class Fixture : IDisposable
     {

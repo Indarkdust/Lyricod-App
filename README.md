@@ -1,4 +1,4 @@
-# Lyricod for Windows
+# Lyricod
 
 ## English | [简体中文](README.zh-CN.md)
 
@@ -37,7 +37,7 @@ On supported Windows 11 versions, the live Liquid Glass island appears in screen
 
 ### Desktop lyrics
 
-Display one or two lines above other windows. When locked, clicks pass through the lyrics. Unlock them to drag the lyrics to a different position.
+Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. When locked, clicks pass through the lyrics. Unlock them to drag the lyrics to a different position.
 
 ![Desktop lyrics with word-by-word highlighting](assets/desktop-lyrics.gif)
 
@@ -63,7 +63,7 @@ For videos in browsers, Lyricod only displays lyrics when it can match the conte
 
 ## Lyrics sources
 
-Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net). Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. Lyrics are cached on your PC for later playback.
+Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net), starting with the platform you're listening on. Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. When one platform has a song word by word and the other only line by line, the word-by-word lyrics come with the translation from the platform you're listening on. Lyrics are cached on your PC for later playback.
 
 If Lyricod finds the wrong song, open Choose Lyrics to compare search results and preview the lyrics before selecting one. Your choice and any timing adjustment are saved for that song, even if you clear the lyrics cache.
 
@@ -102,13 +102,13 @@ The easiest way is through Lyricod: open Settings > General > NetEase Cloud Musi
 
 Lyricod will detect the additional playback information automatically. You can check this in Settings > About > Diagnostics.
 
-InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.41 and 2.10.13. If a player update causes problems, check for an updated plugin. BetterNCM can be removed by deleting `msimg32.dll` from the NetEase Cloud Music installation folder, or use Remove in Lyricod's Settings > General > NetEase Cloud Music sync if you installed it through Lyricod. Do not install the older InfLink alongside InfLink-rs.
+InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.43 and 2.10.13. If a player update causes problems, check for an updated plugin. BetterNCM can be removed by deleting `msimg32.dll` from the NetEase Cloud Music installation folder, or use Remove in Lyricod's Settings > General > NetEase Cloud Music sync if you installed it through Lyricod. Do not install the older InfLink alongside InfLink-rs.
 
 ## Customization
 
 You can customize lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island mode and theme, animations, hover behaviour, and global shortcuts. The island, desktop lyrics and lyrics window have separate display settings.
 
-Lyrics use Microsoft YaHei by default. You can choose another installed font or download **MiSans** by Xiaomi from Settings. MiSans is not bundled with Lyricod and is subject to Xiaomi's licence.
+Lyrics use Microsoft YaHei by default. You can choose another installed font, or download **MiSans** by Xiaomi or **LXGW WenKai Lite** (霞鹜文楷) from Settings. Neither is bundled with Lyricod: MiSans is subject to Xiaomi's licence, and LXGW WenKai Lite is an open font under the SIL Open Font License.
 
 ## Privacy
 
@@ -137,4 +137,4 @@ Lyrics belong to their respective copyright holders. Lyricod is not affiliated w
 
 ## License
 
-Lyricod for Windows is licensed under the [Apache License 2.0](LICENSE). Third-party code, assets, and licences are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+Lyricod is licensed under the [Apache License 2.0](LICENSE). Third-party code, assets, and licences are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

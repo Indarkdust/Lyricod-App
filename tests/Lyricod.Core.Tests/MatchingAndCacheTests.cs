@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Lyricod.Core.Tests;
 
 public class MatchingAndCacheTests
@@ -110,7 +112,8 @@ public class MatchingAndCacheTests
     [Fact]
     public void OverridesRoundTripAndForgetEmptyOnes()
     {
-        var file = Path.Combine(Path.GetTempPath(), "lyricod-tests", Guid.NewGuid() + ".json");
+        using var dir = new TempDirectory();
+        var file = Path.Combine(dir.Path, "overrides.json");
         var track = T("晴天", "周杰伦", 269);
         var overrides = new TrackOverrides(file);
         Assert.True(overrides.TrySet(track, new TrackOverride { Lyrics = new LyricsRef(LyricsSource.Qq, "0039MnYb0qxYhV", 97773), Offset = 0.5 }));
@@ -128,26 +131,22 @@ public class MatchingAndCacheTests
     [InlineData(true, true)]
     public void MovingOverridesFillsEachMissingFieldAndRemovesOldKey(bool hasPin, bool hasOffset)
     {
-        var dir = Path.Combine(Path.GetTempPath(), "lyricod-tests", Guid.NewGuid().ToString());
-        var file = Path.Combine(dir, "overrides.json");
-        try
-        {
-            var stale = T("Hello", "Singer", 0);
-            var to = stale with { Duration = 120 };
-            var overrides = new TrackOverrides(file);
-            Assert.True(overrides.TrySet(stale, new TrackOverride { NeteaseId = 123, Offset = 1.5 }));
-            Assert.True(overrides.TrySet(to, new TrackOverride { Lyrics = hasPin ? LyricsRef.Netease(456) : null, Offset = hasOffset ? 0.25 : null }));
-            Assert.True(overrides.TryMove(stale, to));
-            var saved = new TrackOverrides(file);
-            Assert.Equal(LyricsRef.Netease(hasPin ? 456 : 123), saved[to].Lyrics);
-            Assert.Equal(hasOffset ? 0.25 : 1.5, saved[to].Offset);
-            Assert.True(saved[stale].IsEmpty);
-            Assert.DoesNotContain(LyricsProvider.CacheKey(stale), File.ReadAllText(file));
-            Assert.True(saved.TryMove(stale, to)); // missing source is harmless
-            Assert.True(saved.TryMove(to, to with { Duration = 120.5 })); // same whole-second key
-            Assert.Equal(saved[to].Lyrics, new TrackOverrides(file)[to].Lyrics);
-        }
-        finally { if (Directory.Exists(dir)) Directory.Delete(dir, true); }
+        using var dir = new TempDirectory();
+        var file = Path.Combine(dir.Path, "overrides.json");
+        var stale = T("Hello", "Singer", 0);
+        var to = stale with { Duration = 120 };
+        var overrides = new TrackOverrides(file);
+        Assert.True(overrides.TrySet(stale, new TrackOverride { NeteaseId = 123, Offset = 1.5 }));
+        Assert.True(overrides.TrySet(to, new TrackOverride { Lyrics = hasPin ? LyricsRef.Netease(456) : null, Offset = hasOffset ? 0.25 : null }));
+        Assert.True(overrides.TryMove(stale, to));
+        var saved = new TrackOverrides(file);
+        Assert.Equal(LyricsRef.Netease(hasPin ? 456 : 123), saved[to].Lyrics);
+        Assert.Equal(hasOffset ? 0.25 : 1.5, saved[to].Offset);
+        Assert.True(saved[stale].IsEmpty);
+        Assert.DoesNotContain(LyricsProvider.CacheKey(stale), File.ReadAllText(file));
+        Assert.True(saved.TryMove(stale, to)); // missing source is harmless
+        Assert.True(saved.TryMove(to, to with { Duration = 120.5 })); // same whole-second key
+        Assert.Equal(saved[to].Lyrics, new TrackOverrides(file)[to].Lyrics);
     }
 
     /// Cache files written by the macOS app read the same here.
@@ -155,10 +154,10 @@ public class MatchingAndCacheTests
     public void ReadsMacCacheFormat()
     {
         const string json = """{"source":"QQ Music","lrc":"[00:01.00]晴天","ref":{"source":"qq","id":"abc","qqID":5}}""";
-        var raw = System.Text.Json.JsonSerializer.Deserialize<RawLyrics>(json)!;
+        var raw = JsonSerializer.Deserialize<RawLyrics>(json)!;
         Assert.Equal(new LyricsRef(LyricsSource.Qq, "abc", 5), raw.SongRef);
         Assert.Equal("晴天", raw.Parse()!.Lines[0].Text);
-        var legacy = System.Text.Json.JsonSerializer.Deserialize<RawLyrics>("""{"source":"NetEase","lrc":"[00:01.00]x","neteaseID":186001}""")!;
+        var legacy = JsonSerializer.Deserialize<RawLyrics>("""{"source":"NetEase","lrc":"[00:01.00]x","neteaseID":186001}""")!;
         Assert.Equal(LyricsRef.Netease(186001), legacy.SongRef);
     }
 }
@@ -203,6 +202,45 @@ public class LinePiecesTests
         Assert.Equal("you, wherever you go", pieces[1].Text);
         Assert.Equal(4, pieces[1].Start);
         Assert.Equal("you, ", pieces[1].Words![0].Text);
+    }
+
+    static string[] Rows(string text, double width) =>
+        [.. LinePieces.Split(new LyricLine { Start = 0, End = 10, Text = text }, width, Measure).Select(p => p.Text)];
+
+    [Fact]
+    public void JapaneseBreaksAfterTheClosingQuoteNotInsideIt() =>
+        Assert.Equal(["ただ「見て、綺麗」", "だと手を引い た"], Rows("ただ「見て、綺麗」だと手を引い た", 120));
+
+    [Fact]
+    public void NoRowIsALoneCharacter()
+    {
+        // Ten characters fit a row, so eleven are two rows of five and six, not ten and one.
+        var rows = Rows("あいうえおかきくけこさ", 100);
+        Assert.Equal(2, rows.Length);
+        Assert.All(rows, r => Assert.InRange(r.Length, 5, 6));
+    }
+
+    [Fact]
+    public void RowsNeverStartWithACommaOrStop() =>
+        Assert.Equal(["あいうえお、", "かきくけこ。", "さしすせそ"], Rows("あいうえお、かきくけこ。さしすせそ", 60));
+
+    [Fact]
+    public void ChineseBreaksAfterTheQuotedWords() =>
+        Assert.Equal(["不过是“瞧啊，真美”", "如此便牵系起彼此的手"], Rows("不过是“瞧啊，真美”如此便牵系起彼此的手", 120));
+
+    [Fact]
+    public void AWordTooWideForARowIsSplitEvenly() =>
+        Assert.Equal(["abcd", "efgh", "ijkl"], Rows("abcdefghijkl", 50));
+
+    [Fact]
+    public void ATimedWordSplitBetweenRowsSharesItsTime()
+    {
+        var line = new LyricLine { Start = 0, End = 9, Text = "aaaa bbbb", Words = [new LyricWord(0, 9, "aaaa bbbb")] };
+        var pieces = LinePieces.Split(line, 50, Measure);
+        Assert.Equal(["aaaa", "bbbb"], pieces.Select(p => p.Text));
+        Assert.Equal(5, pieces[1].Start, 3);
+        Assert.Equal(new LyricWord(5, 4, "bbbb"), pieces[1].Words![0]);
+        Assert.Equal(5, pieces[0].End, 3);
     }
 
     [Fact]

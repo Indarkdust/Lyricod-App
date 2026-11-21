@@ -1,4 +1,3 @@
-
 namespace Lyricod.Core.Tests;
 
 public class BandAnalyzerTests

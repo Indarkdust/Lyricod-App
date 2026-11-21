@@ -8,11 +8,11 @@ using Microsoft.UI.Xaml.Hosting;
 namespace Lyricod;
 
 /// <summary>
-/// Text that can go soft, for lines away from the one being sung (as the Mac blurs them). The
-/// blurred copy is a shadow of the text's own shape drawn by the compositor, with the sharp text
-/// faded out under it: WinUI has no blur for elements, and this costs nothing per frame. Changes
-/// in blur animate. The text itself stays opaque and a wrapper fades instead: a text's shape
-/// includes its own opacity, so fading the text would take the blurred copy with it.
+/// Text that can go soft, for lines away from the one being sung. The blurred copy is a shadow of
+/// the text's own shape drawn by the compositor, with the sharp text faded out under it: WinUI has
+/// no blur for elements, and this costs nothing per frame. Changes in blur animate. The text itself
+/// stays opaque and a wrapper fades instead: a text's shape includes its own opacity, so fading the
+/// text would take the blurred copy with it.
 /// </summary>
 sealed class SoftText
 {
@@ -56,7 +56,7 @@ sealed class SoftText
         // Not quite 0: WinUI doesn't draw a fully transparent text's shape, and the blurred copy needs it.
         _fader.Opacity = soft ? 0.01 : 1;
         Animate("Opacity", soft ? 1 : 0);
-        // A shadow's blur radius spreads about twice as far as a Gaussian's; this matches the Mac's look.
+        // A shadow needs about twice the radius to look as soft as a blur of that radius.
         if (soft) Animate("BlurRadius", (float)(radius * 2));
     }
 

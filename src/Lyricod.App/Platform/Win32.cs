@@ -95,8 +95,7 @@ static partial class Win32
     [LibraryImport("dwmapi.dll")]
     private static partial int DwmSetWindowAttribute(nint hwnd, int attribute, ref uint value, int size);
 
-    /// <summary>No window border or rounded corners: Windows 11 draws a thin outline round
-    /// every top-level window, even a borderless transparent one.</summary>
+    /// <summary>No border or rounded corners: Windows 11 outlines every top-level window, even a borderless transparent one.</summary>
     public static void RemoveFrame(nint hwnd)
     {
         uint none = DWMWA_COLOR_NONE, square = DWMWCP_DONOTROUND;
@@ -111,6 +110,93 @@ static partial class Win32
     /// <summary>Makes Windows redraw the frame after its style changed.</summary>
     public static void RefreshFrame(nint hwnd) =>
         SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020); // NOMOVE NOSIZE NOZORDER NOACTIVATE FRAMECHANGED
+
+    /// <summary>
+    /// Puts an always-on-top window above the others (one brought forward later covers it), or just
+    /// above <paramref name="cover"/>, without moving, sizing or activating it.
+    /// </summary>
+    public static void RaiseTopmost(nint hwnd, nint cover = 0)
+    {
+        // It goes under the window it's placed after: the one above the cover, if any.
+        nint after = cover == 0 ? 0 : GetWindow(cover, 3); // GW_HWNDPREV
+        SetWindowPos(hwnd, after == 0 ? -1 : after, 0, 0, 0, 0, 0x0002 | 0x0001 | 0x0010); // HWND_TOPMOST; NOMOVE NOSIZE NOACTIVATE
+    }
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsWindow(nint hwnd);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsIconic(nint hwnd);
+
+    public const int SW_SHOWNOACTIVATE = 4;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ShowWindow(nint hwnd, int command);
+
+    [LibraryImport("user32.dll")]
+    public static partial uint GetWindowThreadProcessId(nint hwnd, out uint processId);
+
+    public const uint EVENT_SYSTEM_FOREGROUND = 0x0003, EVENT_SYSTEM_MINIMIZESTART = 0x0016, WINEVENT_OUTOFCONTEXT = 0;
+
+    [LibraryImport("user32.dll")]
+    public static partial nint GetForegroundWindow();
+
+    [LibraryImport("user32.dll")]
+    private static partial nint GetWindow(nint hwnd, uint command);
+
+    [LibraryImport("user32.dll", EntryPoint = "GetClassNameW")]
+    private static unsafe partial int GetClassName(nint hwnd, char* name, int max);
+
+    [LibraryImport("dwmapi.dll")]
+    private static partial int DwmGetWindowAttribute(nint hwnd, int attribute, out int value, int size);
+
+    /// <summary>
+    /// The highest window shown above <paramref name="hwnd"/> that overlaps it, or 0, leaving out
+    /// <paramref name="leftAbove"/>, <paramref name="ignoredProcesses"/>' windows, menus, tooltips and
+    /// the taskbar with its pop-ups (but not the desktop, which Show Desktop can put on top).
+    /// </summary>
+    public static unsafe nint CoveredBy(nint hwnd, ICollection<nint> leftAbove, params uint[] ignoredProcesses)
+    {
+        if (!GetWindowRect(hwnd, out var me)) return 0;
+        nint highest = 0;
+        char* name = stackalloc char[64];
+        for (nint above = GetWindow(hwnd, 3); above != 0; above = GetWindow(above, 3)) // GW_HWNDPREV: up the z-order
+        {
+            if (!IsWindowVisible(above) || IsIconic(above)) continue;
+            if (DwmGetWindowAttribute(above, 14, out int cloaked, sizeof(int)) == 0 && cloaked != 0) continue; // DWMWA_CLOAKED
+            if (!GetWindowRect(above, out var r) || r.Right <= me.Left || r.Left >= me.Right || r.Bottom <= me.Top || r.Top >= me.Bottom) continue;
+            if (leftAbove.Contains(above)) continue;
+            GetWindowThreadProcessId(above, out uint process);
+            if (Array.IndexOf(ignoredProcesses, process) >= 0) continue;
+            var kind = new string(name, 0, GetClassName(above, name, 64));
+            if (kind is "#32768" or "tooltips_class32" or "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "NotifyIconOverflowWindow"
+                or "TopLevelWindowForOverflowXamlIsland" or "TaskListThumbnailWnd" or "XamlExplorerHostIslandWindow"
+                or "Windows.UI.Core.CoreWindow" or "MultitaskingViewFrame" or "ForegroundStaging") continue;
+            highest = above;
+        }
+        return highest;
+    }
+
+    /// <summary>Calls <paramref name="callback"/> on this thread (it must pump messages) when the events happen.</summary>
+    [LibraryImport("user32.dll")]
+    public static unsafe partial nint SetWinEventHook(uint eventMin, uint eventMax, nint module,
+        delegate* unmanaged<nint, uint, nint, int, int, uint, uint, void> callback, uint processId, uint threadId, uint flags);
+
+    const int GWL_EXSTYLE = -20;
+
+    [LibraryImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static partial nint GetWindowLongPtr(nint hwnd, int index);
+
+    public static bool IsTopmost(nint hwnd) => ((long)GetWindowLongPtr(hwnd, GWL_EXSTYLE) & 0x8) != 0;
+
+    [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
+    private static partial nint SetWindowLongPtr(nint hwnd, int index, nint value);
+
+    /// <summary>Sets the extended style and nothing else: a frame refresh can activate the window and take focus (the tray panel closed when its lock was clicked).</summary>
+    public static void SetExtendedStyle(nint hwnd, long style) => SetWindowLongPtr(hwnd, GWL_EXSTYLE, (nint)style);
 
     [LibraryImport("gdi32.dll")]
     public static partial nint CreateRoundRectRgn(int left, int top, int right, int bottom, int widthEllipse, int heightEllipse);

@@ -24,7 +24,7 @@
   <data name="LyricsRights" xml:space="preserve"><value>歌词版权归各自的权利人所有，仅供个人使用。</value></data>
   <data name="FontHeader" xml:space="preserve"><value>字体</value></data>
   <data name="MiSansName" xml:space="preserve"><value>MiSans（小米）</value></data>
-  <data name="MiSansDetail" xml:space="preserve"><value>歌词默认使用微软雅黑。你可以在「设置 › 歌词」中下载小米 MiSans 字体。</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>歌词默认使用微软雅黑。你可以在「设置 › 通用」中下载小米 MiSans 字体。</value></data>
   <data name="ViewLicence" xml:space="preserve"><value>查看 MiSans 许可协议</value></data>
   <data name="BuiltWith" xml:space="preserve"><value>使用的组件</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>托盘图标和窗口辅助功能。MIT 许可证。</value></data>
@@ -32,9 +32,7 @@
   <data name="Win2DDetail" xml:space="preserve"><value>用于绘制 Lyricod Glass 的液态玻璃效果。</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>基于 Microsoft 的 .NET 和 Windows App SDK 构建。</value></data>
   <data name="Trademarks" xml:space="preserve"><value>商标</value></data>
-  <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯或小米没有关联，也未获得其认可或赞助。</value></data>
-  <data name="LyricsWindowMenu" xml:space="preserve"><value>歌词窗口…</value></data>
-  <data name="SettingsMenu" xml:space="preserve"><value>设置…</value></data>
+  <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Klee 是 Fontworks 的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯、小米或 Fontworks 没有关联，也未获得其认可或赞助。</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Lyricod 设置</value></data>
   <data name="LyricsWindowTitle" xml:space="preserve"><value>歌词窗口</value></data>
   <data name="PaneGeneral" xml:space="preserve"><value>通用</value></data>
@@ -59,7 +57,7 @@
   <data name="NeteaseSyncBeforeDetail" xml:space="preserve"><value>安装过程中，网易云音乐会关闭并重新启动，Windows 也会请求管理员权限。部分安全软件可能会对插件发出警告。BetterNCM 已停止维护，网易云音乐后续更新可能导致插件无法正常使用。</value></data>
   <data name="NeteaseSyncVersion" xml:space="preserve"><value>网易云音乐版本</value></data>
   <data name="NeteaseSyncTested" xml:space="preserve"><value>{0}（已测试）</value></data>
-  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0}（未经测试，已测试版本为 3.1.20 至 3.1.42）</value></data>
+  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0}（未经测试，已测试版本为 3.1.20 至 3.1.43）</value></data>
   <data name="NeteaseSyncUnsupported" xml:space="preserve"><value>仅支持 64 位的网易云音乐 3.x 版本。</value></data>
   <data name="NeteaseSyncStatus" xml:space="preserve"><value>状态</value></data>
   <data name="NeteaseSyncInstalled" xml:space="preserve"><value>已安装</value></data>
@@ -90,6 +88,7 @@
   <data name="LayoutTranslation" xml:space="preserve"><value>翻译</value></data>
   <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>优先显示音译，否则显示翻译</value></data>
   <data name="LayoutPronunciation" xml:space="preserve"><value>音译</value></data>
+  <data name="LayoutPronunciationAndTranslation" xml:space="preserve"><value>音译和翻译</value></data>
   <data name="LayoutNext" xml:space="preserve"><value>下一行</value></data>
   <data name="LayoutNone" xml:space="preserve"><value>不显示（单行）</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>显示歌词岛</value></data>
@@ -99,6 +98,8 @@
   <data name="IslandStyleDefault" xml:space="preserve"><value>默认</value></data>
   <data name="IslandStyleFloating" xml:space="preserve"><value>悬浮</value></data>
   <data name="LockIsland" xml:space="preserve"><value>锁定歌词岛位置</value></data>
+  <data name="UnlockDesktopLyrics" xml:space="preserve"><value>解锁桌面歌词</value></data>
+  <data name="UnlockIsland" xml:space="preserve"><value>解锁歌词岛位置</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛，锁定后恢复鼠标悬停操作。</value></data>
   <data name="ResetIslandPosition" xml:space="preserve"><value>恢复顶部居中</value></data>
   <data name="FoldFloating" xml:space="preserve"><value>悬浮设置</value></data>
@@ -113,6 +114,12 @@
   <data name="GlassTintNeutral" xml:space="preserve"><value>中性</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>跟随专辑封面</value></data>
   <data name="GlassShine" xml:space="preserve"><value>立体效果</value></data>
+  <data name="GlassShineOff" xml:space="preserve"><value>关</value></data>
+  <data name="GlassShineBright" xml:space="preserve"><value>明亮</value></data>
+  <data name="GlassShineSoft" xml:space="preserve"><value>柔和</value></data>
+  <data name="GlassShineOffDetail" xml:space="preserve"><value>边缘不加光影，悬浮的歌词岛下方也不显示阴影。</value></data>
+  <data name="GlassShineBrightDetail" xml:space="preserve"><value>边缘带有清晰的高光，在内容丰富的背景上更有厚度感。</value></data>
+  <data name="GlassShineSoftDetail" xml:space="preserve"><value>高光较淡，背光一侧带有阴影，在纯色背景上边缘依然清楚。</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>玻璃效果</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>透明</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>毛玻璃</value></data>
@@ -171,6 +178,12 @@
   <data name="Japanese" xml:space="preserve"><value>日语</value></data>
   <data name="Korean" xml:space="preserve"><value>韩语</value></data>
   <data name="Chinese" xml:space="preserve"><value>中文</value></data>
+  <data name="FoldExperimental" xml:space="preserve"><value>实验性功能</value></data>
+  <data name="FoldExperimentalDetail" xml:space="preserve"><value>仍在试验中，之后可能调整或移除。</value></data>
+  <data name="RomajiByWord" xml:space="preserve"><value>按词分隔罗马音</value></data>
+  <data name="RomajiByWordDetail" xml:space="preserve"><value>按词而不是按音节分隔日语罗马音。需要在 Windows 语言设置中添加日语；部分词语仍可能被拆开。</value></data>
+  <data name="SmoothSweep" xml:space="preserve"><value>平滑扫过</value></data>
+  <data name="SmoothSweepDetail" xml:space="preserve"><value>长音后面紧跟短音时，让已唱颜色移动得更均匀，不会先慢后突然加快。短音可能稍微提前亮起，颜色边缘也更柔和。</value></data>
   <data name="ShowCredits" xml:space="preserve"><value>显示词曲作者信息</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词自带的罗马音；没有时尝试通过 Windows 生成，部分汉字可能读错。各个歌词视图可以分别设置是否显示翻译和音译。</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语罗马音来自歌词来源（如有）。如需 Lyricod 为其他歌曲生成，请在 Windows 设置 › 时间和语言 › 语言和区域 中添加日语。</value></data>
@@ -233,14 +246,14 @@
   <data name="LyricsLaterBy" xml:space="preserve"><value>歌词延后 {0} 秒</value></data>
   <data name="MatchesTheSong" xml:space="preserve"><value>与歌曲同步</value></data>
   <data name="AnimationLabel" xml:space="preserve"><value>动画</value></data>
-  <data name="AnimationDetail" xml:space="preserve"><value>调整歌词岛音量条的动画帧率。帧率越高通常越流畅，也可能更耗电。</value></data>
+  <data name="AnimationDetail" xml:space="preserve"><value>调整歌词岛音量条和 Lyricod Glass 液态玻璃效果的帧率。帧率越高通常越流畅，也可能更耗电。</value></data>
   <data name="FrameRateLow" xml:space="preserve"><value>省电（15 fps）</value></data>
   <data name="FrameRateBalanced" xml:space="preserve"><value>均衡（30 fps）</value></data>
   <data name="FrameRateSmooth" xml:space="preserve"><value>流畅（60 fps）</value></data>
   <data name="LanguageLabel" xml:space="preserve"><value>语言</value></data>
   <data name="LanguageSystem" xml:space="preserve"><value>跟随系统</value></data>
   <data name="RestartNow" xml:space="preserve"><value>立即重新启动</value></data>
-  <data name="RestartToChangeLanguage" xml:space="preserve"><value>需要重新启动 Lyricod 才能切换语言。</value></data>
+  <data name="RestartToApply" xml:space="preserve"><value>需要重新启动 Lyricod 才能应用更改。</value></data>
   <data name="FollowLabel" xml:space="preserve"><value>跟随</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>正在播放的播放器</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>播放过歌曲的播放器会出现在这里。</value></data>
@@ -267,6 +280,7 @@
   <data name="SungLyrics" xml:space="preserve"><value>已唱歌词</value></data>
   <data name="EffectSweep" xml:space="preserve"><value>颜色扫过</value></data>
   <data name="EffectGlow" xml:space="preserve"><value>发光扫过</value></data>
+  <data name="EffectLift" xml:space="preserve"><value>扫过并浮起</value></data>
   <data name="EffectLine" xml:space="preserve"><value>整行亮起</value></data>
   <data name="NextLine" xml:space="preserve"><value>换行</value></data>
   <data name="TransitionInstant" xml:space="preserve"><value>立即</value></data>
@@ -314,22 +328,30 @@
   <data name="ShowDiagnostics" xml:space="preserve"><value>显示</value></data>
   <data name="HideDiagnostics" xml:space="preserve"><value>隐藏</value></data>
   <data name="DiagnosticsDetail" xml:space="preserve"><value>遇到问题时，可以复制这些信息用于排查。</value></data>
-  <data name="LyricsFont" xml:space="preserve"><value>歌词字体</value></data>
+  <data name="FontLabel" xml:space="preserve"><value>字体</value></data>
   <data name="FontDefault" xml:space="preserve"><value>微软雅黑（默认）</value></data>
   <data name="FontRecommended" xml:space="preserve"><value>MiSans（推荐）</value></data>
   <data name="FontSearch" xml:space="preserve"><value>搜索已安装的字体</value></data>
   <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans 是小米推出的字体，适合中、英、日文混排。选择后会从小米下载字体文件，通常约 15 MB；部分情况下需要下载完整字体包。使用时遵循小米的许可协议。</value></data>
   <data name="FontDownload" xml:space="preserve"><value>下载</value></data>
-  <data name="FontRemove" xml:space="preserve"><value>移除 MiSans</value></data>
+  <data name="FontRemove" xml:space="preserve"><value>移除</value></data>
   <data name="FontRetry" xml:space="preserve"><value>重试</value></data>
-  <data name="FontDownloading" xml:space="preserve"><value>正在下载 MiSans…</value></data>
+  <data name="FontDownloading" xml:space="preserve"><value>正在下载 {0}…</value></data>
   <data name="FontDownloadingArchive" xml:space="preserve"><value>正在下载完整字体包（约 228 MB）…</value></data>
   <data name="FontDownloadingLicence" xml:space="preserve"><value>正在下载许可协议…</value></data>
-  <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 MiSans。</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 {0}。</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>下载超时，请重试。</value></data>
-  <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 MiSans 文件。请关闭 Lyricod 后重试。</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 MiSans 或将其复制到应用文件夹。歌词将使用微软雅黑显示。</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 {0} 文件。请关闭 Lyricod 后重试。</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 {0} 或将其复制到应用文件夹。Lyricod 将使用默认字体显示。</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>无法读取已安装的字体。</value></data>
+  <data name="FontWenKai" xml:space="preserve"><value>霞鹜文楷 Lite</value></data>
+  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>霞鹜文楷是一款开源的楷体风格字体，适合中文和日文假名。Lite 版不含韩文，韩文歌词会改用其他字体显示。选择后会从 GitHub 下载字体文件，约 14 MB。使用时遵循 SIL 开源字体许可协议。</value></data>
+  <data name="FontViewLicence" xml:space="preserve"><value>查看许可协议</value></data>
+  <data name="FontsDownloaded" xml:space="preserve"><value>已下载的字体</value></data>
+  <data name="FontInUse" xml:space="preserve"><value>正在使用</value></data>
+  <data name="FontPartial" xml:space="preserve"><value>下载未完成</value></data>
+  <data name="WenKaiName" xml:space="preserve"><value>霞鹜文楷 Lite（LXGW）</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>开源字体，基于 Fontworks 的 Klee One，遵循 SIL 开源字体许可协议。可在「设置 › 通用」中下载。</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>下载并安装</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>更新内容</value></data>
   <data name="UpdateRestart" xml:space="preserve"><value>重启并更新</value></data>

@@ -5,11 +5,11 @@ namespace Lyricod;
 public sealed partial class IslandWindow
 {
     /// <summary>
-    /// As on the Mac: while the island shows and music plays, the bars are redrawn at the
-    /// animation rate from Settings, each frame gliding into the next on the compositor. They
-    /// follow the player's sound when "Bars follow the music" is on and Windows lets Lyricod
-    /// listen to it (Windows 11, or Server 2022), and bob on their own otherwise. Paused, they
-    /// settle low. The player is listened to only while the bars move.
+    /// While the island shows and music plays, the bars are redrawn at the animation rate from
+    /// Settings, each frame gliding into the next on the compositor. They follow the player's sound
+    /// when "Bars follow the music" is on and Windows lets Lyricod listen to it (Windows 11, or
+    /// Server 2022), and bob on their own otherwise. Paused, they settle low. The player is
+    /// listened to only while the bars move.
     /// </summary>
     void UpdateBars()
     {
@@ -39,8 +39,7 @@ public sealed partial class IslandWindow
         }
     }
 
-    /// <summary>A new height eases in over <paramref name="seconds"/>, so the compositor draws the
-    /// frames in between (smooth at the display's rate, no extra work here).</summary>
+    /// <summary>A new height eases in over <paramref name="seconds"/>, so the compositor draws the frames in between.</summary>
     void Glide(double seconds, bool linear)
     {
         var compositor = _barVisuals[0].Compositor;
@@ -63,8 +62,8 @@ public sealed partial class IslandWindow
         for (int i = 0; i < _barVisuals.Count; i++)
         {
             double phase = t * (3.1 + i * 1.3) + i * 1.7;
-            // Listening but nothing to hear (between songs, or the meter is still starting): stay low
-            // rather than make up a bounce. The bounce is only for when listening can't work.
+            // Listening but nothing to hear (between songs, or the meter is still starting): stay
+            // low rather than make up a bounce, which is only for when listening can't work.
             double height = !_barsRunning ? 3
                 : levels != null ? 3 + 11 * Math.Clamp(levels[i], 0, 1)
                 : listening ? 3

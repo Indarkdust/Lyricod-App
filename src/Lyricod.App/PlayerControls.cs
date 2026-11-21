@@ -29,7 +29,6 @@ sealed partial class TransportButtons : StackPanel
         Update();
     }
 
-    /// <summary>Follows play/pause.</summary>
     public void Update() => _playIcon.Glyph = _model.IsPlaying ? "\uE769" : "\uE768"; // Pause / Play
 
     /// <summary>Sizes the island's controls through layout, keeping the icons crisp.</summary>
@@ -90,10 +89,10 @@ sealed partial class ProgressLine : Grid
                     Update();
                     SchedulePreview();
                 }
-                catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+                catch (Exception e) { Log.Write(e); }
             };
         }
-        // As on the Mac: press or drag on the bar to pick a point, let go to move the player there.
+        // Press or drag on the bar to pick a point, let go to move the player there.
         Background = new SolidColorBrush(Colors.Transparent); // so the whole strip takes the pointer
         PointerPressed += OnPointerPressed;
         PointerEntered += OnPointerMoved;

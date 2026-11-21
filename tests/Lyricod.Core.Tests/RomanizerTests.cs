@@ -2,16 +2,18 @@ using Lyricod.Core.Romanization;
 
 namespace Lyricod.Core.Tests;
 
+/// A stand-in for Windows' JapanesePhoneticAnalyzer: fixed words and readings. A surface starting
+/// with "|" starts a phrase.
+sealed class FakeReader(params (string Surface, string? Reading)[] words) : IJapaneseReader
+{
+    public IReadOnlyList<WordReading> Read(string text) =>
+        words.Select(w => new WordReading(w.Surface.TrimStart('|'), w.Reading, w.Surface.StartsWith('|'))).ToList();
+}
+
 /// Pronunciation lines. Korean and Japanese expectations are the macOS app's; pinyin is
 /// spaced by syllable here (the Mac joins words, using macOS's word tokenizer).
 public class RomanizerTests
 {
-    /// A stand-in for Windows' JapanesePhoneticAnalyzer: fixed words and readings.
-    sealed class FakeReader(params (string Surface, string? Reading)[] words) : IJapaneseReader
-    {
-        public IReadOnlyList<WordReading> Read(string text) => words.Select(w => new WordReading(w.Surface, w.Reading)).ToList();
-    }
-
     [Fact]
     public void PinyinReadsPhrases()
     {
@@ -107,10 +109,35 @@ public class RomanizerTests
         ], "test");
         new Romanizer(new FakeReader(("東京", "とうきょう"), ("の", "の"), ("空", "そら"))).Fill(l);
         Assert.Equal(new Pronunciation("yu me na ra ba", LyricLanguage.Japanese), l.Lines[0].Pronunciation);
-        Assert.Equal(new Pronunciation("toukyou no sora", LyricLanguage.Japanese), l.Lines[1].Pronunciation);
+        Assert.Equal(new Pronunciation("toukyou no sora", LyricLanguage.Japanese, PronunciationOrigin.Lyricod), l.Lines[1].Pronunciation);
 
         var k = new Lyrics([new LyricLine { Text = "사랑해요", Pronunciation = new("sa lang hae yo") }], "test");
         new Romanizer().Fill(k);
         Assert.Equal("saranghaeyo", k.Lines[0].Pronunciation?.Text);
+    }
+
+    [Fact]
+    public void PinyinAndRomanisedKoreanAreSungWhenTheirCharactersAre()
+    {
+        // Pinyin: a syllable for each character, a mark with the syllable before it.
+        var chinese = new Lyrics([RomajiByWordTests.ByCharacter("重新来过，我")], "test");
+        new Romanizer().Fill(chinese);
+        var pinyin = chinese.Lines[0].Pronunciation!;
+        Assert.Equal("chóng xīn lái guò, wǒ", pinyin.Text);
+        Assert.Equal([new LyricWord(1, 1, "chóng"), new LyricWord(2, 1, " xīn"), new LyricWord(3, 1, " lái"), new LyricWord(4, 1, " guò,"), new LyricWord(6, 1, " wǒ")],
+            pinyin.Words);
+
+        // Korean: a word for each run of Hangul, over all of its syllables.
+        var korean = new Lyrics([RomajiByWordTests.ByCharacter("같이 가요")], "test");
+        new Romanizer().Fill(korean);
+        var roman = korean.Lines[0].Pronunciation!;
+        Assert.Equal("gachi gayo", roman.Text);
+        Assert.Equal([new LyricWord(1, 2, "gachi"), new LyricWord(4, 2, " gayo")], roman.Words);
+
+        // Without word timing: as before, plain.
+        var plain = new Lyrics([new LyricLine { Start = 1, End = 5, Text = "重新来过" }], "test");
+        new Romanizer().Fill(plain);
+        Assert.Equal("chóng xīn lái guò", plain.Lines[0].Pronunciation!.Text);
+        Assert.Null(plain.Lines[0].Pronunciation!.Words);
     }
 }

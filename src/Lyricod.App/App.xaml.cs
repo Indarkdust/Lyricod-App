@@ -3,15 +3,14 @@ using Lyricod.Core.Romanization;
 using Lyricod.Platform;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.AppLifecycle;
 using WinUIEx;
 
 namespace Lyricod;
 
 /// <summary>
-/// A tray app, like the Mac's menu-bar app: no main window. The tray icon's menu shows and hides
-/// the views and opens the lyrics window and Settings.
+/// A tray app: no main window. The tray icon's panel shows and hides the views and opens the lyrics
+/// window and Settings.
 /// </summary>
 public partial class App : Application
 {
@@ -28,23 +27,28 @@ public partial class App : Application
     GlobalShortcuts? _shortcuts;
     bool _quitting;
 
-    internal string GlassCaptureDiagnostics => _island?.LiquidCaptureStatus ?? "inactive";
-
-    public App() => InitializeComponent();
+    public App()
+    {
+        // Whatever ends Lyricod unexpectedly is logged first; this changes nothing about what happens next.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) => Log.Write("unhandled: " + e.ExceptionObject);
+        TaskScheduler.UnobservedTaskException += (_, e) => Log.Write("unobserved task: " + e.Exception);
+        UnhandledException += (_, e) => Log.Write("unhandled (XAML): " + e.Exception);
+        UpdateChecker.StartedByLauncher();
+        InitializeComponent();
+    }
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         try { await LaunchAsync(); }
         catch (Exception e)
         {
-            System.Diagnostics.Debug.WriteLine(e);
+            Log.Write(e);
             Quit();
         }
     }
 
     async Task LaunchAsync()
     {
-        // One Lyricod at a time.
         if (!AppInstance.FindOrRegisterForKey("Lyricod").IsCurrent)
         {
             Platform.UpdateHealth.SignalStarted(); // it runs: another Lyricod is just already open
@@ -54,30 +58,34 @@ public partial class App : Application
         // Closing a window mustn't quit a tray app.
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
 
+        // The log's errors read against this: which Lyricod, on which Windows.
+        Log.Write($"Lyricod {UpdateChecker.Version}{(UpdateChecker.TestBuild is { } build ? $" (test build {build})" : "")} started on Windows {Environment.OSVersion.Version}, "
+            + System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant());
         _settings = Settings.Load();
         // A first run gets Lyricod Glass where its liquid effect can run (Windows 11); elsewhere the classic island.
         if (_settings.IsNew && LiquidGlass.IsSupported) _settings.IslandTheme = IslandTheme.Glass;
-        // The language chosen in Settings, read once: like the Mac, a change applies after a restart.
+        // The language chosen in Settings, read once: a change applies after a restart.
         L.Start(_settings.Language);
         Fonts.Start(_settings);
+        Fonts.ApplyToApp(Resources); // before any window opens
         _updates = new UpdateChecker(_settings, DispatcherQueue.GetForCurrentThread());
         var version = typeof(App).Assembly.GetName().Version?.ToString(3) ?? "dev";
         var provider = new LyricsProvider(Path.Combine(Settings.DataDir, "lyrics"), version);
         var overrides = new TrackOverrides(Path.Combine(Settings.DataDir, "song-overrides.json"));
         _model = new PlaybackModel(DispatcherQueue.GetForCurrentThread(), new MediaSession(), provider,
             new Romanizer(JapaneseReader.IsAvailable ? new JapaneseReader() : null), overrides, _settings);
-        PlaybackModel.DebugGlass = () => GlassCaptureDiagnostics;
+        PlaybackModel.GlassStatus = () => _island?.LiquidCaptureStatus ?? "inactive";
         _desktop = new DesktopLyricsWindow(_model, _settings);
         _shortcuts = new GlobalShortcuts(_desktop, _settings, PerformShortcut);
         _island = new IslandWindow(_model, _settings, OpenLyricsWindow, () => OpenSettings());
 
         _tray = new TrayIcon(1, Path.Combine(AppContext.BaseDirectory, "Assets", "Lyricod.ico"), "Lyricod");
-        // A click opens the panel (as the Mac's menu-bar icon does); right-click, Windows' usual short menu.
+        // Either click opens the panel.
         _panel = new TrayPanel(_model, _settings, OpenLyricsWindow, () => OpenSettings(), OpenChooseLyrics, Quit, _updates)
         {
             OpenNeteaseSync = OpenNeteaseSync,
         };
-        _tray.ContextMenu += (_, e) => e.Flyout = BuildMenu();
+        _tray.ContextMenu += (_, _) => _panel.Toggle();
         _tray.Selected += (_, _) => _panel.Toggle();
         _tray.IsVisible = true;
         _model.Changed += change =>
@@ -87,8 +95,8 @@ public partial class App : Application
         };
 
         await _model.StartAsync();
-        // After a portable update: windows, tray icon and media tracking are all up, so the launcher can
-        // let the old copy go. Anything above that throws ends here without this, and the launcher puts it back.
+        // After a portable update: everything is up, so the launcher can let the old copy go. If
+        // anything above threw, this is never reached and the launcher puts the old copy back.
         Platform.UpdateHealth.SignalStarted();
     }
 
@@ -161,54 +169,10 @@ public partial class App : Application
         catch (Exception) { }
     }
 
-    MenuFlyout BuildMenu()
-    {
-        var s = _settings!;
-        var m = _model!;
-        var menu = new MenuFlyout();
-
-        var song = m.Track is { } t ? Trim($"{t.Title} — {t.Artist}", 60) : L.Get("NothingPlaying");
-        menu.Items.Add(new MenuFlyoutItem { Text = song, IsEnabled = false });
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var show = new ToggleMenuFlyoutItem { Text = L.Get("DesktopLyrics"), IsChecked = s.ShowDesktopLyrics };
-        show.Click += (_, _) => s.ShowDesktopLyrics = !s.ShowDesktopLyrics;
-        menu.Items.Add(show);
-        var locked = new ToggleMenuFlyoutItem { Text = L.Get("LockDesktopLyrics"), IsChecked = s.DesktopLocked, IsEnabled = s.ShowDesktopLyrics };
-        locked.Click += (_, _) => s.DesktopLocked = !s.DesktopLocked;
-        menu.Items.Add(locked);
-        var island = new ToggleMenuFlyoutItem { Text = L.Get("PaneIsland"), IsChecked = s.ShowIsland };
-        island.Click += (_, _) => s.ShowIsland = !s.ShowIsland;
-        menu.Items.Add(island);
-        // Only a floating island can be moved, so only it can be locked.
-        if (s.IslandStyle == IslandStyle.Floating)
-        {
-            var islandLocked = new ToggleMenuFlyoutItem { Text = L.Get("LockIsland"), IsChecked = s.IslandLocked, IsEnabled = s.ShowIsland };
-            islandLocked.Click += (_, _) => s.IslandLocked = !s.IslandLocked;
-            menu.Items.Add(islandLocked);
-        }
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var lyrics = new MenuFlyoutItem { Text = L.Get("LyricsWindowMenu"), Icon = new FontIcon { Glyph = "\uE8FD" } };
-        lyrics.Click += (_, _) => OpenLyricsWindow();
-        menu.Items.Add(lyrics);
-        var settings = new MenuFlyoutItem { Text = L.Get("SettingsMenu"), Icon = new FontIcon { Glyph = "\uE713" } };
-        settings.Click += (_, _) => OpenSettings();
-        menu.Items.Add(settings);
-        menu.Items.Add(new MenuFlyoutSeparator());
-        var quit = new MenuFlyoutItem { Text = L.Get("Quit") };
-        quit.Click += (_, _) => Quit();
-        menu.Items.Add(quit);
-        return menu;
-    }
-
     /// <summary>Starts a new Lyricod and quits this one (to change language).</summary>
     void Restart() => Quit(restart: true);
 
-    /// <summary>
-    /// Quits once the click that asked for it (the tray panel's button, the tray menu's item or
-    /// Settings' Restart) has finished, since its window closes on the way out.
-    /// </summary>
+    /// <summary>Quits once the click that asked for it has finished, since its window closes on the way out.</summary>
     void Quit() => Quit(restart: false);
 
     public void QuitForUpdate() => Quit(restart: false);
@@ -227,10 +191,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// Stops everything that calls back on its own (the player's reports, timers, the audio meter,
-    /// shortcuts and the tray icon), closes the windows, then exits. Anything left running would
-    /// run against closed windows, and an exception there crashes the process (0xC000027B in
-    /// CoreMessagingXP) instead of letting it exit.
+    /// Stops everything that calls back on its own (player reports, timers, audio meter, shortcuts,
+    /// tray icon), closes the windows, then exits. A callback left running against a closed window
+    /// that throws crashes the process (0xC000027B in CoreMessagingXP).
     /// </summary>
     void ShutDown(bool restart)
     {
@@ -239,8 +202,6 @@ public partial class App : Application
         _shortcuts?.Dispose();
         if (_tray != null)
         {
-            // An open tray menu would otherwise close with its window and touch it as it goes.
-            _tray.CloseFlyout();
             _tray.Dispose();
             _tray = null;
         }

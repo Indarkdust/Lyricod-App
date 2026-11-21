@@ -24,7 +24,7 @@
   <data name="LyricsRights" xml:space="preserve"><value>Lyrics are the property of their respective copyright holders and are shown for personal use only.</value></data>
   <data name="FontHeader" xml:space="preserve"><value>Font</value></data>
   <data name="MiSansName" xml:space="preserve"><value>MiSans by Xiaomi</value></data>
-  <data name="MiSansDetail" xml:space="preserve"><value>Lyrics use Microsoft YaHei by default. MiSans by Xiaomi can be downloaded in Settings › Lyrics.</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>Lyrics use Microsoft YaHei by default. MiSans by Xiaomi can be downloaded in Settings › General.</value></data>
   <data name="ViewLicence" xml:space="preserve"><value>View the MiSans licence</value></data>
   <data name="BuiltWith" xml:space="preserve"><value>Built With</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>Tray icon and window helpers. MIT License.</value></data>
@@ -32,9 +32,7 @@
   <data name="Win2DDetail" xml:space="preserve"><value>Used to render Lyricod Glass's liquid effect.</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
   <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
-  <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent or Xiaomi.</value></data>
-  <data name="LyricsWindowMenu" xml:space="preserve"><value>Lyrics window…</value></data>
-  <data name="SettingsMenu" xml:space="preserve"><value>Settings…</value></data>
+  <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Klee is a trademark of Fontworks. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent, Xiaomi or Fontworks.</value></data>
   <data name="SettingsTitle" xml:space="preserve"><value>Lyricod settings</value></data>
   <data name="LyricsWindowTitle" xml:space="preserve"><value>Lyrics window</value></data>
   <data name="PaneGeneral" xml:space="preserve"><value>General</value></data>
@@ -59,7 +57,7 @@
   <data name="NeteaseSyncBeforeDetail" xml:space="preserve"><value>NetEase Cloud Music will restart during installation, and Windows will request administrator permission. Some antivirus software may flag the add-ons. BetterNCM is no longer maintained, so future NetEase Cloud Music updates may cause compatibility issues.</value></data>
   <data name="NeteaseSyncVersion" xml:space="preserve"><value>NetEase Cloud Music version</value></data>
   <data name="NeteaseSyncTested" xml:space="preserve"><value>{0} (tested)</value></data>
-  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0} (untested; verified with 3.1.20–3.1.42)</value></data>
+  <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0} (untested; verified with 3.1.20–3.1.43)</value></data>
   <data name="NeteaseSyncUnsupported" xml:space="preserve"><value>Only the 64-bit version of NetEase Cloud Music 3.x is supported.</value></data>
   <data name="NeteaseSyncStatus" xml:space="preserve"><value>Status</value></data>
   <data name="NeteaseSyncInstalled" xml:space="preserve"><value>Installed</value></data>
@@ -90,6 +88,7 @@
   <data name="LayoutTranslation" xml:space="preserve"><value>Translation</value></data>
   <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>Pronunciation, or translation if unavailable</value></data>
   <data name="LayoutPronunciation" xml:space="preserve"><value>Pronunciation</value></data>
+  <data name="LayoutPronunciationAndTranslation" xml:space="preserve"><value>Pronunciation and translation</value></data>
   <data name="LayoutNext" xml:space="preserve"><value>Next line</value></data>
   <data name="LayoutNone" xml:space="preserve"><value>None (single line)</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>Show Lyricod Island</value></data>
@@ -99,6 +98,8 @@
   <data name="IslandStyleDefault" xml:space="preserve"><value>Default</value></data>
   <data name="IslandStyleFloating" xml:space="preserve"><value>Floating</value></data>
   <data name="LockIsland" xml:space="preserve"><value>Lock island position</value></data>
+  <data name="UnlockDesktopLyrics" xml:space="preserve"><value>Unlock desktop lyrics</value></data>
+  <data name="UnlockIsland" xml:space="preserve"><value>Unlock island position</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>Unlock to move the island. Lock it to use hover actions again.</value></data>
   <data name="ResetIslandPosition" xml:space="preserve"><value>Reset to top center</value></data>
   <data name="FoldFloating" xml:space="preserve"><value>Floating options</value></data>
@@ -113,6 +114,12 @@
   <data name="GlassTintNeutral" xml:space="preserve"><value>Neutral</value></data>
   <data name="GlassTintAlbum" xml:space="preserve"><value>Album colour</value></data>
   <data name="GlassShine" xml:space="preserve"><value>3D effect</value></data>
+  <data name="GlassShineOff" xml:space="preserve"><value>Off</value></data>
+  <data name="GlassShineBright" xml:space="preserve"><value>Bright</value></data>
+  <data name="GlassShineSoft" xml:space="preserve"><value>Soft</value></data>
+  <data name="GlassShineOffDetail" xml:space="preserve"><value>No light along the edge, and no shadow under a floating island.</value></data>
+  <data name="GlassShineBrightDetail" xml:space="preserve"><value>A clear light along the edge. Gives the glass thickness over a busy background.</value></data>
+  <data name="GlassShineSoftDetail" xml:space="preserve"><value>A fainter light, with shade on the side away from it. Keeps the edge visible over a plain background.</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>Glass effect</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted</value></data>
@@ -171,6 +178,12 @@
   <data name="Japanese" xml:space="preserve"><value>Japanese</value></data>
   <data name="Korean" xml:space="preserve"><value>Korean</value></data>
   <data name="Chinese" xml:space="preserve"><value>Chinese</value></data>
+  <data name="FoldExperimental" xml:space="preserve"><value>Experimental</value></data>
+  <data name="FoldExperimentalDetail" xml:space="preserve"><value>Still being tried out. These may change or go away.</value></data>
+  <data name="RomajiByWord" xml:space="preserve"><value>Romaji by word</value></data>
+  <data name="RomajiByWordDetail" xml:space="preserve"><value>Spaces Japanese romaji by word instead of by syllable. Needs Japanese added in Windows' language settings; some words may still be split.</value></data>
+  <data name="SmoothSweep" xml:space="preserve"><value>Smooth sweep</value></data>
+  <data name="SmoothSweepDetail" xml:space="preserve"><value>Keeps the sung colour moving evenly when a long note is followed by quick ones, instead of crawling and then rushing. Quick words may light up slightly early, and the colour's edge is softer.</value></data>
   <data name="ShowCredits" xml:space="preserve"><value>Show songwriter credits</value></data>
   <data name="PronunciationNote" xml:space="preserve"><value>Japanese uses romaji from the lyrics source when available. Otherwise, Windows may generate it, although some kanji may be read incorrectly. Each lyrics view has its own translation and pronunciation settings.</value></data>
   <data name="PronunciationNoteNoReader" xml:space="preserve"><value>Japanese romaji comes from the lyrics source when it has some. For Lyricod to work it out for other songs, add Japanese in Windows Settings › Time &amp; language › Language &amp; region.</value></data>
@@ -233,14 +246,14 @@
   <data name="LyricsLaterBy" xml:space="preserve"><value>Lyrics {0} s later</value></data>
   <data name="MatchesTheSong" xml:space="preserve"><value>Matches the song</value></data>
   <data name="AnimationLabel" xml:space="preserve"><value>Animation</value></data>
-  <data name="AnimationDetail" xml:space="preserve"><value>Sets the frame rate of the island's audio bars. Higher rates are usually smoother but may use more power.</value></data>
+  <data name="AnimationDetail" xml:space="preserve"><value>Sets the frame rate of the island's audio bars and of Lyricod Glass's liquid effect. Higher rates are usually smoother but may use more power.</value></data>
   <data name="FrameRateLow" xml:space="preserve"><value>Battery saver (15 fps)</value></data>
   <data name="FrameRateBalanced" xml:space="preserve"><value>Balanced (30 fps)</value></data>
   <data name="FrameRateSmooth" xml:space="preserve"><value>Smooth (60 fps)</value></data>
   <data name="LanguageLabel" xml:space="preserve"><value>Language</value></data>
   <data name="LanguageSystem" xml:space="preserve"><value>Windows' language</value></data>
   <data name="RestartNow" xml:space="preserve"><value>Restart now</value></data>
-  <data name="RestartToChangeLanguage" xml:space="preserve"><value>Lyricod needs to restart to change language.</value></data>
+  <data name="RestartToApply" xml:space="preserve"><value>Lyricod needs to restart to apply this change.</value></data>
   <data name="FollowLabel" xml:space="preserve"><value>Follow</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>Whichever is playing</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>Players appear here after they've played a song.</value></data>
@@ -267,6 +280,7 @@
   <data name="SungLyrics" xml:space="preserve"><value>Sung lyrics</value></data>
   <data name="EffectSweep" xml:space="preserve"><value>Colour sweep</value></data>
   <data name="EffectGlow" xml:space="preserve"><value>Glowing sweep</value></data>
+  <data name="EffectLift" xml:space="preserve"><value>Sweep with a lift</value></data>
   <data name="EffectLine" xml:space="preserve"><value>Whole line</value></data>
   <data name="NextLine" xml:space="preserve"><value>Next line</value></data>
   <data name="TransitionInstant" xml:space="preserve"><value>Instant</value></data>
@@ -314,22 +328,30 @@
   <data name="ShowDiagnostics" xml:space="preserve"><value>Show</value></data>
   <data name="HideDiagnostics" xml:space="preserve"><value>Hide</value></data>
   <data name="DiagnosticsDetail" xml:space="preserve"><value>Copy these details to help troubleshoot a problem.</value></data>
-  <data name="LyricsFont" xml:space="preserve"><value>Lyrics font</value></data>
+  <data name="FontLabel" xml:space="preserve"><value>Font</value></data>
   <data name="FontDefault" xml:space="preserve"><value>Microsoft YaHei (default)</value></data>
   <data name="FontRecommended" xml:space="preserve"><value>MiSans (recommended)</value></data>
   <data name="FontSearch" xml:space="preserve"><value>Search installed fonts</value></data>
   <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans by Xiaomi works well with Chinese, English and Japanese text. The usual download is about 15 MB, although some cases require the full font archive. Use is subject to Xiaomi's licence.</value></data>
   <data name="FontDownload" xml:space="preserve"><value>Download</value></data>
-  <data name="FontRemove" xml:space="preserve"><value>Remove MiSans</value></data>
+  <data name="FontRemove" xml:space="preserve"><value>Remove</value></data>
   <data name="FontRetry" xml:space="preserve"><value>Retry</value></data>
-  <data name="FontDownloading" xml:space="preserve"><value>Downloading MiSans…</value></data>
+  <data name="FontDownloading" xml:space="preserve"><value>Downloading {0}…</value></data>
   <data name="FontDownloadingArchive" xml:space="preserve"><value>Downloading the full font archive (about 228 MB)…</value></data>
   <data name="FontDownloadingLicence" xml:space="preserve"><value>Downloading the licence…</value></data>
-  <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download MiSans.</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download {0}.</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>The download timed out. Please retry.</value></data>
-  <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all MiSans files. Close Lyricod and try again.</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>MiSans could not be loaded or copied to the app folder. Lyrics are using Microsoft YaHei.</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all {0} files. Close Lyricod and try again.</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>{0} could not be loaded or copied to the app folder. Lyricod is using its default font.</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>Could not list installed fonts.</value></data>
+  <data name="FontWenKai" xml:space="preserve"><value>LXGW WenKai Lite</value></data>
+  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>LXGW WenKai is an open-source font in a handwritten kai style, for Chinese and Japanese kana. The Lite version has no Korean, so Korean lyrics use another font. Choosing it downloads the font from GitHub, about 14 MB. Use is subject to the SIL Open Font License.</value></data>
+  <data name="FontViewLicence" xml:space="preserve"><value>View the licence</value></data>
+  <data name="FontsDownloaded" xml:space="preserve"><value>Downloaded fonts</value></data>
+  <data name="FontInUse" xml:space="preserve"><value>In use</value></data>
+  <data name="FontPartial" xml:space="preserve"><value>Download not finished</value></data>
+  <data name="WenKaiName" xml:space="preserve"><value>LXGW WenKai Lite by LXGW</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>An open font based on Fontworks' Klee One, under the SIL Open Font License. It can be downloaded in Settings › General.</value></data>
   <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and Install</value></data>
   <data name="UpdateWhatsNew" xml:space="preserve"><value>What’s new</value></data>
   <data name="UpdateRestart" xml:space="preserve"><value>Restart to Update</value></data>

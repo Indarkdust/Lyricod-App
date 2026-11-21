@@ -21,13 +21,13 @@ using WinUIEx.Messaging;
 namespace Lyricod;
 
 /// <summary>
-/// The floating lyric strip over every app. The sung part of the line is the sung colour in
-/// the text's shape, fading out over a soft edge like the macOS app's; that edge moves on the
-/// compositor (no per-frame work in the app), re-planned whenever the line or the clock changes.
+/// The floating lyric strip over every app. The sung part of the line is the sung colour in the
+/// text's shape, fading out over a soft edge; that edge moves on the compositor (no per-frame work
+/// in the app), re-planned whenever the line or the clock changes.
 /// </summary>
 public sealed partial class DesktopLyricsWindow : Window
 {
-    /// <summary>Strip width in view pixels, like the macOS app.</summary>
+    /// <summary>Strip width in view pixels.</summary>
     const double StripWidth = 900;
     const double SidePadding = 24;
 
@@ -36,6 +36,11 @@ public sealed partial class DesktopLyricsWindow : Window
     readonly nint _hwnd;
     readonly Compositor _compositor;
     readonly SweepPainter _sung;
+    /// <summary>The sung colour over the row under the line, when that's a timed pronunciation.</summary>
+    readonly SweepPainter _sungUnder;
+    readonly TextRuler _underRuler;
+    /// <summary>That pronunciation as a line to light (null for any other row).</summary>
+    LyricLine? _under;
     readonly DispatcherQueueTimer _pieceTimer;
     readonly Dictionary<string, double> _widths = [];
     readonly OverlayContentGate _content = new();
@@ -61,14 +66,17 @@ public sealed partial class DesktopLyricsWindow : Window
 
         _compositor = ElementCompositionPreview.GetElementVisual(Root).Compositor;
         _sung = new SweepPainter(Dim, LitHost);
+        _sungUnder = new SweepPainter(Second, SecondLit);
+        _underRuler = new TextRuler(UnderMeasurer);
         AttachShadow(Dim, LineShadow);
         AttachShadow(Second, SecondShadow);
+        AttachShadow(Third, ThirdShadow);
         LineHost.RenderTransformOrigin = new Point(0.5, 0.5);
         MoveHint.Text = L.Get("MoveHint");
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
-        _pieceTimer.Tick += (_, _) => { try { Refresh(OverlayContentChanges.Clock); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _pieceTimer.Tick += (_, _) => { try { Refresh(OverlayContentChanges.Clock); } catch (Exception e) { Log.Write(e); } };
 
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
@@ -98,13 +106,21 @@ public sealed partial class DesktopLyricsWindow : Window
         MoveFrame.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>Main line, plus the second line unless there's none, plus padding (view pixels).</summary>
+    /// <summary>Main line, plus the rows the layout puts under it, plus padding (view pixels).</summary>
     double StripHeight()
     {
         double f = _settings.DesktopFontSize;
-        double second = _settings.SecondLine == SecondLine.None ? 0 : f * 0.6 * 1.25 + 4;
-        return Math.Round(f * 1.25 + second + 32);
+        double under = _settings.SecondLine.MaxRows() switch
+        {
+            0 => 0,
+            1 => f * UnderScale * 1.25 + 4,
+            _ => f * PronunciationScale * 1.25 + 4 + f * UnderScale * 1.25 + 4,
+        };
+        return Math.Round(f * 1.25 + under + 32);
     }
+
+    /// <summary>The rows under the line, as a share of the line's size; a pronunciation over a translation is a little smaller.</summary>
+    const double UnderScale = 0.6, PronunciationScale = 0.55;
 
     /// <summary>Sizes the strip and puts it where the user left it, or at the bottom centre.</summary>
     void Place()
@@ -156,11 +172,13 @@ public sealed partial class DesktopLyricsWindow : Window
             AppWindow.Show(false);
             if (_closed || _shown != true) return;
             _overlay.StripFrame();
+            _overlay.KeepOnTop();
         }
         else
         {
             _pieceTimer.Stop();
             _sung.Set(0, 1); // stop the compositor sweep as well as the next-piece timer
+            _sungUnder.Set(0, 1);
             AppWindow.Hide();
         }
     }
@@ -172,10 +190,12 @@ public sealed partial class DesktopLyricsWindow : Window
         double f = _settings.DesktopFontSize;
         Dim.FontSize = Measurer.FontSize = f;
         Dim.FontWeight = Measurer.FontWeight = Fonts.BoldWeight;
-        Second.FontSize = Math.Round(f * 0.6);
-        Second.FontWeight = Fonts.SemiboldWeight;
-        Second.MaxWidth = StripWidth - 2 * SidePadding;
-        _sung.Color = ParseColor(_settings.SungColor);
+        bool both = _settings.SecondLine.MaxRows() == 2;
+        Second.FontSize = Math.Round(f * (both ? PronunciationScale : UnderScale));
+        Third.FontSize = Math.Round(f * UnderScale);
+        Second.FontWeight = Third.FontWeight = Fonts.SemiboldWeight;
+        Second.MaxWidth = Third.MaxWidth = StripWidth - 2 * SidePadding;
+        _sung.Color = _sungUnder.Color = ParseColor(_settings.SungColor);
         _widths.Clear();
     }
 
@@ -224,7 +244,7 @@ public sealed partial class DesktopLyricsWindow : Window
             Place();
             Refresh();
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+        catch (Exception e) { Log.Write("font refresh: " + e); }
     }
 
     void OnModelChanged(PlaybackModel.Change change)
@@ -249,6 +269,7 @@ public sealed partial class DesktopLyricsWindow : Window
                 Refresh();
                 break;
             case nameof(Settings.SecondLine):
+                ApplyStyle();
                 Place();
                 Refresh();
                 break;
@@ -279,7 +300,7 @@ public sealed partial class DesktopLyricsWindow : Window
         var line = lyrics is { IsSynced: true } ? _model.CurrentLine : null;
         if (line == null)
         {
-            // No line to sing: the song, as on the Mac.
+            // No line to sing: the song.
             _pieces = [];
             _piece = null;
             _pieceTimer.Stop();
@@ -290,8 +311,10 @@ public sealed partial class DesktopLyricsWindow : Window
             Dim.MaxWidth = StripWidth - 2 * SidePadding;
             _widths.Clear();
             _sung.Set(0, 1);
+            _under = null;
+            _sungUnder.Set(0, 1);
             LineScale.ScaleX = LineScale.ScaleY = 1;
-            Second.Visibility = Visibility.Collapsed;
+            Second.Visibility = Third.Visibility = Visibility.Collapsed;
             return;
         }
         Dim.FontSize = Measurer.FontSize = _settings.DesktopFontSize;
@@ -308,12 +331,20 @@ public sealed partial class DesktopLyricsWindow : Window
         _pieces = LinePieces.Split(line, StripWidth - 2 * SidePadding, Measure);
         _piece = null;
 
-        var under = _model.CurrentIndex is int i && lyrics != null ? _settings.SecondLine.TextUnder(i, lyrics) : null;
-        Second.Text = under?.Text ?? "";
-        if (under is { } u) Second.FontFamily = Fonts.For(u.Text, song);
-        Second.Opacity = under is { IsExtra: true } ? 0.9 : 0.6;
-        Second.Visibility = under == null ? Visibility.Collapsed : Visibility.Visible;
+        List<(string Text, bool IsExtra)> rows = _model.CurrentIndex is int i && lyrics != null ? _settings.SecondLine.RowsUnder(i, lyrics) : [];
+        ShowUnder(Second, rows.Count > 0 ? rows[0] : null, song);
+        ShowUnder(Third, rows.Count > 1 ? rows[1] : null, song);
+        // The pronunciation is always the first row under the line.
+        _under = rows.Count > 0 ? SecondLineExtensions.SungRow(rows[0].Text, line) : null;
         ShowPiece();
+    }
+
+    static void ShowUnder(TextBlock row, (string Text, bool IsExtra)? under, LyricLanguage? song)
+    {
+        row.Text = under?.Text ?? "";
+        if (under is { } u) row.FontFamily = Fonts.For(u.Text, song);
+        row.Opacity = under is { IsExtra: true } ? 0.9 : 0.6;
+        row.Visibility = under == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     /// <summary>Puts up the piece being sung and plans its sweep from now; sets a timer for the next piece.</summary>
@@ -342,5 +373,15 @@ public sealed partial class DesktopLyricsWindow : Window
         }
     }
 
-    void Animate(LyricLine piece, double position) => _sung.Animate(piece, _textWidth, position, _model.IsPlaying, Measure);
+    void Animate(LyricLine piece, double position)
+    {
+        _sung.Animate(piece, _textWidth, position, _model.IsPlaying, Measure);
+        // The row under it, through the whole line (it isn't in pieces). One too wide for the
+        // strip ends in "…": it stays as it is rather than be lit out of step.
+        if (_under is not { } under) { _sungUnder.Set(0, 1); return; }
+        _underRuler.Use(Second.FontFamily, Second.FontSize, Second.FontWeight);
+        double width = Math.Ceiling(_underRuler.Measure(under.Text)) + 1;
+        if (width > Second.MaxWidth) { _sungUnder.Set(0, 1); return; }
+        _sungUnder.Animate(under, width, position, _model.IsPlaying, _underRuler.Measure);
+    }
 }

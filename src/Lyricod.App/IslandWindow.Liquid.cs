@@ -20,10 +20,15 @@ public sealed partial class IslandWindow
 
     LiquidGlass? _liquid;
     DispatcherQueueTimer? _screenshotTimer;
+    /// <summary>Tries the liquid glass again after Windows ended its capture (see <see cref="RetryLiquidLater"/>).</summary>
+    DispatcherQueueTimer? _liquidRetry;
+    /// <summary>Tries since the capture ended; back to 0 once the glass runs again.</summary>
+    int _liquidRetries;
 
     internal string LiquidCaptureStatus => _liquid == null ? "inactive" : _liquid.Failed ? "failed"
-        : _liquid.SessionExclusion ? "session-only exclusion (live, recordable), " + _liquid.ExclusionDetail
-        : _liquid.Frozen ? "global exclusion fallback (screenshot pause)" : "global exclusion fallback";
+        : (_liquid.SessionExclusion ? $"session-only exclusion, island stays in recordings ({_liquid.ExclusionDetail})"
+            : _liquid.Frozen ? "global exclusion fallback, frozen for a screenshot" : "global exclusion fallback")
+        + "; " + _liquid.FrameDetail;
 
     bool WantsLiquid => Glass && _settings.GlassEffect == GlassEffect.Liquid && LiquidGlass.IsSupported && !Movable;
 
@@ -35,12 +40,14 @@ public sealed partial class IslandWindow
             bool on = WantsLiquid && _shown && !(_hovered && _hoverAction == IslandHover.Hide) && _liquid?.Failed != true;
             if (!on)
             {
+                if (_liquid is { Failed: true } failed && (failed.Ended || _liquidRetries > 0) && WantsLiquid) RetryLiquidLater();
                 StopLiquid();
                 return false;
             }
             if (_liquid == null)
             {
-                // If it fails later (the graphics card reset, the screen went away), fall back to clear glass.
+                // If it fails later (the graphics card reset, the screen went away), fall back to clear glass;
+                // once it has faded in, the pill's own fill underneath goes (see ApplyTheme).
                 LiquidGlass? created = null;
                 created = new LiquidGlass(ElementCompositionPreview.GetElementVisual(LiquidHost).Compositor, DispatcherQueue, _overlay.Handle,
                     () =>
@@ -49,17 +56,24 @@ public sealed partial class IslandWindow
                         {
                             DispatcherQueue.TryEnqueue(() =>
                             {
-                                try { if (!_closed && ReferenceEquals(_liquid, created) && created?.Failed == true) ApplyTheme(); }
+                                try
+                                {
+                                    if (_closed || !ReferenceEquals(_liquid, created)) return;
+                                    if (created.Settled) _liquidRetries = 0;
+                                    ApplyTheme();
+                                }
                                 catch (Exception) { StopLiquid(); }
                             });
                         }
                         catch (Exception) { StopLiquid(); }
                     });
+                created.FramesPerSecond = (int)_settings.FrameRate;
                 _liquid = created;
                 ElementCompositionPreview.SetElementChildVisual(LiquidHost, _liquid.Visual);
             }
             UpdateLiquid();
             if (!_liquid.Failed) return true;
+            if (_liquid.Ended || _liquidRetries > 0) RetryLiquidLater();
             StopLiquid();
             return false;
         }
@@ -71,9 +85,9 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Lets screenshots, recordings and screen sharing see the liquid glass island for a few seconds.
-    /// Meanwhile the glass stops capturing and keeps showing what was behind it, so it can't capture
-    /// itself; the lyrics carry on.
+    /// Lets screenshots, recordings and screen sharing see the liquid glass island for a few
+    /// seconds. Meanwhile the glass keeps showing what was behind it instead of capturing, so it
+    /// can't capture itself.
     /// </summary>
     public void ShowInScreenshots()
     {
@@ -115,6 +129,36 @@ public sealed partial class IslandWindow
         catch (Exception e) { _liquid?.Fail(e); }
     }
 
+    /// <summary>
+    /// Windows ended the liquid glass's capture (the screen slept or went away), which left the
+    /// island on clear glass until something else (a new song, a hover) built the glass again. So
+    /// it's built again a few seconds later, and if that fails too, however it fails (the screen
+    /// may not be back yet), again less and less often, up to every 30 seconds, until it runs or
+    /// isn't wanted. A failure with no capture ended before isn't retried.
+    /// </summary>
+    void RetryLiquidLater()
+    {
+        if (_liquidRetry == null)
+        {
+            _liquidRetry = DispatcherQueue.CreateTimer();
+            _liquidRetry.IsRepeating = false;
+            _liquidRetry.Tick += (_, _) =>
+            {
+                try
+                {
+                    if (_closed) return;
+                    if (!WantsLiquid) { _liquidRetries = 0; return; }
+                    if (_liquid == null) ApplyTheme();
+                }
+                catch (Exception e) { Log.Write(e); }
+            };
+        }
+        _liquidRetry.Interval = TimeSpan.FromSeconds(Math.Min(3 << Math.Min(_liquidRetries, 4), 30));
+        _liquidRetries++;
+        _liquidRetry.Stop();
+        _liquidRetry.Start();
+    }
+
     void StopLiquid()
     {
         var timer = _screenshotTimer;
@@ -140,7 +184,7 @@ public sealed partial class IslandWindow
             _liquid.Update(Microsoft.UI.Win32Interop.GetMonitorFromDisplayId(display.DisplayId), new PointInt32(screen.X, screen.Y),
                 new RectInt32((int)Math.Round(left), (int)Math.Round(top), (int)Math.Round(width), (int)Math.Round(height)),
                 new Vector2((float)Pill.ActualWidth, (float)Pill.ActualHeight), (float)Pill.CornerRadius.BottomLeft, !Floating,
-                blur: _settings.LiquidBlur / 100f * 16, refraction: _settings.LiquidRefraction / 100f * 14, GlassTintColour(), shine: GlassLit);
+                blur: _settings.LiquidBlur / 100f * 16, refraction: _settings.LiquidRefraction / 100f * 14, GlassTintColour(), shine: GlassLit, _settings.GlassShineStyle);
         }
         catch (Exception e) { _liquid?.Fail(e); }
     }

@@ -3,9 +3,8 @@ namespace Lyricod.Core;
 public sealed partial class LyricsProvider
 {
     /// <summary>
-    /// <paramref name="track"/> with its artist's other names from NetEase's artist records:
-    /// players often show an English name ("Crowd Lu") where lyric sites use the original
-    /// (卢广仲), and the other way round.
+    /// <paramref name="track"/> with its artist's other names from NetEase's artist records: players
+    /// often show an English name ("Crowd Lu") where lyric sites use the original (卢广仲), or the reverse.
     /// </summary>
     public async Task<Track> WithAliases(Track track, CancellationToken ct = default, bool allowGuess = true)
     {
@@ -20,10 +19,10 @@ public sealed partial class LyricsProvider
         var artists = Arr(Field(res, "result", "artists")).Select(a => new[] { Str(Field(a, "name")) }.Concat(Arr(Field(a, "alias")).Select(Str)).Append(Str(Field(a, "trans")))
             .Where(s => !string.IsNullOrEmpty(s)).Select(s => s!).ToList()).ToList();
         var found = artists.Where(all => all.Any(s => TrackMatcher.Normalize(s) == want)).Take(1).ToList();
-        // A romanised name, as YouTube Music and Spotify show it, may be missing from NetEase's
-        // records ("Kenshi Yonezu" for 米津玄師) or listed under someone else too (優莉 lists "Yuuri";
-        // 優里, the top hit, doesn't): NetEase's top hit counts as well when it has a Chinese,
-        // Japanese or Korean name. A wrong guess still needs the title or the length to agree.
+        // A romanised name ("Kenshi Yonezu" for 米津玄師, as YouTube Music and Spotify show it) may be
+        // missing from NetEase's records or listed under someone else too (優莉 lists "Yuuri"; 優里, the
+        // top hit, doesn't), so the top hit counts as well when it has a Chinese, Japanese or Korean
+        // name. A wrong guess still needs the title or the length to agree.
         if (allowGuess && IsLatinName(primary) && artists.FirstOrDefault() is { } top && top.Any(HasCjk) && !found.Contains(top))
             found.Insert(0, top);
         names = found.SelectMany(all => all).Where(s => TrackMatcher.Normalize(s) != want).Distinct().ToList();

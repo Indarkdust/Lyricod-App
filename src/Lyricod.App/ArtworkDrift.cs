@@ -11,10 +11,10 @@ using Windows.Storage.Streams;
 namespace Lyricod;
 
 /// <summary>
-/// The lyrics window's background, as on the Mac (ArtworkDrift.swift): the cover softened once at
-/// small size, then two copies slowly turned and moved by the compositor: a big one, and a smaller
-/// one fading out towards its edges that wanders around the middle. Nothing runs in the app per
-/// frame; while the music is paused, the drift pauses in place.
+/// The lyrics window's background: the cover softened once at small size, then copies slowly turned
+/// and moved by the compositor: a big one, a smaller one fading out towards its edges that wanders
+/// around the middle, and a third that drifts the other way a little faster. The whole picture
+/// slowly breathes. Nothing runs in the app per frame; while the music is paused, all of it pauses.
 /// </summary>
 sealed class ArtworkDrift
 {
@@ -96,19 +96,23 @@ sealed class ArtworkDrift
         set.Opacity = 0;
         var big = _compositor.CreateSpriteVisual();
         big.Brush = Brush(surface);
-        // The small copy fades out towards its edges, so it has no visible border.
-        var mask = _compositor.CreateRadialGradientBrush();
-        mask.EllipseRadius = new Vector2(0.5f, 0.5f); // clear by the middle of each edge, as on the Mac
-        mask.ColorStops.Add(_compositor.CreateColorGradientStop(0, Colors.Black));
-        mask.ColorStops.Add(_compositor.CreateColorGradientStop(0.45f, Colors.Black));
-        mask.ColorStops.Add(_compositor.CreateColorGradientStop(1, Colors.Transparent));
-        var masked = _compositor.CreateMaskBrush();
-        masked.Source = Brush(surface);
-        masked.Mask = mask;
-        var small = _compositor.CreateSpriteVisual();
-        small.Brush = masked;
         set.Children.InsertAtTop(big);
-        set.Children.InsertAtTop(small);
+        // The smaller copies fade out towards their edges, so they have no visible border.
+        foreach (float opacity in new[] { 1f, 0.8f })
+        {
+            var mask = _compositor.CreateRadialGradientBrush();
+            mask.EllipseRadius = new Vector2(0.5f, 0.5f); // clear by the middle of each edge
+            mask.ColorStops.Add(_compositor.CreateColorGradientStop(0, Colors.Black));
+            mask.ColorStops.Add(_compositor.CreateColorGradientStop(0.45f, Colors.Black));
+            mask.ColorStops.Add(_compositor.CreateColorGradientStop(1, Colors.Transparent));
+            var masked = _compositor.CreateMaskBrush();
+            masked.Source = Brush(surface);
+            masked.Mask = mask;
+            var copy = _compositor.CreateSpriteVisual();
+            copy.Brush = masked;
+            copy.Opacity = opacity;
+            set.Children.InsertAtTop(copy);
+        }
         return set;
     }
 
@@ -129,36 +133,65 @@ sealed class ArtworkDrift
     /// <summary>Sizes the copies for the window and (re)starts their movement.</summary>
     void Layout(ContainerVisual set)
     {
-        if (_size.X <= 0 || set.Children.Count < 2) return;
-        var big = (SpriteVisual)set.Children.First();
-        var small = (SpriteVisual)set.Children.Last();
+        var copies = set.Children.OfType<SpriteVisual>().ToList();
+        if (_size.X <= 0 || copies.Count < 3) return;
+        var (big, small, third) = (copies[0], copies[1], copies[2]);
         var middle = _size / 2;
         // Big enough that its corners never come into view as it turns.
-        float bigSide = _size.Length() * 1.1f, smallSide = Math.Max(_size.X, _size.Y) * 1.04f;
+        float bigSide = _size.Length() * 1.1f, smallSide = Math.Max(_size.X, _size.Y) * 1.04f, thirdSide = Math.Max(_size.X, _size.Y) * 0.8f;
         big.Size = new Vector2(bigSide);
         big.CenterPoint = new Vector3(bigSide / 2, bigSide / 2, 0);
         big.Offset = new Vector3(middle - big.Size / 2, 0);
         small.Size = new Vector2(smallSide);
         small.CenterPoint = new Vector3(smallSide / 2, smallSide / 2, 0);
+        third.Size = new Vector2(thirdSide);
+        third.CenterPoint = new Vector3(thirdSide / 2, thirdSide / 2, 0);
+        set.CenterPoint = new Vector3(middle, 0);
 
         if (big.TryGetAnimationController("RotationAngleInDegrees") == null)
         {
             big.StartAnimation("RotationAngleInDegrees", Turn(120, 360));
             small.StartAnimation("RotationAngleInDegrees", Turn(90, -360));
+            third.StartAnimation("RotationAngleInDegrees", Turn(70, 360));
+            // Breathing: the whole picture swells a little and settles, slowly.
+            var breathe = _compositor.CreateVector3KeyFrameAnimation();
+            var ease = _compositor.CreateCubicBezierEasingFunction(new Vector2(0.45f, 0), new Vector2(0.55f, 1));
+            breathe.InsertKeyFrame(0, Vector3.One, ease);
+            breathe.InsertKeyFrame(0.5f, new Vector3(1.08f, 1.08f, 1), ease);
+            breathe.InsertKeyFrame(1, Vector3.One, ease);
+            breathe.Duration = TimeSpan.FromSeconds(18);
+            breathe.IterationBehavior = AnimationIterationBehavior.Forever;
+            set.StartAnimation("Scale", breathe);
         }
-        // The small copy wanders around the middle on a slow loop; its path depends on the size.
+        // The smaller copies wander around the middle on slow loops (the third the other way, and
+        // faster). The small one goes across in 60 s and down in 75 s, so its path repeats after 5
+        // minutes; the third, 29.2 s and 38 s.
+        small.StartAnimation("Offset", Wander(small.Size, 300, 0.2f, 0.15f, 5, 4));
+        third.StartAnimation("Offset", Wander(third.Size, 380, -0.26f, 0.2f, 13, 10));
+        SetPaused(set, !_moving);
+    }
+
+    /// <summary>
+    /// A loop of <paramref name="seconds"/> going across and back <paramref name="acrossTurns"/> times
+    /// and down and back <paramref name="downTurns"/> times: whole turns, so it ends where it starts
+    /// and runs on with no jump.
+    /// </summary>
+    Vector3KeyFrameAnimation Wander(Vector2 copy, double seconds, float across, float down, int acrossTurns, int downTurns)
+    {
+        var middle = _size / 2;
         var wander = _compositor.CreateVector3KeyFrameAnimation();
-        const int points = 24;
+        var linear = _compositor.CreateLinearEasingFunction();
+        // 24 points per turn of the faster axis.
+        int points = 24 * Math.Max(acrossTurns, downTurns);
         for (int i = 0; i <= points; i++)
         {
             double t = (double)i / points * 2 * Math.PI;
-            var at = middle - small.Size / 2 + new Vector2((float)(_size.X * 0.2 * Math.Sin(t)), (float)(_size.Y * 0.15 * Math.Cos(t * 0.8)));
-            wander.InsertKeyFrame((float)i / points, new Vector3(at, 0), _compositor.CreateLinearEasingFunction());
+            var at = middle - copy / 2 + new Vector2((float)(_size.X * across * Math.Sin(t * acrossTurns)), (float)(_size.Y * down * Math.Cos(t * downTurns)));
+            wander.InsertKeyFrame((float)i / points, new Vector3(at, 0), linear);
         }
-        wander.Duration = TimeSpan.FromSeconds(60);
+        wander.Duration = TimeSpan.FromSeconds(seconds);
         wander.IterationBehavior = AnimationIterationBehavior.Forever;
-        small.StartAnimation("Offset", wander);
-        SetPaused(set, !_moving);
+        return wander;
     }
 
     ScalarKeyFrameAnimation Turn(double seconds, float degrees)
@@ -173,8 +206,8 @@ sealed class ArtworkDrift
 
     static void SetPaused(ContainerVisual set, bool paused)
     {
-        foreach (var visual in set.Children)
-            foreach (var property in new[] { "RotationAngleInDegrees", "Offset" })
+        foreach (var visual in set.Children.Append(set))
+            foreach (var property in new[] { "RotationAngleInDegrees", "Offset", "Scale" })
                 if (visual.TryGetAnimationController(property) is { } controller)
                 {
                     if (paused) controller.Pause(); else controller.Resume();

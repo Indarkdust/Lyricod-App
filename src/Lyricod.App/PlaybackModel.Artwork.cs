@@ -7,9 +7,9 @@ public sealed partial class PlaybackModel
 
     /// <summary>
     /// Reads the player's cover for <paramref name="trackId"/>. A player can hand over a cover it's still
-    /// downloading: decoded, the rest shows grey, and nothing would read it again. So one that's cut short
-    /// is shown, read again shortly for a while (and once more with the late retry), and replaced as soon
-    /// as it comes whole. A cut-short cover never replaces a whole one.
+    /// downloading: decoded, the rest shows grey. So a cut-short cover is shown, read again shortly
+    /// for a while (and once more with the late retry), and replaced as soon as it comes whole. It
+    /// never replaces a whole one.
     /// </summary>
     async void LoadArtwork(string trackId)
     {
@@ -48,7 +48,7 @@ public sealed partial class PlaybackModel
         catch (Exception e) { LastError = "artwork: " + e.Message; }
     }
 
-    /// <summary>For a cover that came cut short: reads it again in a moment, until <see cref="ArtworkWaitSeconds"/> have passed.</summary>
+    /// <summary>Reads a cut-short cover again in a moment, until <see cref="ArtworkWaitSeconds"/> have passed.</summary>
     void ReadArtworkAgainSoon()
     {
         long now = Environment.TickCount64;

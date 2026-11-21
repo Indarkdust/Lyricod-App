@@ -14,23 +14,28 @@ using WinRT;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Glass's liquid effect: what's behind the island, captured from the screen
-/// and drawn as its background, lightly blurred and bent at the edges like the rim of a lens, with
-/// the light its edge catches (the 3D effect) drawn to follow the same curve. The
-/// island is excluded from its own capture session on supported Windows builds, so other recorders see
-/// it throughout; older builds need global capture exclusion to avoid feedback. Windows 11 only: Windows 10
-/// outlines the whole screen in yellow while anything captures it.
+/// Lyricod Glass's liquid effect: what's behind the island, captured from the screen and drawn as
+/// its background, lightly blurred and bent at the edges like the rim of a lens, with the light its
+/// edge catches and the shade of its far side drawn along the same curve. On supported builds the island is excluded from its own
+/// capture session, so other recorders still see it; older builds need global capture exclusion to
+/// avoid feedback. Windows 11 only: Windows 10 outlines the whole screen in yellow while anything
+/// captures it.
+/// <para>
+/// Windows sends a new frame whenever anything on the screen changes, and drawing the glass is such
+/// a change, so a frame is drawn only when what's behind the island differs from the last one drawn
+/// (see <see cref="Unchanged"/>); otherwise the glass would redraw itself for ever. Frames come no
+/// more often than the animation rate from Settings.
+/// </para>
 /// </summary>
 sealed class LiquidGlass : IDisposable
 {
     public static bool IsSupported => Environment.OSVersion.Version.Build >= 22000 && GraphicsCaptureSession.IsSupported();
 
-    /// <summary>What to draw: where the island is on its screen (pixels), its corners, and the look
-    /// (<c>Shine</c>: how wide the light along the edge is, in pixels; 0 for none).</summary>
-    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine);
+    /// <summary>What to draw: the island's pixels on its screen, its corners and the look (<c>Shine</c>: width of the edge light in pixels, 0 for none).</summary>
+    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine, ShineStyle Style);
 
     readonly DispatcherQueue _ui;
-    readonly Action _failed;
+    readonly Action _changed;
     readonly nint _window;
     CanvasDevice _device = null!; // shared; not owned here
     CompositionGraphicsDevice _graphics = null!;
@@ -55,15 +60,14 @@ sealed class LiquidGlass : IDisposable
     CanvasBitmap? _lens;
     (int Width, int Height, float Radius, bool SquareTop) _lensFor;
     CanvasBitmap? _light;
-    (int Width, int Height, float Radius, bool SquareTop, float Rim) _lightFor;
+    (int Width, int Height, float Radius, bool SquareTop, float Rim, ShineStyle Style) _lightFor;
     Look? _look;
     int _pending, _generation, _startGeneration;
-    /// <summary>The steps of starting a session, a moment apart (see <see cref="Begin"/>).</summary>
     readonly DispatcherQueueTimer _startDelay;
     /// <summary>Starting a session: 0, waiting for the island to show; 1, it showed a moment ago; 2 (older Windows),
     /// waiting for it to leave every capture; 3, capturing.</summary>
     int _startStep;
-    /// <summary>With session exclusion: the capture configuration that leaves the island out. Frames made with earlier ones aren't used.</summary>
+    /// <summary>With session exclusion: the capture configuration that leaves the island out. Earlier frames aren't used.</summary>
     ulong _excludedFrom;
     /// <summary>When session exclusion was set (<see cref="Environment.TickCount64"/>), for frames that don't say their configuration.</summary>
     long _excludedAt;
@@ -72,6 +76,17 @@ sealed class LiquidGlass : IDisposable
     ulong? _newestIteration;
     volatile bool _disposed;
     bool _ownsAffinity;
+    bool _appeared;
+    /// <summary>The screen behind the island as last drawn from, and as now (see <see cref="Unchanged"/>); they only grow.</summary>
+    byte[] _seen = [], _seeing = [];
+    RectInt32 _seenFrom;
+    bool _hasSeen;
+    /// <summary>How a frame's pixels are read back: 0, straight from the frame; 1, through a copy
+    /// (where the frame can't be read); 2, not at all: every frame is drawn.</summary>
+    int _reading;
+    CanvasRenderTarget? _copy;
+    /// <summary>Diagnostics: frames taken from Windows, drawn, and left as they were.</summary>
+    int _frames, _draws, _same;
     Windows.Foundation.TypedEventHandler<GraphicsCaptureItem, object>? _itemClosed;
     Windows.Foundation.TypedEventHandler<Direct3D11CaptureFramePool, object>? _frameArrived;
     /// <summary>Until when (<see cref="Environment.TickCount64"/>) new frames are left unused after a freeze.</summary>
@@ -79,16 +94,38 @@ sealed class LiquidGlass : IDisposable
 
     /// <summary>Capturing or drawing failed (the graphics card reset, the screen went away): the island falls back.</summary>
     public bool Failed { get; private set; }
+    /// <summary>It failed because Windows ended the capture (the screen went away, or to sleep), not on an error.</summary>
+    public bool Ended { get; private set; }
+    /// <summary>Windows ended a capture and no glass has run since: the island retries (see <c>IslandWindow.RetryLiquidLater</c>); only the first error is logged meanwhile.</summary>
+    static bool _sinceEnded, _erredSinceEnded;
 
     /// <summary>Only our monitor session excludes the island; other recorders can see it live.</summary>
     public bool SessionExclusion { get; private set; }
 
-    /// <summary>The island's background: put it behind the lyrics, sized to the island.</summary>
+    /// <summary>Windows limits how often frames come (Windows 11 24H2 and later).</summary>
+    public bool RateLimited { get; private set; }
+
+    /// <summary>The glass has faded in over the island: until then the island keeps its own fill underneath.</summary>
+    public bool Settled { get; private set; }
+
+    /// <summary>How often the glass follows the screen at most, in frames a second (Settings › General › Animation).</summary>
+    public int FramesPerSecond
+    {
+        get;
+        set
+        {
+            if (field == value) return;
+            field = value;
+            try { if (_session != null && !_disposed) RateLimited = LimitRate(_session, value); }
+            catch (Exception) { RateLimited = false; }
+        }
+    } = 30;
+
     public SpriteVisual Visual => _visual;
 
     /// <summary>
-    /// Keeps showing what was behind the island instead of capturing it afresh. While the island shows
-    /// in screenshots, it would capture itself otherwise; the glass still follows the island's size.
+    /// Keeps showing what was behind the island instead of capturing afresh (it would capture
+    /// itself while the island shows in screenshots); the glass still follows the island's size.
     /// </summary>
     public bool Frozen
     {
@@ -101,11 +138,11 @@ sealed class LiquidGlass : IDisposable
         }
     }
 
-    /// <param name="failed">Called (on the UI thread) when capturing or drawing fails.</param>
-    public LiquidGlass(Compositor compositor, DispatcherQueue ui, nint window, Action failed)
+    /// <param name="changed">Called (on the UI thread) when capturing or drawing fails, and once the glass has faded in.</param>
+    public LiquidGlass(Compositor compositor, DispatcherQueue ui, nint window, Action changed)
     {
         _ui = ui;
-        _failed = failed;
+        _changed = changed;
         _window = window;
         _startDelay = ui.CreateTimer();
         _startDelay.IsRepeating = false;
@@ -130,6 +167,7 @@ sealed class LiquidGlass : IDisposable
             _shape = compositor.CreateRoundedRectangleGeometry();
             _visual = compositor.CreateSpriteVisual();
             _visual.Brush = _brush;
+            _visual.Opacity = 0; // until the first frame is drawn (see Appear)
             // Smooth rounded corners, unlike a clipped window's.
             _clip = compositor.CreateGeometricClip(_shape);
             _visual.Clip = _clip;
@@ -142,13 +180,13 @@ sealed class LiquidGlass : IDisposable
     }
 
     /// <summary>
-    /// Follows the island: the screen it's on (<paramref name="monitor"/>, whose top-left is
-    /// <paramref name="origin"/>), its bounds there (<paramref name="pill"/>, pixels), its size and
-    /// corner radius in view pixels, and the look (blur and refraction in view pixels; whether the
-    /// edge catches the light).
+    /// Follows the island: its screen (<paramref name="monitor"/>, whose top-left is <paramref
+    /// name="origin"/>), its bounds there (<paramref name="pill"/>, pixels), its size and corner
+    /// radius in view pixels, and the look (blur and refraction in view pixels; whether the edge
+    /// catches the light).
     /// </summary>
     public void Update(nint monitor, PointInt32 origin, RectInt32 pill, Vector2 size, float radius, bool squareTop,
-        float blur, float refraction, Windows.UI.Color tint, bool shine)
+        float blur, float refraction, Windows.UI.Color tint, bool shine, ShineStyle style)
     {
         if (_disposed || Failed) return;
         try
@@ -160,9 +198,13 @@ sealed class LiquidGlass : IDisposable
             _shape.CornerRadius = new Vector2(radius, radius);
             float scale = size.X > 0 ? pill.Width / size.X : 1;
             _look = new Look(new RectInt32(pill.X - origin.X, pill.Y - origin.Y, pill.Width, pill.Height), radius * scale, squareTop,
-                blur * scale, refraction * scale, tint, shine ? 1.5f * scale : 0);
+                blur * scale, refraction * scale, tint, shine ? 1.5f * scale : 0, style);
             if (monitor != _monitor) Start(monitor);
-            else if (_screen != null) Draw(_screen, _look);
+            else if (_screen != null)
+            {
+                Draw(_screen, _look);
+                Appear();
+            }
         }
         catch (Exception e) { Fail(e); }
     }
@@ -205,16 +247,17 @@ sealed class LiquidGlass : IDisposable
         _session = _pool.CreateCaptureSession(_item);
         _session.IsCursorCaptureEnabled = false;
         Borderless(_session);
+        try { RateLimited = LimitRate(_session, FramesPerSecond); }
+        catch (Exception) { RateLimited = false; }
         _startGeneration = generation;
         _startStep = 0;
         Begin();
     }
 
     /// <summary>
-    /// Starts the session capturing, step by step. Windows leaves a window out of capture only once it's
-    /// on screen: the island starts its glass just before it shows, and an exclusion set then is ignored
-    /// (the glass then captures itself over and over, into solid colour). So nothing starts until the
-    /// island has been showing a moment.
+    /// Starts the session capturing, step by step. Windows leaves a window out of capture only once
+    /// it's on screen, and an exclusion set before that is ignored (the glass would capture itself
+    /// into solid colour). So nothing starts until the island has been showing a moment.
     /// </summary>
     void Begin()
     {
@@ -236,8 +279,8 @@ sealed class LiquidGlass : IDisposable
         int build = Environment.OSVersion.Version.Build;
         if (DisplayCaptureExclusion.IsAvailable(native, build))
         {
-            // Each frame says which capture configuration it was made with: until frames come from the
-            // one that leaves the island out, they're left unused. Other recorders see the island throughout.
+            // Each frame says which capture configuration it made with; frames from before the one
+            // that leaves the island out are left unused.
             _session.StartCapture();
             _startStep = 3;
             if (DisplayCaptureExclusion.TryExcludeWindow(native, _window, build, out ulong iteration))
@@ -247,14 +290,14 @@ sealed class LiquidGlass : IDisposable
                 SessionExclusion = true;
                 return;
             }
-            // Capturing already: leave the island out of every capture, and frames unused until it's out.
+            // Capturing already: leave the island out of every capture, and skip frames until it's out.
             SetCaptureAffinity(Frozen ? Win32.WDA_NONE : Win32.WDA_EXCLUDEFROMCAPTURE);
             _skipUntil = Environment.TickCount64 + 400;
             return;
         }
-        // Older Windows: the island goes out of every capture. Windows takes a moment to do that, and
-        // capturing at once could make the first frame show the island inside its own glass (on a still
-        // screen that frame stays: no new ones come until something changes), so capturing starts a moment later.
+        // Older Windows: the island goes out of every capture, which takes a moment. Capturing at
+        // once could put the island inside its own glass, and on a still screen that frame stays
+        // (no new ones until something changes), so capturing starts later.
         SetCaptureAffinity(Frozen ? Win32.WDA_NONE : Win32.WDA_EXCLUDEFROMCAPTURE);
         _startStep = 2;
         Next(400);
@@ -267,7 +310,7 @@ sealed class LiquidGlass : IDisposable
         _startDelay.Start();
     }
 
-    /// <summary>The legacy screenshot workaround is unnecessary with session-only exclusion.</summary>
+    /// <summary>Lets screenshots see the island by lifting its capture exclusion; not needed with session exclusion.</summary>
     public bool ShowInScreenshots()
     {
         if (_disposed || _session == null || SessionExclusion || Failed) return false;
@@ -293,8 +336,8 @@ sealed class LiquidGlass : IDisposable
 
     void SetCaptureAffinity(uint affinity)
     {
-        // Never run live capture without either exclusion mechanism: that would feed the
-        // island back into itself. Failure takes the existing clear-glass fallback instead.
+        // Never run live capture without an exclusion mechanism: the island would feed back into
+        // itself. Failure takes the clear-glass fallback instead.
         if (_disposed) return;
         if (!Win32.SetWindowDisplayAffinity(_window, affinity))
             throw new InvalidOperationException("Could not set the island's capture affinity.");
@@ -344,15 +387,20 @@ sealed class LiquidGlass : IDisposable
             _screen = CanvasBitmap.CreateFromDirect3D11Surface(_device, newest.Surface);
             _frame = newest;
             newest = null; // owned by _frame now
-            if (_look != null) Draw(_screen, _look);
+            _frames++;
+            if (_look == null) return;
+            if (Unchanged(_screen, _look)) { _same++; return; }
+            Draw(_screen, _look);
+            Appear();
         }
         catch (Exception e) { Fail(e); }
         finally { DisposeOwned(ref newest); }
     }
 
     /// <summary>
-    /// Whether a frame was made once the session's exclusion took effect: its capture configuration says
-    /// so. Where frames don't say, the first moment after setting it is left unused instead.
+    /// Whether a frame was made once the session's exclusion took effect, by its capture
+    /// configuration; where frames don't say, the first moment after setting it is left unused
+    /// instead.
     /// </summary>
     bool LeavesIslandOut(Direct3D11CaptureFrame frame)
     {
@@ -362,14 +410,118 @@ sealed class LiquidGlass : IDisposable
         return after;
     }
 
-    /// <summary>Diagnostics: how the island is left out of the glass's capture.</summary>
     internal string ExclusionDetail => SessionExclusion
-        ? $"from capture configuration {_excludedFrom}; newest frame's {(_newestIteration is { } i ? i.ToString() : "unknown")}; {_earlyFrames} earlier frame(s) unused"
+        ? $"excluded from configuration {_excludedFrom}, newest frame from configuration {(_newestIteration is { } i ? i.ToString() : "unknown")}"
+            + $", {_earlyFrames} earlier frame{(_earlyFrames == 1 ? "" : "s")} skipped"
         : "";
+
+    internal string FrameDetail =>
+        $"{_frames} frames, {_draws} drawn, {_same} unchanged ({(_reading == 0 ? "read directly" : _reading == 1 ? "read through a copy" : "can't be read")})"
+        + $", {(RateLimited ? $"at most {FramesPerSecond} a second" : "no rate limit")}";
+
+    /// <summary>
+    /// Whether the screen behind the island is as it was when the glass last drew from it: the
+    /// island's part of the frame plus as far around it as the blur and bend reach, compared byte
+    /// for byte. Reading that back costs far less than drawing, and it stops the glass redrawing
+    /// itself (each redraw brings a new frame).
+    /// </summary>
+    bool Unchanged(CanvasBitmap screen, Look look)
+    {
+        int margin = (int)Math.Ceiling(look.Refraction + 3 * look.Blur) + 2;
+        var size = screen.SizeInPixels;
+        int left = Math.Max(look.Source.X - margin, 0), top = Math.Max(look.Source.Y - margin, 0);
+        int right = Math.Min(look.Source.X + look.Source.Width + margin, (int)size.Width);
+        int bottom = Math.Min(look.Source.Y + look.Source.Height + margin, (int)size.Height);
+        int width = right - left, height = bottom - top;
+        if (width <= 0 || height <= 0) return false;
+        int length = width * height * 4;
+        if (_seeing.Length < length) _seeing = new byte[length + length / 4];
+        if (!Read(screen, _seeing, length, left, top, width, height)) return false;
+        bool same = _hasSeen && left == _seenFrom.X && top == _seenFrom.Y && width == _seenFrom.Width && height == _seenFrom.Height
+            && _seeing.AsSpan(0, length).SequenceEqual(_seen.AsSpan(0, length));
+        (_seen, _seeing) = (_seeing, _seen);
+        _seenFrom = new RectInt32(left, top, width, height);
+        _hasSeen = true;
+        return same;
+    }
+
+    /// <summary>
+    /// Reads part of a frame into <paramref name="into"/>, directly or else through a copy. If
+    /// neither works the check is given up (and logged) and every frame is drawn.
+    /// </summary>
+    bool Read(CanvasBitmap screen, byte[] into, int length, int left, int top, int width, int height)
+    {
+        var buffer = System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsBuffer(into, 0, length);
+        if (_reading == 0)
+        {
+            try
+            {
+                screen.GetPixelBytes(buffer, left, top, width, height);
+                return true;
+            }
+            catch (Exception e)
+            {
+                _reading = 1;
+                Log.Write("liquid glass: a frame can't be read directly, trying a copy: " + e.Message);
+            }
+        }
+        if (_reading == 1)
+        {
+            try
+            {
+                if (_copy == null || _copy.SizeInPixels.Width < width || _copy.SizeInPixels.Height < height)
+                {
+                    DisposeOwned(ref _copy);
+                    // Room to grow, so a pill that's widening doesn't need a new one every frame.
+                    _copy = new CanvasRenderTarget(_device, width + width / 4, height + height / 4, 96);
+                }
+                _copy.CopyPixelsFromBitmap(screen, 0, 0, left, top, width, height);
+                _copy.GetPixelBytes(buffer, 0, 0, width, height);
+                return true;
+            }
+            catch (Exception e)
+            {
+                _reading = 2;
+                Log.Write("liquid glass: a frame can't be read through a copy either; every frame is drawn: " + e.Message);
+            }
+        }
+        return false;
+    }
+
+    /// <summary>Fades the glass in with its first frame (see <see cref="Begin"/>) rather than all at once under lyrics that are already there.</summary>
+    void Appear()
+    {
+        if (_appeared) return;
+        _appeared = true;
+        var compositor = _visual.Compositor;
+        var fade = compositor.CreateScalarKeyFrameAnimation();
+        fade.InsertKeyFrame(1, 1, compositor.CreateCubicBezierEasingFunction(new Vector2(0.2f, 0), new Vector2(0.2f, 1)));
+        fade.Duration = TimeSpan.FromSeconds(0.22);
+        var batch = compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
+        _visual.StartAnimation("Opacity", fade);
+        batch.End();
+        batch.Completed += (_, _) =>
+        {
+            try
+            {
+                if (_disposed) return;
+                _visual.Opacity = 1;
+                Settled = true;
+                if (_sinceEnded)
+                {
+                    _sinceEnded = _erredSinceEnded = false;
+                    Log.Write("liquid glass: following the screen again");
+                }
+                _changed();
+            }
+            catch (Exception) { }
+        };
+    }
 
     /// <summary>The part of the screen behind the island: bent at the edges, blurred, a little more vivid, tinted, lit.</summary>
     void Draw(CanvasBitmap screen, Look look)
     {
+        _draws++;
         int width = look.Source.Width, height = look.Source.Height;
         if (width <= 0 || height <= 0) return;
         if (_surface.Size.Width != width || _surface.Size.Height != height)
@@ -395,7 +547,7 @@ sealed class LiquidGlass : IDisposable
         session.Clear(Microsoft.UI.Colors.Transparent);
         session.DrawImage(_vivid);
         session.FillRectangle(0, 0, width, height, look.Tint);
-        if (look.Shine > 0) session.DrawImage(Light(width, height, look.Radius, look.SquareTop, look.Shine));
+        if (look.Shine > 0) session.DrawImage(Light(width, height, look.Radius, look.SquareTop, look.Shine, look.Style));
     }
 
     /// <summary>The lens map (see <see cref="LiquidLens"/>), made again only when the island's shape changes.</summary>
@@ -409,14 +561,14 @@ sealed class LiquidGlass : IDisposable
         return _lens;
     }
 
-    /// <summary>The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape changes.</summary>
-    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float rim)
+    /// <summary>The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape or the 3D look changes.</summary>
+    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float rim, ShineStyle style)
     {
-        if (_light != null && _lightFor == (width, height, radius, squareTop, rim)) return _light;
+        if (_light != null && _lightFor == (width, height, radius, squareTop, rim, style)) return _light;
         DisposeOwned(ref _light);
-        _light = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Light(width, height, radius, squareTop, rim), width, height,
+        _light = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Light(width, height, radius, squareTop, rim, style), width, height,
             Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
-        _lightFor = (width, height, radius, squareTop, rim);
+        _lightFor = (width, height, radius, squareTop, rim, style);
         return _light;
     }
 
@@ -424,9 +576,14 @@ sealed class LiquidGlass : IDisposable
     {
         if (_disposed || Failed) return;
         Failed = true;
-        try { if (e != null) System.Diagnostics.Debug.WriteLine("liquid glass: " + e); } catch (Exception) { }
+        // With no exception, Windows ended the capture: the screen went away, or went to sleep.
+        Ended = e == null;
+        if (!_sinceEnded || e != null && !_erredSinceEnded)
+            try { Log.Write(e != null ? "liquid glass: " + e : "liquid glass: the screen's capture ended"); } catch (Exception) { }
+        if (e != null && _sinceEnded) _erredSinceEnded = true;
+        if (Ended) _sinceEnded = true;
         try { Stop(); } catch (Exception) { }
-        try { _failed(); } catch (Exception) { }
+        try { _changed(); } catch (Exception) { }
     }
 
     void Stop()
@@ -439,6 +596,8 @@ sealed class LiquidGlass : IDisposable
         _excludedFrom = 0;
         _earlyFrames = 0;
         _newestIteration = null;
+        _hasSeen = false;
+        RateLimited = false;
         Frozen = false; // the old session's screenshot timer is retired too
         var item = _item;
         var closed = _itemClosed;
@@ -490,6 +649,7 @@ sealed class LiquidGlass : IDisposable
         DisposeOwned(ref _behind);
         DisposeOwned(ref _lens);
         DisposeOwned(ref _light);
+        DisposeOwned(ref _copy);
         DisposeOwned(ref _surface);
         DisposeOwned(ref _graphics);
     }
@@ -521,7 +681,7 @@ sealed class LiquidGlass : IDisposable
 
     /// <summary>
     /// Asks Windows 11 not to outline the screen while capturing. The property is newer than the
-    /// Windows SDK Lyricod builds against, so it's set through its COM interface where Windows has it.
+    /// SDK Lyricod builds against, so it's set through its COM interface where Windows has it.
     /// </summary>
     static unsafe void Borderless(GraphicsCaptureSession session)
     {
@@ -535,5 +695,25 @@ sealed class LiquidGlass : IDisposable
             put(session3, 0);
         }
         finally { Marshal.Release(session3); }
+    }
+
+    /// <summary>
+    /// Asks Windows for frames no more often than <paramref name="perSecond"/> times a second, so a
+    /// screen that changes all the time (a video, a game) costs only that much. Newer than the SDK,
+    /// like the border (24H2).
+    /// </summary>
+    static unsafe bool LimitRate(GraphicsCaptureSession session, int perSecond)
+    {
+        if (perSecond <= 0) return false;
+        var iid = new Guid("67C0EA62-1F85-5061-925A-239BE0AC09CB"); // IGraphicsCaptureSession5
+        nint unknown = ((IWinRTObject)session).NativeObject.ThisPtr;
+        if (Marshal.QueryInterface(unknown, in iid, out nint session5) != 0) return false;
+        try
+        {
+            // IUnknown (3) and IInspectable (3), then get_MinUpdateInterval, put_MinUpdateInterval (a TimeSpan: 100 ns units).
+            var put = (delegate* unmanaged[Stdcall]<nint, long, int>)(*(void***)session5)[7];
+            return put(session5, TimeSpan.FromSeconds(1.0 / perSecond).Ticks) >= 0;
+        }
+        finally { Marshal.Release(session5); }
     }
 }

@@ -16,7 +16,6 @@ public sealed partial class LyricsProvider
 
     record QqSong(string Mid, int? Id, string Title, List<string> Artists, string Album, double Duration, string AlbumMid);
 
-    /// <summary>A QQ Music song's details, found by title and artist.</summary>
     public sealed record QqSongDetails(string Mid, int? Id, string Album, string AlbumMid, double Duration);
 
     /// <summary>
@@ -33,10 +32,7 @@ public sealed partial class LyricsProvider
             .OrderByDescending(c => c.Score)];
     }
 
-    /// <summary>
-    /// Looks a song up on QQ Music when only its title and artist are known: its exact
-    /// recording, album and length.
-    /// </summary>
+    /// <summary>Looks a song up on QQ Music by title and artist for its exact recording, album and length.</summary>
     public async Task<QqSongDetails?> QqLookup(string title, string artist, CancellationToken ct = default)
     {
         var songs = await QqSearch($"{title} {artist}", ct);
@@ -127,8 +123,7 @@ public sealed partial class LyricsProvider
         return text.Length == 0 ? null : text;
     }
 
-    /// <param name="minScore">How well the best search result must match: 3 takes a likely
-    /// match, 7 needs title, artist and length to agree.</param>
+    /// <param name="minScore">As in <c>FromNetease</c>.</param>
     async Task<RawLyrics?> FromQq(Track track, bool requireTitle, CancellationToken ct, double minScore = 3, LyricsSearch? search = null)
     {
         search ??= new LyricsSearch(isMusicPlayer: true);
@@ -167,10 +162,7 @@ public sealed partial class LyricsProvider
         return lrc;
     }
 
-    /// <summary>
-    /// QQ Music's own lyrics for a track, whatever the display source is: when following
-    /// QQ Music, its highlighted line is matched against these.
-    /// </summary>
+    /// <summary>QQ Music's own lyrics for a track, whatever the display source: its highlighted line is matched against these.</summary>
     public async Task<Lyrics?> QqReference(Track track, bool ignoreCache = false, CancellationToken ct = default)
     {
         // Keyed by QQ's song id when known, so each recording gets its own lyrics.
@@ -178,8 +170,8 @@ public sealed partial class LyricsProvider
         var file = CacheFile("qq3-" + key);
         if (!ignoreCache && ReadCache(file) is { } raw && raw.Parse() is { } parsed)
         {
-            // Saved without word-by-word lyrics: the download may just have failed (QQ throttles),
-            // so try again, at most once a day (the file's date marks the last try).
+            // Saved without word-by-word lyrics: the download may just have failed (QQ throttles), so
+            // try again at most once a day (the file's date marks the last try).
             var saved = File.GetLastWriteTimeUtc(file);
             if (raw.Qrc == null && raw.SongRef?.QqId is { } qid && DateTime.UtcNow - saved > TimeSpan.FromHours(24))
             {

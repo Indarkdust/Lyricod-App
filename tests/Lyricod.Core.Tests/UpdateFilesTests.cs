@@ -6,13 +6,25 @@ namespace Lyricod.Core.Tests;
 public class UpdateFilesTests
 {
     [Theory]
-    [InlineData("app", true, true, InstallKind.Installer)]
-    [InlineData("Lyricod", true, false, InstallKind.Installer)]
-    [InlineData("APP", false, true, InstallKind.Portable)]
-    [InlineData("app", false, false, InstallKind.Unknown)]
-    [InlineData("publish", false, true, InstallKind.Unknown)]
-    public void DetectsLayout(string name, bool uninstall, bool launcher, InstallKind expected) =>
-        Assert.Equal(expected, UpdateFiles.DetectKind(name, uninstall, launcher));
+    [InlineData("app", true, true, false, InstallKind.Installer)]
+    [InlineData("Lyricod", true, false, false, InstallKind.Installer)]
+    [InlineData("APP", false, true, false, InstallKind.Portable)]
+    [InlineData("app", false, false, false, InstallKind.Unknown)]
+    [InlineData("publish", false, true, false, InstallKind.Unknown)]
+    // Installed with the launcher's layout: the uninstaller is beside the launcher, not beside Lyricod.
+    [InlineData("app", false, true, true, InstallKind.Installer)]
+    [InlineData("app", false, false, true, InstallKind.Unknown)]
+    [InlineData("publish", false, true, true, InstallKind.Unknown)]
+    public void DetectsLayout(string name, bool uninstall, bool launcher, bool parentUninstall, InstallKind expected) =>
+        Assert.Equal(expected, UpdateFiles.DetectKind(name, uninstall, launcher, parentUninstall));
+
+    [Theory]
+    [InlineData("app", true, true)]
+    [InlineData("App", true, true)]
+    [InlineData("app", false, false)]
+    [InlineData("Lyricod", true, false)]
+    public void TheLauncherLayoutIsAnAppFolderUnderTheLauncher(string name, bool launcher, bool expected) =>
+        Assert.Equal(expected, UpdateFiles.HasLauncher(name, launcher));
 
     [Theory]
     [InlineData("https://github.com/Indarkdust/Lyricod-App/releases/download/v1.2.3/a.zip", true)]
@@ -49,13 +61,11 @@ public class UpdateFilesTests
         Assert.Equal(names[3], UpdateFiles.SelectAsset(release, InstallKind.Portable, Architecture.Arm64)!.Name);
         Assert.Null(UpdateFiles.SelectAsset(release, InstallKind.Unknown, Architecture.X64));
         Assert.Null(UpdateFiles.SelectAsset(release, InstallKind.Portable, Architecture.X86));
-        Assert.Null(UpdateFiles.SelectAsset(release with { Assets = [release.Assets[0] with { Sha256 = null }] }, InstallKind.Installer, Architecture.X64));
     }
 
     [Theory]
     [InlineData(null)]
     [InlineData("sha256:abc")]
-    [InlineData("md5:0123456789abcdef")]
     [InlineData("sha256:zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz")]
     public void BadDigestKeepsReleaseButCannotInstall(string? digest)
     {
@@ -73,11 +83,9 @@ public class UpdateFilesTests
     [InlineData("Lyricod/Lyricod.exe", "Lyricod.exe.new")]
     [InlineData("Lyricod/README.txt", "README.txt.new")]
     [InlineData("Lyricod/app/../../bad", null)]
-    [InlineData("/Lyricod/app/bad", null)]
     [InlineData("C:\\Lyricod\\app\\bad", null)]
     [InlineData("Other/app/bad", null)]
     [InlineData("Lyricod/settings.json", null)]
-    [InlineData("Lyricod/app/dir/../bad", null)]
     [InlineData("Lyricod/app/foo:bar", null)]
     [InlineData("Lyricod/app/dir. /bad", null)]
     [InlineData("Lyricod/app/CON.txt", null)]

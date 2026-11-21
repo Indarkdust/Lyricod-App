@@ -1,4 +1,5 @@
 using Lyricod.Core;
+using Lyricod.Core.Fonts;
 using Lyricod.Platform;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,7 +12,7 @@ public sealed partial class SettingsWindow
 {
     void General()
     {
-        var startup = new ToggleSwitch { IsOn = Startup.IsEnabled, OnContent = L.Get("ToggleOn"), OffContent = L.Get("ToggleOff") };
+        var startup = Switch(Startup.IsEnabled);
         startup.Toggled += (_, _) =>
         {
             if (startup.IsOn != Startup.IsEnabled && !Startup.Set(startup.IsOn)) startup.IsOn = Startup.IsEnabled;
@@ -22,11 +23,13 @@ public sealed partial class SettingsWindow
         // Each language in its own name, so it can be found whatever is showing.
         Card(L.Get("LanguageLabel"), null, Choice(nameof(Settings.Language), () => _settings.Language, v => _settings.Language = v,
             ("", L.Get("LanguageSystem")), ("en-US", "English"), ("zh-Hans", "简体中文")));
+        // A new language, and a new font on Lyricod's own text, show after a restart.
         var restart = new Button { Content = L.Get("RestartNow"), Style = Style("AccentButtonStyle") };
         restart.Click += (_, _) => Restart?.Invoke();
         var restartCard = new Border { Style = Style("Card"), Child = RestartRow(restart) };
-        void SyncRestart() => restartCard.Visibility = _settings.Language != L.Language ? Visibility.Visible : Visibility.Collapsed;
+        void SyncRestart() => restartCard.Visibility = _settings.Language != L.Language || Fonts.AppNeedsRestart ? Visibility.Visible : Visibility.Collapsed;
         Watch(nameof(Settings.Language), SyncRestart);
+        FontPicker(SyncRestart);
         SyncRestart();
         Page.Children.Add(restartCard);
 
@@ -61,7 +64,7 @@ public sealed partial class SettingsWindow
         Heading(L.Get("AppearanceHeading"));
         Card(L.Get("TextSize"), null, TextSize());
         Card(L.Get("SungColour"), null, Colours());
-        Card(L.Get("LayoutLabel"), L.Get("LayoutDetail"), Layout(nameof(Settings.SecondLine), () => _settings.SecondLine, v => _settings.SecondLine = v));
+        Card(L.Get("LayoutLabel"), L.Get("LayoutDetail"), Layout(nameof(Settings.SecondLine), () => _settings.SecondLine, v => _settings.SecondLine = v, rows: 2));
     }
 
     void Island()
@@ -122,7 +125,7 @@ public sealed partial class SettingsWindow
             () => _settings.IslandHideWhenPaused, v => _settings.IslandHideWhenPaused = v));
 
         Heading(L.Get("TextHeading"));
-        Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v));
+        Card(L.Get("LayoutLabel"), null, Layout(nameof(Settings.IslandSecondLine), () => _settings.IslandSecondLine, v => _settings.IslandSecondLine = v, rows: 1));
         Fold(L.Get("FoldText"), null, () =>
         {
             Card(L.Get("IslandMaxWidth"), L.Get("IslandMaxWidthDetail"), Choice(nameof(Settings.IslandMaxTextWidth),
@@ -137,7 +140,9 @@ public sealed partial class SettingsWindow
         });
     }
 
-    /// <summary>Lyricod Glass's settings, in their fold on the island page.</summary>
+    /// <summary>The 3D effect's choices, in the list's order.</summary>
+    enum Shine { Off, Bright, Soft }
+
     void GlassSettings()
     {
         Card(L.Get("GlassTransparency"), null,
@@ -152,8 +157,29 @@ public sealed partial class SettingsWindow
         {
             Content = Percent(nameof(Settings.LiquidRefraction), () => _settings.LiquidRefraction, v => _settings.LiquidRefraction = v, 0, 100),
         };
-        // The 3D effect is the liquid glass's: it lights the edge its lens bends.
-        var shine = new ContentControl { Content = Toggle(nameof(Settings.GlassShine), () => _settings.GlassShine, v => _settings.GlassShine = v) };
+        // The 3D effect is the liquid glass's: it lights the edge its lens bends. Off, or on in one of two looks.
+        Shine ShineNow() => !_settings.GlassShine ? Shine.Off : _settings.GlassShineStyle == ShineStyle.Soft ? Shine.Soft : Shine.Bright;
+        ComboBox? shineBox = null;
+        TextBlock? shineDetail = null;
+        // Turning it on sets two settings; the list waits for both, or it would show Off for a moment.
+        bool setting = false;
+        void SyncShine()
+        {
+            if (setting || shineBox == null || shineDetail == null) return;
+            shineBox.SelectedIndex = (int)ShineNow();
+            shineDetail.Text = L.Get("GlassShine" + ShineNow() + "Detail");
+        }
+        void SetShine(Shine v)
+        {
+            setting = true;
+            if (v != Shine.Off) _settings.GlassShineStyle = v == Shine.Soft ? ShineStyle.Soft : ShineStyle.Bright;
+            _settings.GlassShine = v != Shine.Off;
+            setting = false;
+            SyncShine();
+        }
+        shineBox = Choice(nameof(Settings.GlassShine), ShineNow, SetShine,
+            (Shine.Off, L.Get("GlassShineOff")), (Shine.Bright, L.Get("GlassShineBright")), (Shine.Soft, L.Get("GlassShineSoft")));
+        var shine = new ContentControl { Content = shineBox };
         var screenshot = new ContentControl { Content = ScreenshotButton() };
         void SyncEffect()
         {
@@ -176,7 +202,10 @@ public sealed partial class SettingsWindow
         SyncEffect();
         Card(L.Get("LiquidBlur"), null, liquidBlur);
         Card(L.Get("LiquidRefraction"), null, refraction);
-        Card(L.Get("GlassShine"), null, shine);
+        shineDetail = Card(L.Get("GlassShine"), "", shine);
+        Watch(nameof(Settings.GlassShine), SyncShine);
+        Watch(nameof(Settings.GlassShineStyle), SyncShine);
+        SyncShine();
         Card(L.Get("LiquidScreenshot"), L.Get("LiquidScreenshotDetail"), screenshot);
     }
 
@@ -214,8 +243,14 @@ public sealed partial class SettingsWindow
         return button;
     }
 
-    ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set) => Choice(property, get, set,
-        (SungEffect.Sweep, L.Get("EffectSweep")), (SungEffect.Glow, L.Get("EffectGlow")), (SungEffect.Line, L.Get("EffectLine")));
+    /// <param name="lift">Whether words that rise as they're sung are among the choices: that's the lyrics window's, where the text is large enough to show it.</param>
+    ComboBox Effect(string property, Func<SungEffect> get, Action<SungEffect> set, bool lift = false)
+    {
+        List<(SungEffect, string)> options = [(SungEffect.Sweep, L.Get("EffectSweep")), (SungEffect.Glow, L.Get("EffectGlow"))];
+        if (lift) options.Add((SungEffect.Lift, L.Get("EffectLift")));
+        options.Add((SungEffect.Line, L.Get("EffectLine")));
+        return Choice(property, get, set, [.. options]);
+    }
 
     /// <summary>"Lyricod needs to restart to change language", and the button.</summary>
     Grid RestartRow(Button restart)
@@ -223,7 +258,7 @@ public sealed partial class SettingsWindow
         var grid = new Grid { ColumnSpacing = 24 };
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        grid.Children.Add(new TextBlock { Text = L.Get("RestartToChangeLanguage"), Style = Style("Detail"), VerticalAlignment = VerticalAlignment.Center });
+        grid.Children.Add(new TextBlock { Text = L.Get("RestartToApply"), Style = Style("Detail"), VerticalAlignment = VerticalAlignment.Center });
         Grid.SetColumn(restart, 1);
         restart.VerticalAlignment = VerticalAlignment.Center;
         grid.Children.Add(restart);
@@ -248,7 +283,7 @@ public sealed partial class SettingsWindow
         Card(L.Get("ShowPronunciation"), null, Toggle(nameof(Settings.ShowPronunciation), () => _settings.ShowPronunciation, v => _settings.ShowPronunciation = v));
         Card(L.Get("CentreLines"), null, Toggle(nameof(Settings.LyricsCentered), () => _settings.LyricsCentered, v => _settings.LyricsCentered = v));
         Card(L.Get("BlurDistant"), null, Toggle(nameof(Settings.LyricsBlurDistant), () => _settings.LyricsBlurDistant, v => _settings.LyricsBlurDistant = v));
-        Card(L.Get("SungLyrics"), null, Effect(nameof(Settings.LyricsEffect), () => _settings.LyricsEffect, v => _settings.LyricsEffect = v));
+        Card(L.Get("SungLyrics"), null, Effect(nameof(Settings.LyricsEffect), () => _settings.LyricsEffect, v => _settings.LyricsEffect = v, lift: true));
         Card(L.Get("AutoHideControls"), L.Get("AutoHideControlsDetail"), Toggle(nameof(Settings.LyricsAutoHide), () => _settings.LyricsAutoHide, v => _settings.LyricsAutoHide = v));
     }
 
@@ -263,7 +298,6 @@ public sealed partial class SettingsWindow
         Note(L.Get("TimingNote"));
 
         Heading(L.Get("DisplayHeading"));
-        FontPicker();
         var languages = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 16 };
         foreach (var (language, key) in new[] { (LyricLanguage.Japanese, "Japanese"), (LyricLanguage.Korean, "Korean"), (LyricLanguage.Chinese, "Chinese") })
         {
@@ -351,9 +385,9 @@ public sealed partial class SettingsWindow
         {
             FontFamily = new FontFamily("Consolas"), FontSize = 12,
             TextWrapping = TextWrapping.Wrap, IsTextSelectionEnabled = true,
-            Visibility = Visibility.Collapsed, // hidden until asked for
+            Visibility = Visibility.Collapsed,
         };
-        void RefreshDiagnostics() => diagnostics.Text = _model.DiagnosticsText + "\nGlass capture: " + ((App)Application.Current).GlassCaptureDiagnostics;
+        void RefreshDiagnostics() => diagnostics.Text = _model.DiagnosticsText;
         _songWatchers.Add(RefreshDiagnostics);
         Watch(nameof(Settings.Offset), RefreshDiagnostics);
         RefreshDiagnostics();
@@ -374,6 +408,14 @@ public sealed partial class SettingsWindow
         };
         Group(new TextBlock { Text = L.Get("DiagnosticsDetail"), Style = Style("Detail"), TextWrapping = TextWrapping.Wrap },
               Row(show, copy), diagnostics);
+        // What's still being tried out, in one place; open when any of it is on. The details above say which are.
+        Fold(L.Get("FoldExperimental"), L.Get("FoldExperimentalDetail"), () =>
+        {
+            Card(L.Get("RomajiByWord"), L.Get("RomajiByWordDetail"), Toggle(nameof(Settings.RomajiByWord), () => _settings.RomajiByWord, v => _settings.RomajiByWord = v));
+            Card(L.Get("SmoothSweep"), L.Get("SmoothSweepDetail"), Toggle(nameof(Settings.SmoothSweep), () => _settings.SmoothSweep, v => _settings.SmoothSweep = v));
+        }).IsExpanded = _settings.RomajiByWord || _settings.SmoothSweep;
+        Watch(nameof(Settings.RomajiByWord), RefreshDiagnostics);
+        Watch(nameof(Settings.SmoothSweep), RefreshDiagnostics);
 
         Heading(L.Get("LyricsHeader"));
         Group(Entry(L.Get("NetEase"), L.Get("SourceDetail"), "https://music.163.com"),
@@ -389,6 +431,10 @@ public sealed partial class SettingsWindow
         _songWatchers.Add(ShowFontLicence);
         ShowFontLicence();
         Group(Entry(L.Get("MiSansName"), L.Get("MiSansDetail"), "https://hyperos.mi.com/font/"), licence);
+        // WenKai's licence ships with Lyricod, so it's there to read whether or not the font is.
+        var wenKaiLicence = new HyperlinkButton { Content = L.Get("FontViewLicence"), Padding = new Thickness(0, 4, 0, 0) };
+        wenKaiLicence.Click += (_, _) => Open(Path.Combine(AppContext.BaseDirectory, "licenses", WenKaiFont.LicenceFileName));
+        Group(Entry(L.Get("WenKaiName"), L.Get("WenKaiDetail"), "https://github.com/lxgw/LxgwWenKai-Lite"), wenKaiLicence);
 
         Heading(L.Get("BuiltWith"));
         Group(Entry("WinUIEx by Morten Nielsen", L.Get("WinUIExDetail"), "https://github.com/dotMorten/WinUIEx"),

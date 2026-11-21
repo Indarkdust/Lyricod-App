@@ -15,13 +15,11 @@ using Microsoft.UI.Xaml.Shapes;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Island, like the macOS app's: a black pill at the top centre of the screen with the
-/// cover, the line being sung (sweeping in the album's colour) and six bars that move to the
-/// player's sound while music plays.
-/// The pill fits the current piece and its second row. While
-/// the pointer is over it, it takes clicks and (by default) grows into a mini player; otherwise
-/// it's click-through. The floating style (IslandWindow.Floating.cs) is rounded all round and sits
-/// wherever it was dragged.
+/// Lyricod Island: a black pill at the top centre of the screen with the cover, the line being sung
+/// (sweeping in the album's colour) and six bars that move to the player's sound while music plays.
+/// The pill fits the current piece and its second row. While the pointer is over it, it takes
+/// clicks and (by default) grows into a mini player; otherwise it's click-through. The floating
+/// style (IslandWindow.Floating.cs) is rounded all round and sits wherever it was dragged.
 /// </summary>
 public sealed partial class IslandWindow : Window
 {
@@ -33,7 +31,7 @@ public sealed partial class IslandWindow : Window
         _ => 1,
     };
     // The cover sits as far from the side as from the bottom, and its corner is the island's corner
-    // minus that gap, so the two corners share a centre (as on the Mac: 12 and 6).
+    // minus that gap, so the two corners share a centre (12 and 6).
     const double CoverInset = 6, CoverSize = 22, CoverRadius = 6, PillRadius = CoverInset + CoverRadius;
     double RowHeight => (CoverSize + 2 * CoverInset) * LayoutScale;
     double SecondHeight => 18 * LayoutScale;
@@ -52,6 +50,10 @@ public sealed partial class IslandWindow : Window
     readonly Settings _settings;
     readonly Overlay _overlay;
     readonly SweepPainter _sweep;
+    /// <summary>The same over the row under the lyric, when that's a timed pronunciation.</summary>
+    readonly SweepPainter _secondSweep;
+    /// <summary>That pronunciation as a line to light (null for any other row).</summary>
+    LyricLine? _secondLine;
     readonly TransportButtons _transport;
     readonly ProgressLine _progress;
     readonly DispatcherQueueTimer _pieceTimer, _pointerTimer, _progressTimer, _barTimer, _revealTimer, _pauseTimer;
@@ -66,11 +68,13 @@ public sealed partial class IslandWindow : Window
     List<LyricLine> _pieces = [];
     LyricLine? _piece;
     double _pieceWidth;
-    double _textWidth = 80, _secondWidth, _secondOpacity = 0.6;
+    double _textWidth = 80, _secondWidth;
     double _widthTarget = double.NaN, _heightTarget = double.NaN;
     Storyboard? _widthAnimation, _heightAnimation, _lineAnimation;
     bool _waitingForWidth, _widthAnimating, _transitionPending;
     bool _shown, _hovered, _expanded, _barsRunning, _closed;
+    /// <summary>The mini player is opening or closing: the pill's height is on its way.</summary>
+    bool _playerMoving;
     IslandHover _hoverAction;
     /// <summary>Where the pointer has been outside the island lately (screen pixels, steady-clock seconds).</summary>
     readonly List<(double X, double Y, double T)> _trail = [];
@@ -89,6 +93,7 @@ public sealed partial class IslandWindow : Window
         _overlay = new Overlay(this);
         _overlay.SetClickThrough(true);
         _sweep = new SweepPainter(Lyric, LyricSweep) { Effect = settings.IslandEffect };
+        _secondSweep = new SweepPainter(SecondText, SecondSweep) { Effect = SecondEffect };
         _transport = new TransportButtons(model, 13);
         TransportHost.Children.Add(_transport);
         _progress = new ProgressLine(model, hoverPreview: true);
@@ -97,7 +102,7 @@ public sealed partial class IslandWindow : Window
         SettingsButton.Click += (_, _) => openSettings();
         ToolTipService.SetToolTip(LyricsButton, L.Get("LyricsWindowTitle"));
         ToolTipService.SetToolTip(SettingsButton, L.Get("SettingsTitle"));
-        // One bar per band of the meter, sized as on the Mac (2 wide, 1.5 apart, 3 to 14 tall).
+        // One bar per band of the meter, 2 wide, 1.5 apart, 3 to 14 tall.
         for (int i = 0; i < AudioMeter.BandCount; i++)
         {
             var bar = new Rectangle { Width = 2, Height = BarHeight, RadiusX = 1, RadiusY = 1, Fill = new SolidColorBrush(Colors.White) };
@@ -111,16 +116,16 @@ public sealed partial class IslandWindow : Window
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
-        _pieceTimer.Tick += (_, _) => { try { Refresh(OverlayContentChanges.Clock); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _pieceTimer.Tick += (_, _) => { try { Refresh(OverlayContentChanges.Clock); } catch (Exception e) { Log.Write(e); } };
         // The pointer is checked often only near the island; a few times a second otherwise.
         _pointerTimer = DispatcherQueue.CreateTimer();
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(250);
-        _pointerTimer.Tick += (_, _) => { try { CheckPointer(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _pointerTimer.Tick += (_, _) => { try { CheckPointer(); } catch (Exception e) { Log.Write(e); } };
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);
-        _progressTimer.Tick += (_, _) => { try { if (!_closed && _expanded) _progress.Update(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _progressTimer.Tick += (_, _) => { try { if (!_closed && _expanded) _progress.Update(); } catch (Exception e) { Log.Write(e); } };
         _barTimer = DispatcherQueue.CreateTimer();
-        _barTimer.Tick += (_, _) => { try { DrawBars(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _barTimer.Tick += (_, _) => { try { DrawBars(); } catch (Exception e) { Log.Write(e); } };
         // Text hidden while the pill widens shows again by this at the latest.
         _revealTimer = DispatcherQueue.CreateTimer();
         _revealTimer.IsRepeating = false;
@@ -128,7 +133,7 @@ public sealed partial class IslandWindow : Window
         _revealTimer.Tick += (_, _) =>
         {
             try { if (_waitingForWidth && !_closed) { _waitingForWidth = false; RevealText(); } }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            catch (Exception e) { Log.Write(e); }
         };
 
         // Hide when paused: only once the music has stayed stopped a moment, so the gap players
@@ -145,24 +150,32 @@ public sealed partial class IslandWindow : Window
                 _pausedAway = true;
                 Refresh(OverlayContentChanges.None);
             }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            catch (Exception e) { Log.Write(e); }
         };
 
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
         _settings.PropertyChanged += OnSettingChanged;
+        // The island is placed by the screen's size and scale: when those change, it's placed again
+        // (and its line fitted to the new width) at once, not when the next line happens to come.
+        _overlay.DisplayChanged += () =>
+        {
+            if (_closed) return;
+            Place();
+            Render();
+        };
         // Dragged while floating and unlocked.
         Pill.PointerPressed += OnPillPressed;
-        // Lyricod Glass's shadow and frosted shape keep the pill's size as it grows and shrinks.
+        // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and
+        // shrinks; text hidden while it widens shows as soon as it fits.
         Pill.SizeChanged += (_, _) =>
         {
             try
             {
-                UpdateShadow();
-                if (_shaped) Shape();
-                UpdateLiquid();
+                ApplyCorners();
+                RevealWhenItFits();
             }
-            catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); }
+            catch (Exception e) { Log.Write(e); }
         };
         // Nothing may touch the window once it's gone (the pointer check reads its position).
         Closed += (_, _) =>
@@ -200,7 +213,7 @@ public sealed partial class IslandWindow : Window
             _widths.Clear();
             Refresh();
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+        catch (Exception e) { Log.Write("font refresh: " + e); }
     }
 
     void OnModelChanged(PlaybackModel.Change change)
@@ -278,7 +291,7 @@ public sealed partial class IslandWindow : Window
                 case nameof(Settings.IslandLocked):
                     ApplyMoveMode();
                     break;
-                case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine)
+                case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine) or nameof(Settings.GlassShineStyle)
                     or nameof(Settings.GlassEffect) or nameof(Settings.LiquidBlur) or nameof(Settings.LiquidRefraction):
                     ApplyTheme();
                     break;
@@ -297,10 +310,12 @@ public sealed partial class IslandWindow : Window
                     break;
                 case nameof(Settings.IslandEffect):
                     _sweep.Effect = _settings.IslandEffect;
+                    _secondSweep.Effect = SecondEffect;
                     Refresh(OverlayContentChanges.Clock);
                     break;
                 case nameof(Settings.IslandAudioBars) or nameof(Settings.FrameRate):
                     UpdateBars();
+                    if (_liquid != null) _liquid.FramesPerSecond = (int)_settings.FrameRate;
                     break;
             }
         }
@@ -327,6 +342,9 @@ public sealed partial class IslandWindow : Window
         ApplyColour();
     }
 
+    /// <summary>The row under the lyric is lit as the lyric is, without the glow: that's too much on small text.</summary>
+    SungEffect SecondEffect => _settings.IslandEffect == SungEffect.Line ? SungEffect.Line : SungEffect.Sweep;
+
     /// <summary>The album's colour, or the island's chosen colour.</summary>
     Windows.UI.Color LyricColour =>
         _settings.IslandAlbumColour && _model.ArtworkColor is { } c ? c : DesktopLyricsWindow.ParseColor(_settings.IslandColor);
@@ -334,7 +352,7 @@ public sealed partial class IslandWindow : Window
     void ApplyColour()
     {
         var colour = LyricColour;
-        _sweep.Color = colour;
+        _sweep.Color = _secondSweep.Color = colour;
         var brush = new SolidColorBrush(colour);
         foreach (var bar in _bars) bar.Fill = brush;
         _progress.BarBrush = brush;

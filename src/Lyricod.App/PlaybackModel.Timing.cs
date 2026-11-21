@@ -26,10 +26,7 @@ public sealed partial class PlaybackModel
         if (TrySaveSongChoice(t, edit)) ApplyOffset();
     }
 
-    /// <summary>
-    /// Updates the current line, then sets one timer for when the next line starts. Anything
-    /// that moves the playhead, pauses, or changes the lyrics calls this again.
-    /// </summary>
+    /// <summary>Updates the current line, then sets one timer for when the next starts. Anything that moves the playhead, pauses or changes the lyrics calls this again.</summary>
     void Tick()
     {
         if (_stopped) return;
@@ -51,8 +48,8 @@ public sealed partial class PlaybackModel
 
     /// <summary>Debug: LYRICOD_STATE_FILE=path writes the playhead and line for checks from outside.</summary>
     static readonly string? DebugStatePath = Environment.GetEnvironmentVariable("LYRICOD_STATE_FILE");
-    /// <summary>Debug: the glass's capture status, for the state file.</summary>
-    internal static Func<string>? DebugGlass;
+    /// <summary>The liquid glass's capture status, for diagnostics and the debug state file.</summary>
+    internal static Func<string>? GlassStatus;
 
     public string DiagnosticsText => Diagnostics.Text(
         UpdateChecker.TestBuild is { } build ? $"{UpdateChecker.Version} (test build {build})"
@@ -62,7 +59,8 @@ public sealed partial class PlaybackModel
         PlayerName, NowPlaying?.AppId, IsPlaying, Track, Lyrics, IsSearching, LyricsPinned,
         SongOffset, _settings.Offset, LastError, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         NowPlaying?.HasTimeline, ArtworkSize, Fonts.DiagnosticsText, UpdateChecker.Kind, IsMusicPlayer, IsSong, BestMatchScore, AutomaticLookupAllowed,
-        Artwork?.Length, Artwork == null ? null : _artworkWhole);
+        Artwork?.Length, Artwork == null ? null : _artworkWhole, GlassStatus?.Invoke(),
+        [.. new[] { (_settings.RomajiByWord, "romaji by word"), (_settings.SmoothSweep, "smooth sweep") }.Where(e => e.Item1).Select(e => e.Item2)]);
 
     void WriteDebugState(double position)
     {
@@ -76,11 +74,12 @@ public sealed partial class PlaybackModel
                 reportedPosition = NowPlaying?.Position, reportedAt = NowPlaying?.PositionAt, hasTimeline = NowPlaying?.HasTimeline,
                 reportedPlaying = NowPlaying?.IsPlaying, playing = IsPlaying, position, lines = Lyrics?.Lines.Count,
                 synced = Lyrics?.IsSynced, firstLine = Lyrics?.Lines.FirstOrDefault()?.Start, index = CurrentIndex, line = CurrentLine?.Text, error = LastError,
+                pronunciation = CurrentLine?.Pronunciation?.Text, translation = CurrentLine?.Translation,
                 meter = Platform.AudioMeter.LastStatus,
                 musicPlayer = IsMusicPlayer, song = IsSong, bestMatchScore = BestMatchScore,
                 automaticLookupAllowed = AutomaticLookupAllowed,
                 artwork = Artwork == null ? null : $"{Artwork.Length} bytes, {(_artworkWhole ? "whole" : "cut short")}",
-                glass = DebugGlass?.Invoke(),
+                glass = GlassStatus?.Invoke(),
             }));
         }
         catch (IOException) { }

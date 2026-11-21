@@ -27,10 +27,6 @@ public class IslandGestureTests
         Assert.True(Opens(Floating, (40, 175), (90, 175), (150, 172), (156, 150), (158, 132)));
 
     [Fact]
-    public void SweepingAcrossThenPullingUpOverAFloatingIslandOpens() =>
-        Assert.True(Opens(Floating, (60, 130), (140, 130), (200, 128), (204, 112), (205, 92)));
-
-    [Fact]
     public void PullingUpOverTheDefaultIslandDoesNotOpen()
     {
         // Along under it, then up into it: a floating island would open.

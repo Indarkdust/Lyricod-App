@@ -1,4 +1,5 @@
 using System.Numerics;
+using Lyricod.Core;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Hosting;
@@ -9,8 +10,8 @@ namespace Lyricod;
 
 /// <summary>
 /// The island's theme (Settings › Lyricod Island › Theme): Classic black, or Lyricod Glass, a
-/// see-through tint. With the liquid effect, glass's 3D effect lights it as glass catches light: the
-/// liquid glass draws the light along its edge itself, following the curve of its lens, and a
+/// see-through tint. With the liquid effect, glass's 3D effect lights it as glass catches light
+/// (the liquid glass draws the light along its edge itself, following the curve of its lens), and a
 /// floating island gets a shadow underneath.
 /// </summary>
 public sealed partial class IslandWindow
@@ -19,6 +20,7 @@ public sealed partial class IslandWindow
     static readonly Color NeutralGlass = Color.FromArgb(255, 18, 18, 22);
 
     SpriteVisual? _shadow;
+    DropShadow? _dropShadow;
     CompositionRoundedRectangleGeometry? _shadowShape;
     ShapeVisual? _shadowCaster;
     CompositionVisualSurface? _shadowSurface;
@@ -36,8 +38,9 @@ public sealed partial class IslandWindow
         UpdateShadow();
         if (Movable) { Pill.Background = new SolidColorBrush(MovingColour); return; }
         if (!Glass) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Black); return; }
-        // The liquid layer draws the glass, tint and all.
-        if (liquid) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent); return; }
+        // The liquid layer draws the glass, tint and all, once it has faded in. Its first frame comes a
+        // moment after the island shows: until then the island is clear glass, not lyrics over nothing.
+        if (liquid && _liquid!.Settled) { Pill.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent); return; }
         var tint = GlassColour();
         double clear = _settings.GlassTransparency / 100.0;
         byte alpha = (byte)Math.Round(255 * (1 - clear));
@@ -89,12 +92,14 @@ public sealed partial class IslandWindow
             shadow.Mask = compositor.CreateSurfaceBrush(_shadowSurface);
             shadow.Color = Microsoft.UI.Colors.Black;
             shadow.BlurRadius = 18;
-            shadow.Opacity = 0.45f;
-            shadow.Offset = new Vector3(0, 6, 0);
+            _dropShadow = shadow;
             _shadow = compositor.CreateSpriteVisual();
             _shadow.Shadow = shadow;
             ElementCompositionPreview.SetElementChildVisual(ShadowHost, _shadow);
         }
+        bool soft = _settings.GlassShineStyle == ShineStyle.Soft;
+        _dropShadow!.Opacity = soft ? 0.18f : 0.45f;
+        _dropShadow.Offset = new Vector3(0, soft ? 3 : 6, 0);
         float radius = (float)Pill.CornerRadius.BottomLeft;
         _shadowShape!.Size = size;
         _shadowShape.CornerRadius = new Vector2(radius, radius);

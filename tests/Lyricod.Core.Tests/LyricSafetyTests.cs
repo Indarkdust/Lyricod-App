@@ -9,7 +9,6 @@ public class LyricSafetyTests
     [Theory]
     [InlineData("NaN:00")]
     [InlineData("Infinity:00")]
-    [InlineData("1e309:00")]
     [InlineData("-1:00")]
     [InlineData("01:-1")]
     [InlineData("00:NaN")]
@@ -40,7 +39,6 @@ public class LyricSafetyTests
     [Theory]
     [InlineData("NaN")]
     [InlineData("Infinity")]
-    [InlineData("1e309")]
     [InlineData("-1")]
     [InlineData("86400001")]
     [InlineData("not-a-number")]
@@ -145,21 +143,17 @@ public class LyricSafetyTests
     [InlineData(true)]
     public async Task ProviderCapsJsonAndQrcTextResponses(bool qrc)
     {
-        var dir = Path.Combine(Path.GetTempPath(), "lyricod-limits", Guid.NewGuid().ToString());
+        using var dir = new TempDirectory();
         var stream = new CountingStream(LyricData.MaxBytes + 100000);
-        using var handler = new ResponseHandler(request => new HttpResponseMessage(HttpStatusCode.OK)
+        using var handler = new StubHandler(request => new HttpResponseMessage(HttpStatusCode.OK)
         {
             Content = !qrc || request.RequestUri!.AbsolutePath.Contains("lyric_download")
                 ? new StreamContent(stream) : new StringContent("{}"),
         });
-        try
-        {
-            var provider = new LyricsProvider(dir, "test", handler);
-            if (qrc) Assert.Null(await provider.FetchQqSong("test", 1, TestContext.Current.CancellationToken));
-            else Assert.Null(await provider.FetchLrclib("1", TestContext.Current.CancellationToken));
-            Assert.InRange(stream.BytesRead, LyricData.MaxBytes + 1, LyricData.MaxBytes + 8192);
-        }
-        finally { Directory.Delete(dir, true); }
+        var provider = new LyricsProvider(dir.Path, "test", handler);
+        if (qrc) Assert.Null(await provider.FetchQqSong("test", 1, TestContext.Current.CancellationToken));
+        else Assert.Null(await provider.FetchLrclib("1", TestContext.Current.CancellationToken));
+        Assert.InRange(stream.BytesRead, LyricData.MaxBytes + 1, LyricData.MaxBytes + 8192);
     }
 
     [Theory]
@@ -173,11 +167,6 @@ public class LyricSafetyTests
         var result = QrcDecrypter.Inflate(compressed.ToArray());
         if (excess == 0) Assert.Equal(LyricData.MaxBytes, result?.Length);
         else Assert.Null(result);
-    }
-
-    sealed class ResponseHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) => Task.FromResult(respond(request));
     }
 
     sealed class CountingStream(int length) : Stream

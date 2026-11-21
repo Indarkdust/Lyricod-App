@@ -7,8 +7,7 @@ namespace Lyricod;
 
 /// <summary>
 /// Settings › General › NetEase Cloud Music sync: sets up BetterNCM and InfLink-rs through Lyricod CM
-/// Helper (see <see cref="NeteaseSync"/>), saying first what that means. Shown only when NetEase
-/// Cloud Music is installed.
+/// Helper (see <see cref="NeteaseSync"/>), saying first what that means. Shown only when NetEase is installed.
 /// </summary>
 public sealed partial class SettingsWindow
 {

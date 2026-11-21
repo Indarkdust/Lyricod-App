@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Builds src/Lyricod.App/Assets/Lyricod.ico (and Lyricod-256.png, for About) from the macOS app icon.
+"""Builds src/Lyricod.App/Assets/Lyricod.ico (and Lyricod-256.png, for About) from assets/icon.
 
-Usage (on a Mac): tools/make-icon.py [path to the macOS app's AppIcon.icns]
-(default: ../Lyricod/Resources/AppIcon.icns, the macOS app's repository next to this one).
+Usage (on a Mac): tools/make-icon.py
+lyricod-<size>.svg is drawn for that size (bars on whole pixels); lyricod.svg makes the others.
 Packs PNG images at the sizes Windows asks for (tray 16–32, taskbar and Explorer up to 256)
-into one .ico. Uses sips, which ships with macOS.
+into one .ico. Uses sips, which ships with macOS and renders SVG.
 """
-import pathlib, struct, subprocess, sys, tempfile
+import pathlib, struct, subprocess, tempfile
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SOURCE = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT.parent / "Lyricod/Resources/AppIcon.icns"
+ICON = ROOT / "assets/icon"
 OUT = ROOT / "src/Lyricod.App/Assets/Lyricod.ico"
 LARGE = ROOT / "src/Lyricod.App/Assets/Lyricod-256.png"
 SIZES = [16, 20, 24, 32, 40, 48, 64, 256]
@@ -17,8 +17,11 @@ SIZES = [16, 20, 24, 32, 40, 48, 64, 256]
 with tempfile.TemporaryDirectory() as tmp:
     images = []
     for size in SIZES:
+        source = ICON / f"lyricod-{size}.svg"
+        if not source.exists():
+            source = ICON / "lyricod.svg"
         png = pathlib.Path(tmp) / f"{size}.png"
-        subprocess.run(["sips", "-s", "format", "png", "-Z", str(size), str(SOURCE), "--out", str(png)],
+        subprocess.run(["sips", "-s", "format", "png", "-z", str(size), str(size), str(source), "--out", str(png)],
                        check=True, capture_output=True)
         images.append((size, png.read_bytes()))
     header = struct.pack("<HHH", 0, 1, len(images))

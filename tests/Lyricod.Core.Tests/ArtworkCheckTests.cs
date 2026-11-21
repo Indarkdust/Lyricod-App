@@ -1,5 +1,3 @@
-using Lyricod.Core;
-
 namespace Lyricod.Core.Tests;
 
 public class ArtworkCheckTests

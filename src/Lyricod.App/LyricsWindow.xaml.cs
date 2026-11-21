@@ -12,10 +12,10 @@ using WinUIEx;
 namespace Lyricod;
 
 /// <summary>
-/// The whole song, like the macOS app's lyrics window: the line being sung sweeps word by word
-/// (in rows that fit the width) and stays a third of the way down; the others shrink a little and
-/// fade and blur with distance, and scrolling eases like a spring. The softened cover drifts behind.
-/// Click a line to jump there. Wide windows and full screen put a large cover beside the lyrics.
+/// The whole song: the line being sung sweeps word by word (in rows that fit the width) and stays a
+/// third of the way down; the others shrink a little and fade and blur with distance, and scrolling
+/// eases like a spring. The softened cover drifts behind. Click a line to jump there. Wide windows
+/// and full screen put a large cover beside the lyrics.
 /// </summary>
 public sealed partial class LyricsWindow : Window
 {
@@ -36,6 +36,19 @@ public sealed partial class LyricsWindow : Window
     double _fontSize = 30;
     /// <summary>Text widths in the current line's font, cleared when the font or size changes.</summary>
     readonly Dictionary<string, double> _widths = [];
+    /// <summary>The width the lines were broken into rows for.</summary>
+    double _linesWidth;
+    /// <summary>Set while the next scroll is the move to the next line, which the lines below follow.</summary>
+    bool _stagger;
+    /// <summary>
+    /// Set while the user is scrolling through the lyrics, and for a few seconds after: all lines
+    /// are sharp and the window doesn't pull back to the line being sung.
+    /// </summary>
+    bool _browsing;
+    readonly DispatcherQueueTimer _browse;
+    /// <summary>The line sung before this one, while its words come back down (the lift); it's drawn plain when they have.</summary>
+    LineView? _settling;
+    readonly DispatcherQueueTimer _settle;
 
     /// <summary>One lyric line on screen; while it's being sung, its rows and their sweeps.</summary>
     sealed class LineView(LyricLine line, StackPanel panel)
@@ -43,6 +56,8 @@ public sealed partial class LyricsWindow : Window
         public LyricLine Line { get; } = line;
         public StackPanel Panel { get; } = panel;
         public List<(LyricLine Piece, double Width, SweepPainter Sweep)> Rows { get; } = [];
+        /// <summary>While it's being sung: the rows of a timed pronunciation, and their sweeps.</summary>
+        public List<(LyricLine Piece, double Width, SweepPainter Sweep, FontFamily Font)> ExtraRows { get; } = [];
         /// <summary>The line's texts that soften with distance (none while it's being sung).</summary>
         public List<SoftText> Soft { get; } = [];
     }
@@ -70,6 +85,7 @@ public sealed partial class LyricsWindow : Window
         AppWindow.Changed += (_, e) => { if (e.DidPresenterChange) UpdateFullScreenIcon(); };
 
         _drift = new ArtworkDrift(ArtHost);
+        _extraRuler = new TextRuler(ExtraMeasurer);
         _transport = new TransportButtons(model);
         _progress = new ProgressLine(model);
         ToolTipService.SetToolTip(TranslationButton, L.Get("TranslationsTip"));
@@ -79,18 +95,40 @@ public sealed partial class LyricsWindow : Window
 
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);
-        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _progressTimer.Tick += (_, _) => { try { _progress.Update(); } catch (Exception e) { Log.Write(e); } };
         // Rows depend on the width: rebuild the sung line once resizing settles.
         _relayout = DispatcherQueue.CreateTimer();
         _relayout.IsRepeating = false;
         _relayout.Interval = TimeSpan.FromMilliseconds(120);
-        _relayout.Tick += (_, _) => { try { Relayout(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _relayout.Tick += (_, _) => { try { Relayout(); } catch (Exception e) { Log.Write(e); } };
 
         Root.SizeChanged += (_, _) => _relayout.Start();
+        _browse = DispatcherQueue.CreateTimer();
+        _browse.IsRepeating = false;
+        _browse.Interval = TimeSpan.FromSeconds(3);
+        _browse.Tick += (_, _) =>
+        {
+            try
+            {
+                // A finger still on the lyrics, or the lyrics still coasting: not done yet.
+                if (UserScrolling(Scroller)) _browse.Start(); else Browse(false);
+            }
+            catch (Exception e) { Log.Write(e); }
+        };
+        // The scroller takes the wheel, a touchpad and a finger itself, below XAML's pointer events:
+        // what tells them from Lyricod's own scrolling is its state (that's "Animation").
+        Scroller.StateChanged += (scroller, _) =>
+        {
+            try { if (UserScrolling(scroller)) Browse(true); } catch (Exception e) { Log.Write(e); }
+        };
+        _settle = DispatcherQueue.CreateTimer();
+        _settle.IsRepeating = false;
+        _settle.Interval = TimeSpan.FromSeconds(WordLift.Settle + 0.05);
+        _settle.Tick += (_, _) => { try { Settled(); } catch (Exception e) { Log.Write(e); } };
         _idle = DispatcherQueue.CreateTimer();
         _idle.IsRepeating = false;
         _idle.Interval = TimeSpan.FromSeconds(3);
-        _idle.Tick += (_, _) => { try { _pointerIdle = true; UpdateControls(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        _idle.Tick += (_, _) => { try { _pointerIdle = true; UpdateControls(); } catch (Exception e) { Log.Write(e); } };
         Root.PointerMoved += (_, _) =>
         {
             _idle.Stop();
@@ -113,6 +151,8 @@ public sealed partial class LyricsWindow : Window
             _progressTimer.Stop();
             _relayout.Stop();
             _idle.Stop();
+            _browse.Stop();
+            _settle.Stop();
         };
 
         SyncButtons();
@@ -130,7 +170,7 @@ public sealed partial class LyricsWindow : Window
         {
             BuildLines();
         }
-        catch (Exception e) { System.Diagnostics.Debug.WriteLine("font refresh: " + e); }
+        catch (Exception e) { Log.Write("font refresh: " + e); }
     }
 
     void OnModelChanged(PlaybackModel.Change change)
@@ -182,6 +222,10 @@ public sealed partial class LyricsWindow : Window
                 break;
         }
     }
+
+    /// <summary>Whether the lyrics are moving under the user's hand: a finger on them, or coasting after a flick or the wheel.</summary>
+    static bool UserScrolling(ScrollView scroller) =>
+        scroller.State is ScrollingInteractionState.Interaction or ScrollingInteractionState.Inertia;
 
     void UpdateTimer()
     {

@@ -63,6 +63,7 @@ public sealed partial class IslandWindow
             AppWindow.Show(false);
             if (_closed) return;
             _overlay.StripFrame();
+            _overlay.KeepOnTop();
             _pointerTimer.Start();
             AnimateShown(true);
         }
@@ -72,6 +73,7 @@ public sealed partial class IslandWindow
             _progressTimer.Stop();
             _pieceTimer.Stop();
             _sweep.Set(0, 1);
+            _secondSweep.Set(0, 1);
             SetHovered(false);
             _trail.Clear();
             AnimateShown(false, () => { if (!_shown && !_closed) AppWindow.Hide(); });
@@ -79,8 +81,8 @@ public sealed partial class IslandWindow
         UpdateBars();
     }
 
-    /// <summary>Comes and goes like the Mac's: a fade with a slight shrink toward the top edge
-    /// (floating: toward its middle).</summary>
+    /// <summary>Comes and goes with a fade and a slight shrink toward the top edge (floating:
+    /// toward its middle).</summary>
     void AnimateShown(bool show, Action? done = null)
     {
         double seconds = show ? 0.3 : 0.35;
@@ -114,7 +116,7 @@ public sealed partial class IslandWindow
         Storyboard.SetTarget(animation, element);
         Storyboard.SetTargetProperty(animation, "Opacity");
         var story = new Storyboard { Children = { animation } };
-        if (done != null) story.Completed += (_, _) => { try { done(); } catch (Exception e) { System.Diagnostics.Debug.WriteLine(e); } };
+        if (done != null) story.Completed += (_, _) => { try { done(); } catch (Exception e) { Log.Write(e); } };
         story.Begin();
     }
 }

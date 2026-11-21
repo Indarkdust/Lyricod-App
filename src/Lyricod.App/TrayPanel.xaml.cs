@@ -5,8 +5,11 @@ using Lyricod.Platform;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.Graphics;
 using WinUIEx;
@@ -14,9 +17,8 @@ using WinUIEx;
 namespace Lyricod;
 
 /// <summary>
-/// The tray icon's panel, like the macOS app's menu-bar panel: now playing with its controls, the
-/// desktop lyrics and island tiles, this song's lyrics (to choose others) and timing, and the
-/// lyrics window, Settings and Quit. It sits above the notification area like Windows' own
+/// The tray icon's panel: now playing, the view tiles, this song's lyrics and timing, and buttons
+/// for the lyrics window, Settings and Quit. It sits above the notification area like Windows' own
 /// flyouts and goes away when it loses focus.
 /// </summary>
 public sealed partial class TrayPanel : Window
@@ -27,8 +29,9 @@ public sealed partial class TrayPanel : Window
     readonly PlaybackModel _model;
     readonly Settings _settings;
     readonly Action _openLyricsWindow, _openSettings, _chooseLyrics, _quit;
+    readonly TileLock _desktopLock, _islandLock;
 
-    /// <summary>What the NetEase tip opens: NetEase Cloud Music sync's settings; without it, the guide in the README.</summary>
+    /// <summary>What the NetEase tip opens: the sync settings; without this, the guide.</summary>
     public Action? OpenNeteaseSync { get; set; }
     readonly TransportButtons _transport;
     readonly ProgressLine _progress;
@@ -81,6 +84,8 @@ public sealed partial class TrayPanel : Window
         ProgressHost.Children.Add(_progress);
         DesktopTileText.Text = L.Get("DesktopLyrics");
         IslandTileText.Text = L.Get("PaneIsland");
+        _desktopLock = new TileLock(DesktopTileHost, DesktopTile, L.Get("LockDesktopLyrics"), on => _settings.DesktopLocked = on);
+        _islandLock = new TileLock(IslandTileHost, IslandTile, L.Get("LockIsland"), on => _settings.IslandLocked = on);
         LyricsTitle.Text = L.Get("PaneLyrics");
         TimingTitle.Text = L.Get("TimingHeading");
         ToolTipService.SetToolTip(LyricsRow, L.Get("ChooseLyricsTip"));
@@ -117,7 +122,7 @@ public sealed partial class TrayPanel : Window
     void OnModelChanged(PlaybackModel.Change change) { if (_shown) Update(); }
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e) { if (_shown) Update(); }
 
-    /// <summary>Opens above the notification area, or closes if it's open (a second click on the icon).</summary>
+    /// <summary>Opens above the notification area, or closes if already open.</summary>
     public void Toggle()
     {
         if (_shown || PlaybackModel.Now - _hiddenAt < 0.3)
@@ -129,8 +134,7 @@ public sealed partial class TrayPanel : Window
         SizeToContent();
         _shown = true;
         Activate();
-        // Opened from the keyboard (Win+B), Windows can leave focus in the notification area;
-        // the panel takes it, like its own flyouts, so the keys work in it and it closes on leaving.
+        // Opened with Win+B, focus can stay in the notification area; take it so the keys work and it closes on leaving.
         this.SetForegroundWindow();
         if (_model.IsPlaying) _progressTimer.Start();
     }
@@ -144,11 +148,10 @@ public sealed partial class TrayPanel : Window
         double k = Win32.Scale(hwnd);
         var area = DisplayArea.Primary.WorkArea;
         int gap = (int)(12 * k), w = (int)Math.Ceiling(PanelWidth * k), h = (int)Math.Ceiling(height * k);
-        // The panel only gets the window's inside: Windows keeps invisible edges round it for the
-        // shadow (left, right and bottom; none on top, as the title bar is hidden), and sizing the
-        // whole window to the panel cut off its right side. So the inside is sized to the panel and
-        // put in the corner, with the edges measured rather than assumed (AppWindow.ResizeClient
-        // still counts the hidden title bar), and checked once.
+        // Windows keeps invisible shadow edges round the window (left, right, bottom; none on top,
+        // as the title bar is hidden), and sizing the whole window to the panel cut off its right
+        // side. So the edges are measured (AppWindow.ResizeClient still counts the hidden title
+        // bar), the inside is sized to the panel, and the result is checked once.
         for (int pass = 0; pass < 2; pass++)
         {
             var (left, top, right, bottom) = Win32.FrameEdges(hwnd);
@@ -195,6 +198,10 @@ public sealed partial class TrayPanel : Window
 
             DesktopTile.IsChecked = _settings.ShowDesktopLyrics;
             IslandTile.IsChecked = _settings.ShowIsland;
+            // Like Settings: locking needs the view showing, and only a floating island can move.
+            _desktopLock.Sync(_settings.DesktopLocked, _settings.ShowDesktopLyrics, L.Get("UnlockDesktopLyrics"), L.Get("LockDesktopLyrics"));
+            _islandLock.Sync(_settings.IslandLocked, _settings.ShowIsland, L.Get("UnlockIsland"), L.Get("LockIsland"));
+            _islandLock.Toggle.Visibility = _settings.IslandStyle == IslandStyle.Floating ? Visibility.Visible : Visibility.Collapsed;
 
             ThisSong.Opacity = track != null ? 1 : 0.5;
             LyricsRow.IsEnabled = EarlierButton.IsEnabled = LaterButton.IsEnabled = track != null;
@@ -234,6 +241,52 @@ public sealed partial class TrayPanel : Window
         if (_model.Lyrics is not { } l) return L.Get("NoneFoundChoose");
         var kind = !l.IsSynced ? L.Get("KindPlain") : l.IsWordSynced ? L.Get("KindWords") : L.Get("KindLines");
         return _model.LyricsPinned ? $"{kind} · {l.Source} · {L.Get("ChooseLyricsPinned")}" : $"{kind} · {l.Source}";
+    }
+
+    /// <summary>A tile's lock toggle, bottom right: filled while locked, outlined while not. It draws its own face so it shows on a lit (accent) tile too.</summary>
+    sealed class TileLock
+    {
+        public ToggleButton Toggle { get; }
+        readonly ToggleButton _tile;
+        readonly Border _face;
+        readonly FontIcon _icon = new() { FontSize = 13 };
+
+        public TileLock(Grid host, ToggleButton tile, string name, Action<bool> set)
+        {
+            _tile = tile;
+            _face = new Border { Width = 28, Height = 28, CornerRadius = new CornerRadius(6), BorderThickness = new Thickness(1), Child = _icon };
+            Toggle = new ToggleButton
+            {
+                Content = _face, Padding = new Thickness(0), BorderThickness = new Thickness(0), MinWidth = 0, MinHeight = 0, CornerRadius = new CornerRadius(6),
+                HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Bottom, Margin = new Thickness(0, 0, 8, 8),
+            };
+            // The toggle's own fills stay clear at rest (the face shows the state); hover and press still show.
+            var clear = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            foreach (string key in new[] { "ToggleButtonBackground", "ToggleButtonBackgroundChecked", "ToggleButtonBackgroundCheckedPointerOver",
+                                           "ToggleButtonBackgroundCheckedPressed", "ToggleButtonBackgroundDisabled", "ToggleButtonBackgroundCheckedDisabled" })
+                Toggle.Resources[key] = clear;
+            AutomationProperties.SetName(Toggle, name);
+            Toggle.Click += (_, _) => set(Toggle.IsChecked == true);
+            host.Children.Add(Toggle);
+        }
+
+        public void Sync(bool locked, bool usable, string unlockTip, string lockTip)
+        {
+            bool lit = _tile.IsChecked == true;
+            Toggle.IsChecked = locked;
+            Toggle.IsEnabled = usable;
+            _icon.Glyph = locked ? "\uE72E" : "\uE785"; // a closed lock, an open one
+            // On a lit tile the tile's text colour fills it; on a plain one, the accent.
+            Brush ink = Theme(lit ? "TextOnAccentFillColorPrimaryBrush" : "TextFillColorPrimaryBrush");
+            Brush fill = Theme(lit ? "TextOnAccentFillColorPrimaryBrush" : "AccentFillColorDefaultBrush");
+            _face.Background = locked ? fill : null;
+            _face.BorderBrush = locked ? fill : ink;
+            _icon.Foreground = locked ? Theme(lit ? "AccentFillColorDefaultBrush" : "TextOnAccentFillColorPrimaryBrush") : ink;
+            _face.Opacity = usable ? 1 : 0.4;
+            ToolTipService.SetToolTip(Toggle, locked ? unlockTip : lockTip);
+        }
+
+        static Brush Theme(string key) => (Brush)Application.Current.Resources[key];
     }
 
     void OnDesktopTile(object sender, RoutedEventArgs e) => _settings.ShowDesktopLyrics = DesktopTile.IsChecked == true;

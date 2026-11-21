@@ -95,7 +95,6 @@ public sealed partial class IslandWindow
         catch (Exception) { /* the screen or window went away */ }
     }
 
-    /// <summary>Remembers where the pill was dropped, then places it from there.</summary>
     void SaveSpot()
     {
         double k = _overlay.Scale;

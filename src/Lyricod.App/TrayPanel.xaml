@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- What the tray icon opens, laid out like the macOS app's menu-bar panel (and Windows' own quick
-     settings): now playing, the desktop and island tiles, this song's lyrics and timing, and a
-     footer. Opens above the notification area and closes when it loses focus. -->
+<!-- What the tray icon opens, laid out like Windows' own quick settings: now playing, the desktop
+     and island tiles, this song's lyrics and timing, and a footer. Opens above the notification
+     area and closes when it loses focus. -->
 <Window
     x:Class="Lyricod.TrayPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -59,26 +59,30 @@
                 </StackPanel>
             </Border>
 
-            <!-- The two views, as quick-settings tiles. -->
+            <!-- The two views, as quick-settings tiles, each with its lock in the corner (added in code). -->
             <Grid ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <ToggleButton x:Name="DesktopTile" HorizontalAlignment="Stretch" Height="72" Padding="12,8"
-                              HorizontalContentAlignment="Left" Click="OnDesktopTile">
-                    <StackPanel Spacing="6">
-                        <FontIcon Glyph="&#xE7F4;" FontSize="16" HorizontalAlignment="Left" />
-                        <TextBlock x:Name="DesktopTileText" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                </ToggleButton>
-                <ToggleButton x:Name="IslandTile" Grid.Column="1" HorizontalAlignment="Stretch" Height="72" Padding="12,8"
-                              HorizontalContentAlignment="Left" Click="OnIslandTile">
-                    <StackPanel Spacing="6">
-                        <FontIcon Glyph="&#xE8D6;" FontSize="16" HorizontalAlignment="Left" />
-                        <TextBlock x:Name="IslandTileText" TextTrimming="CharacterEllipsis" />
-                    </StackPanel>
-                </ToggleButton>
+                <Grid x:Name="DesktopTileHost">
+                    <ToggleButton x:Name="DesktopTile" HorizontalAlignment="Stretch" Height="72" Padding="12,8,44,8"
+                                  HorizontalContentAlignment="Left" Click="OnDesktopTile">
+                        <StackPanel Spacing="6">
+                            <FontIcon Glyph="&#xE7F4;" FontSize="16" HorizontalAlignment="Left" />
+                            <TextBlock x:Name="DesktopTileText" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </ToggleButton>
+                </Grid>
+                <Grid x:Name="IslandTileHost" Grid.Column="1">
+                    <ToggleButton x:Name="IslandTile" HorizontalAlignment="Stretch" Height="72" Padding="12,8,44,8"
+                                  HorizontalContentAlignment="Left" Click="OnIslandTile">
+                        <StackPanel Spacing="6">
+                            <FontIcon Glyph="&#xE8D6;" FontSize="16" HorizontalAlignment="Left" />
+                            <TextBlock x:Name="IslandTileText" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </ToggleButton>
+                </Grid>
             </Grid>
 
             <!-- This song: its lyrics (opens Choose Lyrics) and timing. -->

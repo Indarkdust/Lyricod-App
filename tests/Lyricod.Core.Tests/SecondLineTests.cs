@@ -7,6 +7,7 @@ public class SecondLineTests
     [InlineData(SecondLine.Translation, false)]
     [InlineData(SecondLine.PronunciationOrTranslation, false)]
     [InlineData(SecondLine.Pronunciation, false)]
+    [InlineData(SecondLine.PronunciationAndTranslation, false)]
     [InlineData(SecondLine.Next, true)]
     [InlineData(SecondLine.None, false)]
     public void PlainSyncedSongOnlyHasTheNextLine(SecondLine mode, bool expected)
@@ -21,6 +22,7 @@ public class SecondLineTests
     [InlineData(SecondLine.Translation)]
     [InlineData(SecondLine.PronunciationOrTranslation)]
     [InlineData(SecondLine.Pronunciation)]
+    [InlineData(SecondLine.PronunciationAndTranslation)]
     [InlineData(SecondLine.Next)]
     [InlineData(SecondLine.None)]
     public void NoLineUnsyncedOrBlankHasNoRow(SecondLine mode)
@@ -43,5 +45,25 @@ public class SecondLineTests
         Assert.Equal("two", SecondLine.TranslationOrNext.RowUnder(0, lyrics)?.Text);
         Assert.Equal("译文", SecondLine.PronunciationOrTranslation.RowUnder(1, lyrics)?.Text);
         Assert.Null(SecondLine.Pronunciation.RowUnder(1, lyrics));
+    }
+
+    [Fact]
+    public void PronunciationAndTranslationAreTwoRowsWhereThereAreBoth()
+    {
+        var lyrics = new Lyrics([
+            new() { Text = "惹かれ合うのは", Pronunciation = new("hikare au no wa"), Translation = "为何彼此心生憧憬" },
+            new() { Text = "なぜ", Pronunciation = new("naze") },
+            new() { Text = "海", Translation = "海" },
+            new() { Text = "x" },
+        ], "test");
+        var mode = SecondLine.PronunciationAndTranslation;
+        Assert.Equal([("hikare au no wa", true), ("为何彼此心生憧憬", true)], mode.RowsUnder(0, lyrics));
+        Assert.Equal([("naze", true)], mode.RowsUnder(1, lyrics));
+        Assert.Equal([("海", true)], mode.RowsUnder(2, lyrics));
+        Assert.Empty(mode.RowsUnder(3, lyrics));
+        Assert.Equal(2, mode.MaxRows());
+        // The island has room for one row: it shows the pronunciation, or the translation.
+        Assert.Equal("hikare au no wa", mode.RowUnder(0, lyrics)?.Text);
+        Assert.Equal([("two", false)], SecondLine.TranslationOrNext.RowsUnder(0, new Lyrics([new() { Text = "one" }, new() { Text = "two" }], "test")));
     }
 }

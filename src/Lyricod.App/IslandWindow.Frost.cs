@@ -13,9 +13,7 @@ public sealed partial class IslandWindow
 {
     FrostedBackdrop? _frost;
     SystemBackdrop? _clearBackdrop;
-    /// <summary>The acrylic is on.</summary>
     bool _frosted;
-    /// <summary>The window is clipped to the pill.</summary>
     bool _shaped;
 
     bool WantsFrost => Glass && _settings.GlassEffect == GlassEffect.Frosted && FrostedBackdrop.IsSupported && !Movable;

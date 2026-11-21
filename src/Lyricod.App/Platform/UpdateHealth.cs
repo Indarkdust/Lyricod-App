@@ -8,8 +8,7 @@ static class UpdateHealth
 {
     const string Variable = "LYRICOD_UPDATE_SIGNAL";
 
-    /// <summary>This Lyricod was started by an update, so the launcher owns the old copy: nothing in this
-    /// run deletes it (the launcher does once it hears back, or the next normal start does).</summary>
+    /// <summary>Started by an update, so the launcher owns the old copy: this run doesn't delete it (the launcher does once it hears back, or the next normal start).</summary>
     public static bool Pending { get; } = Environment.GetEnvironmentVariable(Variable) is { Length: > 0 };
 
     public static void SignalStarted()

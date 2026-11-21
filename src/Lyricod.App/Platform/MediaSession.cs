@@ -19,10 +19,9 @@ public sealed record NowPlaying(
 }
 
 /// <summary>
-/// Follows the player Windows considers current through the System Media Transport
-/// Controls (SMTC): any app that shows in Windows' media flyout. Events arrive on
-/// background threads; <see cref="Changed"/> says something changed, and
-/// <see cref="ReadAsync"/> gets the latest.
+/// Follows a player through the System Media Transport Controls (SMTC): any app that shows in
+/// Windows' media flyout. Events arrive on background threads; <see cref="Changed"/> says something
+/// changed and <see cref="ReadAsync"/> gets the latest.
 /// </summary>
 public sealed class MediaSession : IDisposable
 {
@@ -35,8 +34,7 @@ public sealed class MediaSession : IDisposable
     /// <summary>Raised on a background thread when the song, play state or position changed.</summary>
     public event Action? Changed;
 
-    /// <summary>Raised on a background thread when the song's details (title, cover…) changed:
-    /// players often hand over the cover a while after the song.</summary>
+    /// <summary>Raised on a background thread when the song's details (title, cover…) changed; players often hand over the cover late.</summary>
     public event Action? DetailsChanged;
 
     public async Task StartAsync()
@@ -62,7 +60,6 @@ public sealed class MediaSession : IDisposable
     }
     string _choice = "auto";
 
-    /// <summary>The players Windows knows about now, by app id.</summary>
     public IReadOnlyList<string> AppIds
     {
         get
@@ -72,7 +69,6 @@ public sealed class MediaSession : IDisposable
         }
     }
 
-    /// <summary>The session to follow (see <see cref="SessionPick.Choose"/>), or null.</summary>
     GlobalSystemMediaTransportControlsSession? Choose()
     {
         if (_manager is not { } manager) return null;
@@ -81,9 +77,9 @@ public sealed class MediaSession : IDisposable
     }
 
     /// <summary>
-    /// Follows the chosen player when it's open. Otherwise one that's playing (several players can
-    /// be open), preferring the one Windows shows in its media controls, else the one Windows
-    /// calls current; of one app's sessions, the one that reports the song's position.
+    /// Follows the chosen player when it's open. Otherwise one that's playing (several can be open),
+    /// preferring the one Windows shows in its media controls, else the one it calls current; of one
+    /// app's sessions, the one that reports the song's position.
     /// </summary>
     void Pick()
     {
@@ -148,7 +144,6 @@ public sealed class MediaSession : IDisposable
         try { var t = s.GetTimelineProperties(); return t.EndTime > t.StartTime; } catch (Exception) { return false; }
     }
 
-    /// <summary>The followed player's song and position, or null when nothing is loaded.</summary>
     public async Task<NowPlaying?> ReadAsync()
     {
         GlobalSystemMediaTransportControlsSession? s;

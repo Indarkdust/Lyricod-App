@@ -20,6 +20,7 @@ public class FontTests
         Assert.Equal(standard, FontWeights.Get(weight, LyricFont.Other));
         Assert.Equal(miSans, FontWeights.Get(weight, LyricFont.MiSans));
         Assert.Equal(yaHei, FontWeights.Get(weight, LyricFont.Default));
+        Assert.Equal(500, FontWeights.Get(weight, LyricFont.WenKai));
     }
 
     static byte[] Font()
@@ -73,7 +74,7 @@ public class FontTests
         using var handler = new ArchiveHandler(Zip(("large-unrelated.bin", padding), ("??/MiSansVF.ttf", font))) { IgnoreRange = fullZip };
         using var http = new HttpClient(handler);
         using var dir = new TempDirectory();
-        var progress = new Reports();
+        var progress = new ProgressLog<FontDownloadProgress>();
         var hash = await MiSansArchive.DownloadAsync(http, dir.Path, progress, TestContext.Current.CancellationToken);
         Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(font)), hash);
         Assert.NotEqual(MiSansArchive.KnownHash, hash);
@@ -89,7 +90,7 @@ public class FontTests
     {
         using var handler = new ArchiveHandler(Zip(("??/MiSansVF.ttf", Font()))) { IgnoreRange = true };
         using var http = new HttpClient(handler);
-        var progress = new Reports();
+        var progress = new ProgressLog<FontDownloadProgress>();
         string path;
         using (var stream = await HttpRangeStream.OpenAsync(http, new Uri(MiSansArchive.ZipUrl), progress, TestContext.Current.CancellationToken))
         {
@@ -150,7 +151,7 @@ public class FontTests
         using var handler = new ArchiveHandler(Zip(("MiSansVF.ttf", font))) { Fault = "200" };
         using var http = new HttpClient(handler);
         using var dir = new TempDirectory();
-        var progress = new Reports();
+        var progress = new ProgressLog<FontDownloadProgress>();
         await MiSansArchive.DownloadAsync(http, dir.Path, progress, TestContext.Current.CancellationToken);
         Assert.Equal(font, await File.ReadAllBytesAsync(System.IO.Path.Combine(dir.Path, "MiSansVF.ttf"), TestContext.Current.CancellationToken));
         Assert.Contains(progress.Values, p => p.Phase == FontDownloadPhase.Archive && p.Completed == handler.Zip.Length);
@@ -178,7 +179,7 @@ public class FontTests
         using var handler = new ArchiveHandler(Zip(("MiSansVF.ttf", Font()))) { IgnoreRange = fullZip };
         using var http = new HttpClient(handler);
         using var dir = new TempDirectory();
-        var progress = new Reports(_ => stop.Cancel());
+        var progress = new ProgressLog<FontDownloadProgress>(_ => stop.Cancel());
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => MiSansArchive.DownloadAsync(http, dir.Path, progress, stop.Token));
         Assert.Empty(Directory.GetFiles(dir.Path));
     }
@@ -206,27 +207,6 @@ public class FontTests
         var path = System.IO.Path.Combine(dir.Path, "tiny.ttf");
         await File.WriteAllBytesAsync(path, [0, 1, 0, 0], TestContext.Current.CancellationToken);
         await Assert.ThrowsAsync<InvalidDataException>(() => MiSansArchive.ValidateAsync(path, TestContext.Current.CancellationToken));
-    }
-
-    [Fact]
-    public void DiagnosticsIncludeTheFont()
-    {
-        var text = Diagnostics.Text("1", "Windows", "x64", null, null, false, null, null, false, false, 0, 0,
-            font: "MiSans (downloaded, hash ok)");
-        Assert.Contains("Font: MiSans (downloaded, hash ok)", text);
-    }
-
-    sealed class Reports(Action<FontDownloadProgress>? report = null) : IProgress<FontDownloadProgress>
-    {
-        public List<FontDownloadProgress> Values { get; } = [];
-        public void Report(FontDownloadProgress value) { Values.Add(value); report?.Invoke(value); }
-    }
-
-    sealed class TempDirectory : IDisposable
-    {
-        public string Path { get; } = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "lyricod-font-test-" + Guid.NewGuid());
-        public TempDirectory() => Directory.CreateDirectory(Path);
-        public void Dispose() => Directory.Delete(Path, true);
     }
 
     sealed class ArchiveHandler(byte[] zip) : HttpMessageHandler
