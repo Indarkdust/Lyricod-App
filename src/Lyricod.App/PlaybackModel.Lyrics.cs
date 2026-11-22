@@ -31,29 +31,24 @@ public sealed partial class PlaybackModel
         catch (Exception e) { LastError = "preview: " + e.Message; return null; }
     }
 
-    public bool TryPinLyrics(LyricsRef reference)
+    public void PinLyrics(LyricsRef reference)
     {
-        if (Track is not { } track) return false;
-        if (!TrySaveSongChoice(track, choice => choice.Lyrics = reference)) return false;
+        if (Track is not { } track) return;
+        var choice = _overrides[track];
+        choice.Lyrics = reference;
+        _overrides[track] = choice;
         LoadLyrics(track, ignoreCache: true);
-        return true;
     }
 
-    /// <summary>Searches afresh only after the manual choice has been removed successfully.</summary>
-    public bool TryUnpinLyrics()
+    /// <summary>Searches afresh so the cached manual choice cannot win again.</summary>
+    public void UnpinLyrics()
     {
-        if (Track is not { } track) return false;
-        if (!TrySaveSongChoice(track, choice => choice.Lyrics = null)) return false;
+        if (Track is not { } track) return;
+        var choice = _overrides[track];
+        choice.Lyrics = null;
+        _overrides[track] = choice;
         _provider.ClearCache(track);
         LoadLyrics(track, ignoreCache: true);
-        return true;
-    }
-
-    bool TrySaveSongChoice(Track track, Action<TrackOverride> edit)
-    {
-        if (!_overrides.TryGet(track, out var choice)) return false;
-        edit(choice);
-        return _overrides.TrySet(track, choice);
     }
 
     public void ClearSavedLyrics() => _provider.ClearAll();

@@ -244,14 +244,15 @@ public sealed partial class ChooseLyricsWindow : Window
         }
     }
 
-    void OnAutomatic(object sender, RoutedEventArgs e) { if (_model.TryUnpinLyrics()) Close(); }
+    void OnAutomatic(object sender, RoutedEventArgs e) { _model.UnpinLyrics(); Close(); }
     void OnCancel(object sender, RoutedEventArgs e) => Close();
     void OnUse(object sender, RoutedEventArgs e) => UseSelection();
 
     void UseSelection()
     {
         if (!UseButton.IsEnabled || _selection is not { } reference) return;
-        if (_model.TryPinLyrics(reference)) Close();
+        _model.PinLyrics(reference);
+        Close();
     }
 
     static Visibility Shown(bool value) => value ? Visibility.Visible : Visibility.Collapsed;

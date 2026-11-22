@@ -14,7 +14,7 @@ namespace Lyricod;
 public sealed partial class PlaybackModel
 {
     [Flags]
-    public enum Change { None = 0, Track = 1, Lyrics = 2, Line = 4, Clock = 8, Artwork = 16, Diagnostics = 32, Progress = 64 }
+    public enum Change { None = 0, Track = 1, Lyrics = 2, Line = 4, Clock = 8, Artwork = 16, Diagnostics = 32 }
 
     public event Action<Change>? Changed;
 
@@ -70,7 +70,7 @@ public sealed partial class PlaybackModel
     readonly TrackOverrides _overrides;
     readonly Settings _settings;
     readonly Playhead _playhead = new();
-    readonly MediaClock _mediaClock;
+    readonly MediaClock _clock;
     readonly DispatcherQueueTimer _lineTimer;
     readonly DispatcherQueueTimer _safetyPoll;
     readonly DispatcherQueueTimer _artworkRetry;
@@ -83,7 +83,7 @@ public sealed partial class PlaybackModel
     Lyrics? _allLyrics;
     CancellationTokenSource? _loading;
     int _artworkTries;
-    /// <summary>The song's length correction was already attempted automatically.</summary>
+    /// <summary>The song's length was corrected after it started (and searched again with it).</summary>
     bool _lengthCorrected;
     bool _refreshing, _refreshAgain;
     bool _stopped;
@@ -101,7 +101,7 @@ public sealed partial class PlaybackModel
         SweepPainter.Smooth = settings.SmoothSweep;
         _overrides = overrides;
         _settings = settings;
-        _mediaClock = new MediaClock(_playhead);
+        _clock = new MediaClock(_playhead);
         _lineTimer = ui.CreateTimer();
         _lineTimer.IsRepeating = false;
         _lineTimer.Tick += (_, _) => { try { Tick(); } catch (Exception e) { LastError = "line: " + e.Message; } };
@@ -178,11 +178,8 @@ public sealed partial class PlaybackModel
             do
             {
                 _refreshAgain = false;
-                long session = _media.SessionId;
-                var report = await _media.ReadAsync();
-                if (session != _media.SessionId) { _refreshAgain = true; continue; }
-                Apply(report);
-            } while (_refreshAgain && !_stopped);
+                Apply(await _media.ReadAsync());
+            } while (_refreshAgain);
         }
         catch (Exception e) { LastError = "refresh: " + e.Message; }
         finally { _refreshing = false; }
@@ -203,7 +200,6 @@ public sealed partial class PlaybackModel
                 IsSearching = false; // the cancelled search won't say it's done
                 SongOffset = 0; _playhead.Offset = _settings.Offset;
                 _playhead.Anchor(0, Now, false);
-                _mediaClock.Reset();
                 change = Change.Track | Change.Lyrics | Change.Line | Change.Clock | Change.Artwork;
             }
             _safetyPoll.Stop();
@@ -213,11 +209,10 @@ public sealed partial class PlaybackModel
             return;
         }
 
-        if (now.Duration != NowPlaying?.Duration || now.CanSeek != NowPlaying?.CanSeek) change |= Change.Progress;
+        bool trackChanged = now.TrackId != NowPlaying?.TrackId;
         NowPlaying = now;
-        double at = Now;
-        if (_mediaClock.Apply(new MediaClockReport(now.TrackId, now.Position, now.PositionAt,
-                now.IsPlaying, now.HasTimeline), DateTimeOffset.UtcNow, at, out bool trackChanged)) change |= Change.Clock;
+        var report = new MediaClockReport(now.Position, now.PositionAt, now.IsPlaying, now.HasTimeline);
+        if (_clock.Apply(report, trackChanged, DateTimeOffset.Now, Now)) change |= Change.Clock;
 
         if (trackChanged)
         {
@@ -237,14 +232,12 @@ public sealed partial class PlaybackModel
         {
             // Some players (QQ Music) report a new song with the last one's length for a moment.
             // The length helps pick the right lyrics, so search again with the real one, once.
-            _lengthCorrected = true; // one automatic attempt per song, including an I/O failure
-            if (_provider.TryCorrectDuration(current, now.Duration, _overrides, out var corrected))
-            {
-                Track = corrected;
-                ApplyOffset();
-                LoadLyrics(corrected, ignoreCache: false);
-                change |= Change.Track;
-            }
+            _lengthCorrected = true;
+            _loading?.Cancel();
+            Track = _provider.CorrectDuration(current, now.Duration, _overrides);
+            change |= Change.Track;
+            ApplyOffset();
+            LoadLyrics(Track, ignoreCache: false);
         }
         // Browsers hand over the cover a moment after the song: ask again on the next few reports.
         if (Artwork == null && _artworkTries < 4) LoadArtwork(now.TrackId);
@@ -271,22 +264,15 @@ public sealed partial class PlaybackModel
         try
         {
             double target = Math.Clamp(seconds, 0, Duration > 0 ? Duration : double.MaxValue);
-            if (NowPlaying is not { } source) return;
-            if (!await _media.Seek(target, source) || _stopped) return;
-            if (source.SessionId == _media.SessionId)
-            {
-                _playhead.Anchor(target, Now, _playhead.IsPlaying);
-                Finish(Change.Clock);
-            }
+            if (!await _media.Seek(target) || _stopped) return;
+            _playhead.Anchor(target, Now, _playhead.IsPlaying);
+            Finish(Change.Clock);
             await Refresh();
         }
         catch (Exception) { /* the player went away */ }
     }
 
-    public async Task PlayPause()
-    {
-        if (await _media.PlayPause(NowPlaying) && !_stopped) await Refresh();
-    }
+    public Task PlayPause() => _media.PlayPause();
     public Task Next() => _media.Next();
     public Task Previous() => _media.Previous();
 }

@@ -47,18 +47,15 @@ public sealed partial class LyricsProvider
 
     public void ClearCache(Track track)
     {
-        try { File.Delete(CacheFile(CacheKey(track))); }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
+        try { File.Delete(CacheFile(CacheKey(track))); } catch (IOException) { }
     }
 
     /// <summary>Keep manual choices when the same playing song reports its real length.</summary>
-    public bool TryCorrectDuration(Track track, double duration, TrackOverrides overrides, out Track corrected)
+    public Track CorrectDuration(Track track, double duration, TrackOverrides overrides)
     {
-        corrected = track;
-        var updated = track with { Duration = duration };
-        if (!overrides.TryGet(track, out var choice) || !overrides.TryMove(track, updated)) return false;
-        var pinned = choice.Lyrics;
-        corrected = updated;
+        var corrected = track with { Duration = duration };
+        var pinned = overrides[track].Lyrics;
+        overrides.Move(track, corrected);
         var oldFile = CacheFile(CacheKey(track));
         var newFile = CacheFile(CacheKey(corrected));
         // Only manual lyrics belong to the corrected recording without another search.
@@ -71,6 +68,6 @@ public sealed partial class LyricsProvider
             }
             catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
         }
-        return true;
+        return corrected;
     }
 }

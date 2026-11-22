@@ -11,7 +11,6 @@ public sealed partial class IslandWindow
     /// <summary>Top centre of the main display, or (floating) where it was dragged.</summary>
     void Place()
     {
-        if (_closed) return;
         double k = _overlay.Scale;
         if (Floating)
         {
@@ -50,35 +49,36 @@ public sealed partial class IslandWindow
         _pausedAway = false;
     }
 
-    void UpdateVisibility()
+    /// <summary>Shows or hides the island. Returns whether it just came up, brought up to date.</summary>
+    bool UpdateVisibility()
     {
         bool visible = _settings.ShowIsland && _model.IsSong && !_pausedAway;
-        if (visible == _shown) return;
+        if (visible == _shown) return false;
         _shown = visible;
         ApplyTheme(); // frosted blur only while it shows: it can't fade with the island
         if (visible)
         {
             Place();
-            if (_closed) return;
             AppWindow.Show(false);
-            if (_closed) return;
             _overlay.StripFrame();
             _overlay.KeepOnTop();
             _pointerTimer.Start();
             AnimateShown(true);
+            // The lyric isn't kept up while it's hidden; the line there now just appears.
+            UpdateSong();
+            Render();
         }
         else
         {
             _pointerTimer.Stop();
             _progressTimer.Stop();
             _pieceTimer.Stop();
-            _sweep.Set(0, 1);
-            _secondSweep.Set(0, 1);
             SetHovered(false);
             _trail.Clear();
             AnimateShown(false, () => { if (!_shown && !_closed) AppWindow.Hide(); });
         }
         UpdateBars();
+        return visible;
     }
 
     /// <summary>Comes and goes with a fade and a slight shrink toward the top edge (floating:

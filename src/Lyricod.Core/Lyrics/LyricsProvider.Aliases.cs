@@ -26,10 +26,9 @@ public sealed partial class LyricsProvider
         if (allowGuess && IsLatinName(primary) && artists.FirstOrDefault() is { } top && top.Any(HasCjk) && !found.Contains(top))
             found.Insert(0, top);
         names = found.SelectMany(all => all).Where(s => TrackMatcher.Normalize(s) != want).Distinct().ToList();
-        var aliases = names.AsReadOnly();
         // Remembered only when NetEase answered, so a failed lookup is tried again.
-        if (res != null) _aliasCache.Set((primary, allowGuess), aliases);
-        return track with { ArtistAliases = aliases };
+        if (res != null) _aliasCache[(primary, allowGuess)] = names;
+        return track with { ArtistAliases = names };
     }
 
     static bool IsLatinName(string s) => s.Any(char.IsLetter) && s.All(c => c < 'ɐ' || char.IsWhiteSpace(c) || char.IsPunctuation(c));

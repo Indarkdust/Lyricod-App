@@ -43,13 +43,12 @@ public sealed partial class DesktopLyricsWindow : Window
     LyricLine? _under;
     readonly DispatcherQueueTimer _pieceTimer;
     readonly Dictionary<string, double> _widths = [];
-    readonly OverlayContentGate _content = new();
 
     List<LyricLine> _pieces = [];
     LyricLine? _piece;
     double _textWidth;
     bool? _shown;
-    bool _closed;
+    bool _placing;
     /// <summary>Whether the window has its strip size yet (before that, its size is Windows' default).</summary>
     bool _placed;
     readonly Overlay _overlay;
@@ -76,14 +75,14 @@ public sealed partial class DesktopLyricsWindow : Window
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
-        _pieceTimer.Tick += (_, _) => { try { Refresh(OverlayContentChanges.Clock); } catch (Exception e) { Log.Write(e); } };
+        _pieceTimer.Tick += (_, _) => { try { ShowPiece(); } catch (Exception e) { Log.Write(e); } };
 
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
         _settings.PropertyChanged += OnSettingChanged;
+        AppWindow.Changed += OnAppWindowChanged;
         Closed += (_, _) =>
         {
-            _closed = true;
             _model.Changed -= OnModelChanged;
             Fonts.Changed -= OnFontChanged;
             _settings.PropertyChanged -= OnSettingChanged;
@@ -93,7 +92,7 @@ public sealed partial class DesktopLyricsWindow : Window
         ApplyStyle();
         ApplyLock();
         Place();
-        Refresh();
+        Render();
     }
 
     // ---- Window ----
@@ -125,18 +124,28 @@ public sealed partial class DesktopLyricsWindow : Window
     /// <summary>Sizes the strip and puts it where the user left it, or at the bottom centre.</summary>
     void Place()
     {
-        if (_closed) return;
         double scale = Win32.Scale(_hwnd);
         var size = new SizeInt32((int)(StripWidth * scale), (int)(StripHeight() * scale));
-        (int X, int Y)? saved = _settings.DesktopX is int x && _settings.DesktopY is int y && OnSomeScreen(x, y, size)
-            ? (x, y) : null;
-        ScreenRect? current = _placed
-            ? new(AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height) : null;
-        var area = DisplayArea.Primary.WorkArea;
-        var spot = DesktopLyricsPlacement.Origin(saved, current,
-            new(area.X, area.Y, area.Width, area.Height), size.Width, size.Height, (int)(40 * scale));
-        AppWindow.MoveAndResize(new RectInt32(spot.X, spot.Y, size.Width, size.Height));
-        _placed = true;
+        _placing = true;
+        try
+        {
+            // Grow or shrink upward from the bottom edge, so the strip stays where it was put.
+            // The first time, the saved spot is the strip's own top-left.
+            int grow = _placed ? size.Height - AppWindow.Size.Height : 0;
+            if (_settings.DesktopX is int x && _settings.DesktopY is int y && OnSomeScreen(x, y - grow, size))
+            {
+                AppWindow.MoveAndResize(new RectInt32(x, y - grow, size.Width, size.Height));
+                // Keep the saved top-left in step, or the next placing (or start) moves the strip by the change.
+                _settings.DesktopY = y - grow;
+            }
+            else
+            {
+                var area = DisplayArea.Primary.WorkArea;
+                AppWindow.MoveAndResize(new RectInt32(area.X + (area.Width - size.Width) / 2,
+                    area.Y + area.Height - size.Height - (int)(40 * scale), size.Width, size.Height));
+            }
+        }
+        finally { _placing = false; _placed = true; }
     }
 
     static bool OnSomeScreen(int x, int y, SizeInt32 size)
@@ -145,21 +154,19 @@ public sealed partial class DesktopLyricsWindow : Window
         return area != null;
     }
 
-    void SaveSpot()
+    void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
     {
-        _settings.DesktopX = AppWindow.Position.X;
-        _settings.DesktopY = AppWindow.Position.Y;
+        if (!args.DidPositionChange || _placing || _settings.DesktopLocked) return;
+        _settings.DesktopX = sender.Position.X;
+        _settings.DesktopY = sender.Position.Y;
     }
 
     void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (_closed || _settings.DesktopLocked) return;
+        if (_settings.DesktopLocked) return;
         // Let Windows move the window as if its title bar were dragged.
-        var origin = AppWindow.Position;
         Win32.ReleaseCapture();
         Win32.SendMessage(_hwnd, Win32.WM_NCLBUTTONDOWN, Win32.HTCAPTION, 0);
-        // A click without a drag must preserve automatic bottom-centre placement.
-        if (!_closed && (AppWindow.Position.X != origin.X || AppWindow.Position.Y != origin.Y)) SaveSpot();
     }
 
     void UpdateVisibility()
@@ -170,17 +177,10 @@ public sealed partial class DesktopLyricsWindow : Window
         if (visible)
         {
             AppWindow.Show(false);
-            if (_closed || _shown != true) return;
             _overlay.StripFrame();
             _overlay.KeepOnTop();
         }
-        else
-        {
-            _pieceTimer.Stop();
-            _sung.Set(0, 1); // stop the compositor sweep as well as the next-piece timer
-            _sungUnder.Set(0, 1);
-            AppWindow.Hide();
-        }
+        else AppWindow.Hide();
     }
 
     // ---- Text ----
@@ -237,12 +237,11 @@ public sealed partial class DesktopLyricsWindow : Window
 
     void OnFontChanged()
     {
-        if (_closed) return;
         try
         {
             ApplyStyle();
             Place();
-            Refresh();
+            Render();
         }
         catch (Exception e) { Log.Write("font refresh: " + e); }
     }
@@ -250,14 +249,13 @@ public sealed partial class DesktopLyricsWindow : Window
     void OnModelChanged(PlaybackModel.Change change)
     {
         if (change.HasFlag(PlaybackModel.Change.Track) || change.HasFlag(PlaybackModel.Change.Lyrics) || change.HasFlag(PlaybackModel.Change.Line))
-            Refresh();
+            Render();
         else if (change.HasFlag(PlaybackModel.Change.Clock))
-            Refresh(OverlayContentChanges.Clock);
+            ShowPiece();
     }
 
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_closed) return;
         switch (e.PropertyName)
         {
             case nameof(Settings.DesktopLocked):
@@ -266,15 +264,15 @@ public sealed partial class DesktopLyricsWindow : Window
             case nameof(Settings.DesktopFontSize) or nameof(Settings.SungColor):
                 ApplyStyle();
                 Place();
-                Refresh();
+                Render();
                 break;
             case nameof(Settings.SecondLine):
                 ApplyStyle();
                 Place();
-                Refresh();
+                Render();
                 break;
             case nameof(Settings.ShowDesktopLyrics):
-                Refresh();
+                Render();
                 break;
             case nameof(Settings.DesktopY) when _settings.DesktopX == null && _settings.DesktopY == null:
                 // "Reset to bottom centre" in Settings.
@@ -284,18 +282,10 @@ public sealed partial class DesktopLyricsWindow : Window
     }
 
     /// <summary>Shows the current line (in pieces if it's too wide) and what goes under it.</summary>
-    void Refresh(OverlayContentChanges changes = OverlayContentChanges.Lyrics)
-    {
-        if (_closed) return;
-        UpdateVisibility();
-        if (_closed) return;
-        var update = _content.Take(_shown == true, changes);
-        if (update.HasFlag(OverlayContentChanges.Lyrics)) Render();
-        else if (update.HasFlag(OverlayContentChanges.Clock)) ShowPiece();
-    }
-
     void Render()
     {
+        UpdateVisibility();
+        if (_shown != true) return; // showing renders afresh
         var lyrics = _model.Lyrics;
         var line = lyrics is { IsSynced: true } ? _model.CurrentLine : null;
         if (line == null)
@@ -351,7 +341,7 @@ public sealed partial class DesktopLyricsWindow : Window
     void ShowPiece()
     {
         _pieceTimer.Stop();
-        if (_pieces.Count == 0) return;
+        if (_pieces.Count == 0 || _shown != true) return;
         double now = _model.Position();
         var piece = LinePieces.Current(_pieces, now)!;
         if (!ReferenceEquals(piece, _piece))

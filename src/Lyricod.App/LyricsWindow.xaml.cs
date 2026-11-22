@@ -188,12 +188,6 @@ public sealed partial class LyricsWindow : Window
             UpdateTimer();
             UpdateControls();
         }
-        else if (change.HasFlag(PlaybackModel.Change.Progress))
-        {
-            // Position-independent metadata can arrive while paused; it must not re-plan lyric sweeps.
-            _progress.Update();
-            UpdateTimer();
-        }
     }
 
     void OnSettingChanged(object? sender, PropertyChangedEventArgs e)

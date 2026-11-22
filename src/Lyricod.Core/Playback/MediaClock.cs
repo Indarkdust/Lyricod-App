@@ -1,36 +1,29 @@
 namespace Lyricod.Core;
 
-/// <summary>The song, play state and raw timeline reported by a media player.</summary>
-public readonly record struct MediaClockReport(string TrackId, double Position,
-    DateTimeOffset PositionAt, bool IsPlaying, bool HasTimeline);
+/// <summary>A player report: its timeline (the position at an instant), if it has one, and whether it plays.</summary>
+public readonly record struct MediaClockReport(double Position, DateTimeOffset PositionAt, bool IsPlaying, bool HasTimeline);
 
-/// <summary>Keeps a steady playhead when playback toggles without a new timeline.</summary>
+/// <summary>Moves a <see cref="Playhead"/> from player reports.</summary>
 public sealed class MediaClock(Playhead playhead)
 {
-    MediaClockReport? _previous;
+    (double, DateTimeOffset)? _timeline;
 
-    public void Reset() => _previous = null;
-
-    public bool Apply(MediaClockReport report, DateTimeOffset utcNow, double now, out bool trackChanged)
+    /// <summary>Returns whether the playhead was re-anchored. <paramref name="utcNow"/> is the time of day, <paramref name="now"/> the playhead's clock.</summary>
+    public bool Apply(MediaClockReport report, bool trackChanged, DateTimeOffset utcNow, double now)
     {
-        trackChanged = _previous is not { } previous || previous.TrackId != report.TrackId;
-        bool newTimeline = report.HasTimeline && double.IsFinite(report.Position) &&
-            (trackChanged || _previous is not { HasTimeline: true } old ||
-             old.Position != report.Position || old.PositionAt != report.PositionAt);
+        (double, DateTimeOffset)? timeline = report.HasTimeline ? (report.Position, report.PositionAt) : null;
+        // Players often resend the pause-time timeline on resume. Carried on from its stamp, it would
+        // count the pause as played, so a repeated timeline keeps the playhead where it is.
+        bool fresh = timeline != null && (trackChanged || timeline != _timeline);
+        _timeline = timeline;
         double position = trackChanged ? 0 : playhead.RawPosition(now);
-        if (newTimeline)
+        if (fresh)
         {
             position = report.Position;
             double elapsed = (utcNow - report.PositionAt).TotalSeconds;
-            // Invalid or constant timestamps describe the reported position without extrapolation.
-            if (report.IsPlaying && (trackChanged || _previous?.PositionAt != report.PositionAt) &&
-                elapsed >= 0 && elapsed <= TimeSpan.FromDays(1).TotalSeconds)
-                position += elapsed;
+            // Some players report a stale or empty update time; then the position is as of now.
+            if (report.IsPlaying && elapsed >= 0 && elapsed <= TimeSpan.FromDays(1).TotalSeconds) position += elapsed;
         }
-        // A repeated timeline must not count the paused interval as playing time.
-        // Report still anchors a changed play state at the current effective position.
-        bool changed = playhead.Report(position, now, report.IsPlaying, force: trackChanged);
-        _previous = report;
-        return changed;
+        return playhead.Report(position, now, report.IsPlaying, force: trackChanged);
     }
 }

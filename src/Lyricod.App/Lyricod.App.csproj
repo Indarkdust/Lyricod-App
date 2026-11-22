@@ -21,7 +21,8 @@
     <!-- Publishing leaves out the parts of .NET and the Windows SDK and WinUI projections that Lyricod never
          calls (IL trimming). Partial: only assemblies marked as safe to trim are trimmed; Lyricod's own code,
          Lyricod.Core and ToolGood.Words stay whole, so XAML bindings and JSON can still find their properties.
-         Trimming drops .NET's own precompiled code. ReadyToRun precompiles the remaining runtime and projections. -->
+         Trimming drops .NET's own precompiled code, so ReadyToRun precompiles what's left: without it Lyricod
+         starts more slowly than untrimmed; with it, faster (it precompiles Lyricod and the projections too). -->
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
     <PublishReadyToRun>true</PublishReadyToRun>
@@ -30,11 +31,6 @@
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
   </PropertyGroup>
-  <ItemGroup>
-    <!-- With .NET 10.0.14, precompiling the app can crash Enum.GetValues while reading saved settings.
-         JIT Lyricod.dll at startup and keep ReadyToRun for its dependencies. -->
-    <PublishReadyToRunExclude Include="Lyricod.dll" />
-  </ItemGroup>
   <ItemGroup>
     <!-- Only the parts of Windows App SDK 2.5.1 that Lyricod uses, at the versions the 2.5.1 metapackage
          (Microsoft.WindowsAppSDK) picks. The metapackage would also ship AI, machine learning (ONNX Runtime,
