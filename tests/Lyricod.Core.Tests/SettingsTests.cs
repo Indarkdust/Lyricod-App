@@ -5,13 +5,26 @@ namespace Lyricod.Core.Tests;
 public class SettingsTests
 {
     [Fact]
-    public void AnUnknownLyricsBackgroundReadsAsTheMovingArtwork()
+    public void AValueThisVersionCantReadKeepsItsDefaultAndTheRestIsRead()
     {
-        // A test build's "Glass" or "Flow" mustn't make the whole file unreadable.
-        var settings = JsonSerializer.Deserialize<Lyricod.Settings>("""{"LyricsBackground":"Glass","DesktopFontSize":40}""")!;
+        // A test build's or a newer version's choice mustn't make the whole file unreadable.
+        var settings = Lyricod.Settings.Read("""
+            {"LyricsBackground":"Glass","IslandHover":"Peek","FrameRate":"Turbo","IslandSecondLine":"Lyrics","IslandSize":7.5,
+             "PronunciationLanguages":["Korean","Klingon"],"DesktopFontSize":40,"LyricsEffect":"Glow","GlassShineStyle":"Soft"}
+            """)!;
         Assert.Equal(Lyricod.LyricsBackground.Artwork, settings.LyricsBackground);
+        Assert.Equal(Lyricod.IslandHover.ByDirection, settings.IslandHover);
+        Assert.Equal(Lyricod.FrameRate.Balanced, settings.FrameRate);
+        Assert.Equal(SecondLine.None, settings.IslandSecondLine);
+        Assert.Equal(Lyricod.IslandSize.Medium, settings.IslandSize);
+        Assert.Equal([LyricLanguage.Japanese, LyricLanguage.Korean], settings.PronunciationLanguages);
         Assert.Equal(40, settings.DesktopFontSize);
-        Assert.Equal(Lyricod.LyricsBackground.Dark, JsonSerializer.Deserialize<Lyricod.Settings>("""{"LyricsBackground":"Dark"}""")!.LyricsBackground);
+        Assert.Equal(Lyricod.SungEffect.Glow, settings.LyricsEffect);
+        Assert.Equal(ShineStyle.Soft, settings.GlassShineStyle);
+
+        // A file that isn't JSON at all is still refused, and Load starts afresh.
+        Assert.ThrowsAny<JsonException>(() => Lyricod.Settings.Read("""{"DesktopFontSize":"""));
+        Assert.Null(Lyricod.Settings.Read("[]"));
     }
 
     [Fact]

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Lyricod.Core;
 
@@ -144,7 +145,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// <summary>Light along the glass's edge, and a shadow under a floating island.</summary>
     public bool GlassShine { get => _glassShine; set => Set(ref _glassShine, value); }
     /// <summary>How the 3D effect looks when it's on. Saved apart from the switch, so an older version still reads that.</summary>
-    [JsonConverter(typeof(KnownOrDefault<ShineStyle>))]
     public ShineStyle GlassShineStyle { get => _glassShineStyle; set => Set(ref _glassShineStyle, value); }
     /// <summary>Liquid by default; it stays clear where Windows can't run it.</summary>
     public GlassEffect GlassEffect { get => _glassEffect; set => Set(ref _glassEffect, Enum.IsDefined(value) ? value : GlassEffect.Liquid); }
@@ -174,8 +174,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
         _islandColor ??= _sungColor;
     }
 
-    /// <summary>A background this version doesn't know (a test build's, or a newer version's) reads as the moving album art.</summary>
-    [JsonConverter(typeof(KnownOrDefault<LyricsBackground>))]
     public LyricsBackground LyricsBackground { get => _lyricsBackground; set => Set(ref _lyricsBackground, value); }
     public LyricsTextSize LyricsTextSize { get => _lyricsTextSize; set => Set(ref _lyricsTextSize, value); }
     /// <summary>The lyrics window shows translations / pronunciation under each line.</summary>
@@ -218,12 +216,24 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
         Settings? s = null;
         try
         {
-            if (File.Exists(FilePath)) s = JsonSerializer.Deserialize<Settings>(File.ReadAllText(FilePath), Json);
+            if (File.Exists(FilePath)) s = Read(File.ReadAllText(FilePath));
         }
         catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException) { }
         s ??= new Settings { IsNew = true };
         s._ready = true; // reading the file set every property; saving starts now
         return s;
+    }
+
+    /// <summary>A value this version can't read (a newer or test build's choice, a hand edit) is left out, so that
+    /// setting keeps its default instead of the whole file being dropped.</summary>
+    internal static Settings? Read(string json)
+    {
+        var file = JsonNode.Parse(json) as JsonObject;
+        while (true)
+        {
+            try { return file.Deserialize<Settings>(Json); }
+            catch (JsonException e) when (e.Path?.Split('.', '[') is [_, var name, ..] && file!.Remove(name)) { }
+        }
     }
 
     bool _ready;
@@ -246,13 +256,4 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 
     [JsonConstructor]
     public Settings() { }
-}
-
-/// <summary>Reads a choice by name; an unknown name becomes the first choice instead of failing the whole settings file.</summary>
-sealed class KnownOrDefault<T> : JsonConverter<T> where T : struct, Enum
-{
-    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) =>
-        reader.TokenType == JsonTokenType.String && Enum.TryParse<T>(reader.GetString(), out var value) && Enum.IsDefined(value) ? value : default;
-
-    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
 }
