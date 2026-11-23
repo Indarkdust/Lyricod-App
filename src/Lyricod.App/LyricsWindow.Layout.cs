@@ -42,6 +42,7 @@ public sealed partial class LyricsWindow
         Move(_progress, wide ? BigProgressHost : SmallProgressHost);
         _transport.SetLayoutScale(wide ? 1.35 : 1, 16);
         _progress.SetLayoutScale(wide ? 1.15 : 1);
+        ApplyBar();
         UpdateControls();
         _widths.Clear();
         BuildLines();

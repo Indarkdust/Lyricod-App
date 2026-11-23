@@ -176,7 +176,11 @@ public sealed partial class LyricsWindow : Window
     void OnModelChanged(PlaybackModel.Change change)
     {
         if (change.HasFlag(PlaybackModel.Change.Track) || change.HasFlag(PlaybackModel.Change.Lyrics)) UpdateSong();
-        if (change.HasFlag(PlaybackModel.Change.Artwork)) _ = ApplyArtwork();
+        if (change.HasFlag(PlaybackModel.Change.Artwork))
+        {
+            ApplyBar();
+            _ = ApplyArtwork();
+        }
         if (change.HasFlag(PlaybackModel.Change.Lyrics) || change.HasFlag(PlaybackModel.Change.Track)) BuildLines();
         else if (change.HasFlag(PlaybackModel.Change.Line)) MoveToCurrent(animate: true);
         if (change.HasFlag(PlaybackModel.Change.Clock))
@@ -266,6 +270,17 @@ public sealed partial class LyricsWindow : Window
             BackdropColour.Visibility = Visibility.Visible;
         }
         else BackdropColour.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// The progress bar in the cover's colour, as the island's is: full under the big cover, and halfway to
+    /// white in the narrow layout's dark card, beside its small white text. White for a cover with no clear colour.
+    /// </summary>
+    void ApplyBar()
+    {
+        var c = _model.ArtworkColor ?? Colors.White;
+        if (!_wide) c = Windows.UI.Color.FromArgb(255, (byte)((c.R + 255) / 2), (byte)((c.G + 255) / 2), (byte)((c.B + 255) / 2));
+        _progress.BarBrush = new SolidColorBrush(c);
     }
 
     static Windows.UI.Color Shade(Windows.UI.Color c, double k) =>
