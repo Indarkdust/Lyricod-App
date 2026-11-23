@@ -89,11 +89,11 @@ public sealed partial class TrayPanel : Window
         LyricsTitle.Text = L.Get("PaneLyrics");
         TimingTitle.Text = L.Get("TimingHeading");
         ToolTipService.SetToolTip(LyricsRow, L.Get("ChooseLyricsTip"));
-        ToolTipService.SetToolTip(EarlierButton, L.Get("OffsetEarlier"));
-        ToolTipService.SetToolTip(LaterButton, L.Get("OffsetLater"));
-        ToolTipService.SetToolTip(LyricsWindowButton, L.Get("LyricsWindowTitle"));
-        ToolTipService.SetToolTip(SettingsButton, L.Get("SettingsTip"));
-        ToolTipService.SetToolTip(QuitButton, L.Get("Quit"));
+        L.Tip(EarlierButton, "OffsetEarlier");
+        L.Tip(LaterButton, "OffsetLater");
+        L.Tip(LyricsWindowButton, "LyricsWindowTitle");
+        L.Tip(SettingsButton, "SettingsTip");
+        L.Tip(QuitButton, "Quit");
 
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);

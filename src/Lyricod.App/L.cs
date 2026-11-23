@@ -1,3 +1,6 @@
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace Lyricod;
@@ -35,6 +38,14 @@ static class L
             return _strings is { } r && r.Map.TryGetValue(key, r.Context)?.ValueAsString is { Length: > 0 } value ? value : key;
         }
         catch (Exception) { return key; }
+    }
+
+    /// <summary>A tooltip that is also what a screen reader calls the control: for a button that shows only an icon.</summary>
+    public static void Tip(DependencyObject control, string key)
+    {
+        string text = Get(key);
+        ToolTipService.SetToolTip(control, text);
+        AutomationProperties.SetName(control, text);
     }
 
     public static string Format(string key, params object[] args) => string.Format(System.Globalization.CultureInfo.CurrentCulture, Get(key), args);

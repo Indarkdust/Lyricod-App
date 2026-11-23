@@ -99,8 +99,8 @@ public sealed partial class IslandWindow : Window
         ProgressHost.Children.Add(_progress);
         LyricsButton.Click += (_, _) => openLyrics();
         SettingsButton.Click += (_, _) => openSettings();
-        ToolTipService.SetToolTip(LyricsButton, L.Get("LyricsWindowTitle"));
-        ToolTipService.SetToolTip(SettingsButton, L.Get("SettingsTitle"));
+        L.Tip(LyricsButton, "LyricsWindowTitle");
+        L.Tip(SettingsButton, "SettingsTitle");
         // One bar per band of the meter, 2 wide, 1.5 apart, 3 to 14 tall.
         for (int i = 0; i < AudioMeter.BandCount; i++)
         {

@@ -88,10 +88,10 @@ public sealed partial class LyricsWindow : Window
         _extraRuler = new TextRuler(ExtraMeasurer);
         _transport = new TransportButtons(model);
         _progress = new ProgressLine(model);
-        ToolTipService.SetToolTip(TranslationButton, L.Get("TranslationsTip"));
-        ToolTipService.SetToolTip(PronunciationButton, L.Get("PronunciationTip"));
-        ToolTipService.SetToolTip(FullScreenButton, L.Get("FullScreenTip"));
-        ToolTipService.SetToolTip(ChooseButton, L.Get("ChooseLyricsTip"));
+        L.Tip(TranslationButton, "TranslationsTip");
+        L.Tip(PronunciationButton, "PronunciationTip");
+        L.Tip(FullScreenButton, "FullScreenTip");
+        L.Tip(ChooseButton, "ChooseLyricsTip");
 
         _progressTimer = DispatcherQueue.CreateTimer();
         _progressTimer.Interval = TimeSpan.FromSeconds(0.5);

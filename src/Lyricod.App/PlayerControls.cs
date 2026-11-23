@@ -54,6 +54,7 @@ sealed partial class TransportButtons : StackPanel
         };
         button.Click += (_, _) => action();
         ToolTipService.SetToolTip(button, tip);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, tip);
         return button;
     }
 }

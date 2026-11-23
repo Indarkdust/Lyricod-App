@@ -109,6 +109,7 @@ public sealed partial class SettingsWindow
         grid.Children.Add(text);
         var link = new HyperlinkButton { Content = new FontIcon { Glyph = "\uE8A7", FontSize = 14 }, NavigateUri = new Uri(url), VerticalAlignment = VerticalAlignment.Top };
         ToolTipService.SetToolTip(link, url);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(link, name);
         Grid.SetColumn(link, 1);
         grid.Children.Add(link);
         return grid;
@@ -191,6 +192,7 @@ public sealed partial class SettingsWindow
             var swatch = Swatch(DesktopLyricsWindow.ParseColor(hex));
             swatch.Click += (_, _) => set(hex);
             ToolTipService.SetToolTip(swatch, hex);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(swatch, hex);
             swatches.Add((swatch, hex));
             row.Children.Add(swatch);
         }
@@ -206,7 +208,7 @@ public sealed partial class SettingsWindow
             Content = new FontIcon { Glyph = "\uE790", FontSize = 14 }, // Color
             Flyout = new Flyout { Content = picker },
         };
-        ToolTipService.SetToolTip(custom, L.Get("CustomColour"));
+        L.Tip(custom, "CustomColour");
         row.Children.Add(custom);
 
         void Sync()
@@ -236,8 +238,8 @@ public sealed partial class SettingsWindow
         var minus = new Button { Content = new FontIcon { Glyph = "\uE738", FontSize = 12 }, Padding = new Thickness(10, 8, 10, 8) };
         var plus = new Button { Content = new FontIcon { Glyph = "\uE710", FontSize = 12 }, Padding = new Thickness(10, 8, 10, 8) };
         var reset = new Button { Content = L.Get("Reset") };
-        ToolTipService.SetToolTip(minus, L.Get("OffsetLater"));
-        ToolTipService.SetToolTip(plus, L.Get("OffsetEarlier"));
+        L.Tip(minus, "OffsetLater");
+        L.Tip(plus, "OffsetEarlier");
         minus.Click += (_, _) => set(Math.Clamp(get() - 0.25, -10, 10));
         plus.Click += (_, _) => set(Math.Clamp(get() + 0.25, -10, 10));
         reset.Click += (_, _) => set(0);
