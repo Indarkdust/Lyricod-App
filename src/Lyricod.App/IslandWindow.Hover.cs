@@ -95,7 +95,11 @@ public sealed partial class IslandWindow
                 _transport.Update();
                 if (_model.IsPlaying) _progressTimer.Start();
             }
-            else _progressTimer.Stop();
+            else
+            {
+                _progressTimer.Stop();
+                _progress.Hover(null); // it may close with the pointer still on the bar (the island hid)
+            }
             // The mini player fades in once the pill has mostly grown, and goes at once on collapse.
             Fade(Expanded, expand ? 1 : 0, expand ? 0.18 : 0.08, () => { if (!_expanded) Expanded.Visibility = Visibility.Collapsed; },
                 delay: expand ? 0.12 : 0);

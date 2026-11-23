@@ -1,5 +1,6 @@
 using System.Globalization;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -68,16 +69,29 @@ sealed partial class ProgressLine : Grid
     readonly TextBlock _elapsed, _left;
     /// <summary>While dragging: where the pointer is (0–1), shown instead of the playhead.</summary>
     double? _scrub;
+    /// <summary>Over the bar: where the pointer is (0–1), shown like a drag once it rests there a moment.</summary>
+    double? _hover;
+    bool _previewing;
+    /// <summary>That moment, so a pointer passing over doesn't move the bar. Null: hovering shows nothing.</summary>
+    readonly DispatcherQueueTimer? _rest;
     bool? _seekable;
     static readonly InputCursor Hand = InputSystemCursor.Create(InputSystemCursorShape.Hand);
 
-    public ProgressLine(PlaybackModel model)
+    public ProgressLine(PlaybackModel model, bool hoverPreview = false)
     {
         _model = model;
+        if (hoverPreview)
+        {
+            _rest = DispatcherQueue.CreateTimer();
+            _rest.IsRepeating = false;
+            _rest.Interval = TimeSpan.FromSeconds(0.2);
+            _rest.Tick += (_, _) => { try { _previewing = true; Update(); } catch (Exception e) { Log.Write(e); } };
+        }
         // Press or drag on the bar to pick a point, let go to move the player there.
         Background = new SolidColorBrush(Colors.Transparent); // so the whole strip takes the pointer
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;
+        PointerExited += (_, _) => { try { Hover(null); } catch (Exception) { } };
         PointerReleased += OnPointerReleased;
         PointerCaptureLost += (_, _) => { if (_scrub != null) { _scrub = null; Update(); } };
         RowSpacing = 4;
@@ -106,14 +120,17 @@ sealed partial class ProgressLine : Grid
 
     bool CanSeek => _model.CanSeek && _model.Duration > 0;
 
+    /// <summary>The bar, not the times under it.</summary>
+    bool OnBar(double y) => y >= -10 && y <= _bar.ActualHeight + 10;
+
     void OnPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         try
         {
             if (!CanSeek) return;
             var p = e.GetCurrentPoint(_bar).Position;
-            if (p.Y < -10 || p.Y > _bar.ActualHeight + 10) return; // the bar, not the times under it
-            if (!CapturePointer(e.Pointer)) return;
+            if (!OnBar(p.Y) || !CapturePointer(e.Pointer)) return;
+            Hover(null);
             Scrub(p.X);
             e.Handled = true;
         }
@@ -122,9 +139,21 @@ sealed partial class ProgressLine : Grid
 
     void OnPointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (_scrub == null) return;
-        try { Scrub(e.GetCurrentPoint(_bar).Position.X); e.Handled = true; }
+        try
+        {
+            var p = e.GetCurrentPoint(_bar).Position;
+            if (_scrub != null) { Scrub(p.X); e.Handled = true; }
+            else if (_rest != null) Hover(CanSeek && OnBar(p.Y) ? Math.Clamp(p.X / Math.Max(_bar.ActualWidth, 1), 0, 1) : null);
+        }
         catch (Exception) { }
+    }
+
+    /// <summary>The pointer is over the bar at <paramref name="at"/> (0–1), or off it (null).</summary>
+    public void Hover(double? at)
+    {
+        _hover = at;
+        if (_previewing) { _previewing = at != null; Update(); }
+        else { _rest?.Stop(); if (at != null) _rest?.Start(); }
     }
 
     void OnPointerReleased(object sender, PointerRoutedEventArgs e)
@@ -150,7 +179,7 @@ sealed partial class ProgressLine : Grid
     public void Update()
     {
         double duration = _model.Duration;
-        double position = _scrub is double at ? at * duration : _model.PlayerPosition;
+        double position = (_scrub ?? (_previewing ? _hover : null)) is double at ? at * duration : _model.PlayerPosition;
         Visibility = duration > 0 ? Visibility.Visible : Visibility.Collapsed;
         bool seekable = CanSeek;
         if (seekable != _seekable)

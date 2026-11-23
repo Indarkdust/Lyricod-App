@@ -70,6 +70,7 @@ public sealed partial class PlaybackModel
     readonly TrackOverrides _overrides;
     readonly Settings _settings;
     readonly Playhead _playhead = new();
+    readonly MediaClock _clock;
     readonly DispatcherQueueTimer _lineTimer;
     readonly DispatcherQueueTimer _safetyPoll;
     readonly DispatcherQueueTimer _artworkRetry;
@@ -100,6 +101,7 @@ public sealed partial class PlaybackModel
         SweepPainter.Smooth = settings.SmoothSweep;
         _overrides = overrides;
         _settings = settings;
+        _clock = new MediaClock(_playhead);
         _lineTimer = ui.CreateTimer();
         _lineTimer.IsRepeating = false;
         _lineTimer.Tick += (_, _) => { try { Tick(); } catch (Exception e) { LastError = "line: " + e.Message; } };
@@ -208,26 +210,9 @@ public sealed partial class PlaybackModel
         }
 
         bool trackChanged = now.TrackId != NowPlaying?.TrackId;
-        var previous = NowPlaying;
         NowPlaying = now;
-        double at = Now;
-        if (now.HasTimeline)
-        {
-            // The report's position, carried to this instant.
-            double position = now.Position + (now.IsPlaying ? (DateTimeOffset.Now - now.PositionAt).TotalSeconds : 0);
-            if (_playhead.Report(position, at, now.IsPlaying, force: trackChanged)) change |= Change.Clock;
-        }
-        else if (trackChanged)
-        {
-            // No position from the player: time the song from now.
-            _playhead.Anchor(0, at, now.IsPlaying);
-            change |= Change.Clock;
-        }
-        else if (previous?.IsPlaying != now.IsPlaying)
-        {
-            _playhead.Anchor(_playhead.RawPosition(at), at, now.IsPlaying);
-            change |= Change.Clock;
-        }
+        var report = new MediaClockReport(now.Position, now.PositionAt, now.IsPlaying, now.HasTimeline);
+        if (_clock.Apply(report, trackChanged, DateTimeOffset.Now, Now)) change |= Change.Clock;
 
         if (trackChanged)
         {

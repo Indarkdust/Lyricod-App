@@ -58,6 +58,8 @@ public sealed partial class LyricsProvider
     {
         var res = await GetJson(new HttpRequestMessage(HttpMethod.Get, "https://lrclib.net/api/search?" + Query(("q", query))), ct, require200: true);
         var list = new List<LyricsCandidate>();
+        // A browser can send every video here; don't keep their lyrics all session.
+        if (_lrclibSeen.Count > 200) _lrclibSeen.Clear();
         foreach (var r in Arr(res).Take(20))
         {
             if (Long(Field(r, "id")) is not { } id || Str(Field(r, "trackName")) is not { } title) continue;

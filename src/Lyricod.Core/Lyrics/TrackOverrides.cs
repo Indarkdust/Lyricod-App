@@ -65,7 +65,12 @@ public sealed class TrackOverrides
     void Save()
     {
         var tmp = _file + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(_map));
-        File.Move(tmp, _file, overwrite: true);
+        try
+        {
+            File.WriteAllText(tmp, JsonSerializer.Serialize(_map));
+            File.Move(tmp, _file, overwrite: true);
+        }
+        // Saved from click and shortcut handlers: the choice still applies, and the next save writes it.
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { }
     }
 }

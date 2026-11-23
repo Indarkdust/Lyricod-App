@@ -156,10 +156,8 @@ public sealed class MediaSession : IDisposable
                 try { if (Choose() is { } better && !ReferenceEquals(better, s)) Pick(); }
                 catch (Exception) { /* the session list can change underneath us */ }
             }
-            // Some players report a stale or empty update time; then the position is as of now.
+            // As reported, even stale or empty: MediaClock tells a repeated report by it.
             var at = timeline.LastUpdatedTime;
-            var now = DateTimeOffset.Now;
-            if (at > now || now - at > TimeSpan.FromDays(1)) at = now;
             return new NowPlaying(
                 s.SourceAppUserModelId ?? "", props.Title.Trim(), props.Artist?.Trim() ?? "", props.AlbumTitle?.Trim() ?? "",
                 hasTimeline ? duration : 0, (timeline.Position - timeline.StartTime).TotalSeconds, at,

@@ -129,12 +129,14 @@ public sealed partial class DesktopLyricsWindow : Window
         _placing = true;
         try
         {
-            if (_settings.DesktopX is int x && _settings.DesktopY is int y && OnSomeScreen(x, y, size))
+            // Grow or shrink upward from the bottom edge, so the strip stays where it was put.
+            // The first time, the saved spot is the strip's own top-left.
+            int grow = _placed ? size.Height - AppWindow.Size.Height : 0;
+            if (_settings.DesktopX is int x && _settings.DesktopY is int y && OnSomeScreen(x, y - grow, size))
             {
-                // Grow or shrink upward from the bottom edge, so the strip stays where it was put.
-                // The first time, the saved spot is the strip's own top-left.
-                int bottom = y + (_placed ? AppWindow.Size.Height : size.Height);
-                AppWindow.MoveAndResize(new RectInt32(x, bottom - size.Height, size.Width, size.Height));
+                AppWindow.MoveAndResize(new RectInt32(x, y - grow, size.Width, size.Height));
+                // Keep the saved top-left in step, or the next placing (or start) moves the strip by the change.
+                _settings.DesktopY = y - grow;
             }
             else
             {
@@ -283,6 +285,7 @@ public sealed partial class DesktopLyricsWindow : Window
     void Render()
     {
         UpdateVisibility();
+        if (_shown != true) return; // showing renders afresh
         var lyrics = _model.Lyrics;
         var line = lyrics is { IsSynced: true } ? _model.CurrentLine : null;
         if (line == null)
@@ -338,7 +341,7 @@ public sealed partial class DesktopLyricsWindow : Window
     void ShowPiece()
     {
         _pieceTimer.Stop();
-        if (_pieces.Count == 0) return;
+        if (_pieces.Count == 0 || _shown != true) return;
         double now = _model.Position();
         var piece = LinePieces.Current(_pieces, now)!;
         if (!ReferenceEquals(piece, _piece))

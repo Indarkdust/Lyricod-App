@@ -95,7 +95,7 @@ public sealed partial class IslandWindow : Window
         _secondSweep = new SweepPainter(SecondText, SecondSweep) { Effect = SecondEffect };
         _transport = new TransportButtons(model, 13);
         TransportHost.Children.Add(_transport);
-        _progress = new ProgressLine(model);
+        _progress = new ProgressLine(model, hoverPreview: true);
         ProgressHost.Children.Add(_progress);
         LyricsButton.Click += (_, _) => openLyrics();
         SettingsButton.Click += (_, _) => openSettings();
@@ -198,10 +198,8 @@ public sealed partial class IslandWindow : Window
         ApplyMoveMode();
         ApplyLayout();
         Place();
-        _ = ApplyArtwork();
-        UpdateSong();
-        Render();
         UpdatePaused();
+        UpdateVisibility();
     }
 
     // ---- Model ----
@@ -221,6 +219,8 @@ public sealed partial class IslandWindow : Window
         UpdatePaused();
         if (change.HasFlag(PlaybackModel.Change.Track)) UpdateSong();
         if (change.HasFlag(PlaybackModel.Change.Artwork)) _ = ApplyArtwork();
+        // Hidden, the lyric needn't keep up: coming up renders it.
+        if (UpdateVisibility() || !_shown) return;
         if (change.HasFlag(PlaybackModel.Change.Track) || change.HasFlag(PlaybackModel.Change.Lyrics) || change.HasFlag(PlaybackModel.Change.Line))
             Render();
         else if (change.HasFlag(PlaybackModel.Change.Clock))
@@ -250,6 +250,7 @@ public sealed partial class IslandWindow : Window
                     break;
                 case nameof(Settings.IslandHideWhenPaused):
                     UpdatePaused();
+                    UpdateVisibility();
                     break;
                 case nameof(Settings.IslandHover):
                     SetHovered(false);
@@ -302,7 +303,6 @@ public sealed partial class IslandWindow : Window
         SongArtist.Text = _model.Track?.Artist ?? "";
         _transport.Update();
         _progress.Update();
-        UpdateVisibility();
         UpdateBars(); // another player may be playing now
     }
 
