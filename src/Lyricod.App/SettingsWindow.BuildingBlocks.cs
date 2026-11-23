@@ -81,6 +81,7 @@ public sealed partial class SettingsWindow
             Header = header, Content = inside, Margin = new Thickness(0, 0, 0, 4),
             HorizontalAlignment = HorizontalAlignment.Stretch, HorizontalContentAlignment = HorizontalAlignment.Stretch,
         };
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(fold, title);
         Page.Children.Add(fold);
         var outer = _folding;
         _folding = inside;

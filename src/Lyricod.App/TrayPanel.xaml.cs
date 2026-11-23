@@ -84,11 +84,14 @@ public sealed partial class TrayPanel : Window
         ProgressHost.Children.Add(_progress);
         DesktopTileText.Text = L.Get("DesktopLyrics");
         IslandTileText.Text = L.Get("PaneIsland");
+        // A button holding an icon and text has no name of its own for a screen reader.
+        AutomationProperties.SetName(DesktopTile, DesktopTileText.Text);
+        AutomationProperties.SetName(IslandTile, IslandTileText.Text);
         _desktopLock = new TileLock(DesktopTileHost, DesktopTile, L.Get("LockDesktopLyrics"), on => _settings.DesktopLocked = on);
         _islandLock = new TileLock(IslandTileHost, IslandTile, L.Get("LockIsland"), on => _settings.IslandLocked = on);
         LyricsTitle.Text = L.Get("PaneLyrics");
         TimingTitle.Text = L.Get("TimingHeading");
-        ToolTipService.SetToolTip(LyricsRow, L.Get("ChooseLyricsTip"));
+        L.Tip(LyricsRow, "ChooseLyricsTip");
         L.Tip(EarlierButton, "OffsetEarlier");
         L.Tip(LaterButton, "OffsetLater");
         L.Tip(LyricsWindowButton, "LyricsWindowTitle");
