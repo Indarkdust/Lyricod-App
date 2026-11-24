@@ -129,14 +129,16 @@ public sealed partial class DesktopLyricsWindow : Window
         _placing = true;
         try
         {
-            // Grow or shrink upward from the bottom edge, so the strip stays where it was put.
+            // Grow or shrink upward from the bottom edge, so the strip stays where it was put,
+            // but not above the top of its screen, where the line would be cut off.
             // The first time, the saved spot is the strip's own top-left.
             int grow = _placed ? size.Height - AppWindow.Size.Height : 0;
-            if (_settings.DesktopX is int x && _settings.DesktopY is int y && OnSomeScreen(x, y - grow, size))
+            if (_settings.DesktopX is int x && _settings.DesktopY is int y
+                && StripPlacement.Top(y, grow, ScreenTop(x, y, AppWindow.Size)) is var top && OnSomeScreen(x, top, size))
             {
-                AppWindow.MoveAndResize(new RectInt32(x, y - grow, size.Width, size.Height));
+                AppWindow.MoveAndResize(new RectInt32(x, top, size.Width, size.Height));
                 // Keep the saved top-left in step, or the next placing (or start) moves the strip by the change.
-                _settings.DesktopY = y - grow;
+                _settings.DesktopY = top;
             }
             else
             {
@@ -147,6 +149,10 @@ public sealed partial class DesktopLyricsWindow : Window
         }
         finally { _placing = false; _placed = true; }
     }
+
+    /// <summary>The top of the work area of the screen the strip is on (the nearest one, if it's on none).</summary>
+    static int ScreenTop(int x, int y, SizeInt32 size) =>
+        DisplayArea.GetFromRect(new RectInt32(x, y, size.Width, size.Height), DisplayAreaFallback.Nearest).WorkArea.Y;
 
     static bool OnSomeScreen(int x, int y, SizeInt32 size)
     {
