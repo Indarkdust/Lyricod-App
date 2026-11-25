@@ -14,7 +14,7 @@ It works with Spotify, QQ Music, NetEase Cloud Music, Apple Music, and supported
 
 ### Lyricod Island
 
-The island sits at the top of the screen by default and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line. Lyric colours can follow the album artwork or use a colour you choose.
+The island sits at the top of the screen by default and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line under it. Lyric colours can follow the album artwork or use a colour you choose.
 
 ![Lyricod Island highlighting lyrics as music plays](assets/island.gif)
 
@@ -29,25 +29,27 @@ Hovering over the island can expand it into a mini player or hide it temporarily
 
 </details>
 
-To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides and can be dragged anywhere once unlocked. Near screen edges, it expands inward to keep the lyrics and mini player on screen.
+To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides and can be dragged anywhere once unlocked: use the lock on the tray panel's Lyricod Island tile, or **Lock island position** on the same Settings page. Near screen edges, it expands inward to keep the lyrics and mini player on screen. While it's unlocked, hover actions and Lyricod Glass's effects are paused.
 
-Lyricod Glass gives the island a transparent background. On Windows 11, the default Liquid effect adds a slight blur, edge refraction and highlights. You can also choose Clear or Frosted, and adjust transparency, tint, blur and refraction.
+Lyricod Glass gives the island a transparent background. New installs on Windows 11 start with it, and you can switch between Lyricod Glass and the Classic island in Settings > Lyricod Island > Theme. The default Liquid effect adds a slight blur, edge refraction and highlights. You can also choose Clear or Frosted, and adjust transparency and tint. Liquid has extra settings for blur, refraction and a 3D effect (Off, Bright or Soft).
 
 On supported Windows 11 versions, the live Liquid Glass island appears in screenshots and recordings, including NVIDIA Instant Replay. On older versions, the island may be hidden from capture to prevent visual feedback. You can temporarily show it using **Show in screenshots**.
 
 ### Desktop lyrics
 
-Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. When locked, clicks pass through the lyrics. Unlock them to drag the lyrics to a different position.
+Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. When locked, clicks pass through the lyrics. To drag them to a different position, unlock them with the lock on the tray panel's Desktop lyrics tile, or in Settings > Desktop lyrics.
 
 ![Desktop lyrics with word-by-word highlighting](assets/desktop-lyrics.gif)
 
 ### Lyrics window
 
-View the whole song in a separate window, with optional album artwork in the background. Lyrics scroll with playback, and clicking a line seeks to that point in the song. Press F11 for full screen.
+View the whole song in a separate window, with optional album artwork in the background. Lyrics scroll with playback. With synced lyrics, clicking a line seeks to that point in the song if the player allows it. If you scroll the lyrics yourself, the window returns to the current line a few seconds after you stop. The window has its own playback controls; in a wide window or full screen, they fade out while music plays and the pointer is still. Press F11 for full screen.
 
 ![Separate lyrics window with album art and synchronized lines](assets/lyrics-window.png)
 
-Lyricod also runs in the system tray. Open its tray panel to control playback, toggle lyric views, choose lyrics, or adjust the current song's timing. Global shortcuts are available for common actions.
+In Settings > Lyrics window > Sung lyrics you can change how sung words are highlighted in this window: a colour sweep (the default), a glowing sweep, the whole line at once, or **Sweep with a lift**, where each word rises a little as it's sung.
+
+Lyricod also runs in the system tray. Open its tray panel to control playback, show, hide or lock the lyric views, choose lyrics, or adjust the current song's timing. You can set global shortcuts for common actions in Settings > Shortcuts.
 
 <img src="assets/tray-panel.en.png" alt="Lyricod tray panel with playback controls and lyric settings" width="360">
 
@@ -63,13 +65,13 @@ For videos in browsers, Lyricod only displays lyrics when it can match the conte
 
 ## Lyrics sources
 
-Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net), starting with the platform you're listening on. Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. When one platform has a song word by word and the other only line by line, the word-by-word lyrics come with the translation from the platform you're listening on. Lyrics are cached on your PC for later playback.
+Lyricod searches NetEase Cloud Music, QQ Music, and [LRCLIB](https://lrclib.net), starting with the platform you're listening on. Depending on the song and source, results may include word-by-word or line-synced lyrics, translations, and pronunciation. When one platform has a song word by word and the other only line by line, the word-by-word lyrics come with the translation from the platform you're listening on. Pronunciation can be highlighted as it's sung as well: QQ Music's romaji, and the pinyin, romaji or romanised Korean that Lyricod works out for word-by-word lyrics. Lyrics are cached on your PC for later playback.
 
 If Lyricod finds the wrong song, open Choose Lyrics to compare search results and preview the lyrics before selecting one. Your choice and any timing adjustment are saved for that song, even if you clear the lyrics cache.
 
 ![Choose Lyrics dialog comparing search results and previewing lyrics](assets/choose-lyrics.en.png)
 
-You can adjust lyric timing from the tray panel or Settings > Lyrics.
+You can adjust timing for the current song from the tray panel or Settings > Lyrics. Settings > Lyrics also has an offset that applies to all songs.
 
 ## Download and install
 
@@ -79,14 +81,17 @@ Download the version for your PC from [Releases](https://github.com/Indarkdust/L
 - **ARM64**: for Windows PCs with Arm processors.
 - **Installer (setup.exe)**: installs for the current user without administrator access.
 - **Portable (zip)**: extract the archive and run `Lyricod.exe`. Keep the `app` folder next to it.
+- **Patch (patch-….zip)**: used by in-app updates. You don't need to download these.
 
 Lyricod runs in the Windows system tray after launch. If no window appears, look for its icon in the notification area.
 
 The app is currently unsigned, so Windows may display a warning the first time it runs. Check where you downloaded the file before deciding whether to proceed.
 
-Lyricod checks for updates once a day. You can disable this in Settings > About. Both installed and portable versions support in-app updates, or you can download a new version manually.
+Lyricod checks for updates once a day. You can disable this in Settings > About. Both installed and portable versions support in-app updates. An update downloads only the changed files when it can, and the full version otherwise. You can also download a new version manually.
 
-Settings and cached lyrics are stored in `%LOCALAPPDATA%\Lyricod` and are kept during updates. Uninstalling the app does not remove this folder; delete it manually if you want to remove the data as well.
+Settings, cached lyrics, downloaded fonts and an error log are stored in `%LOCALAPPDATA%\Lyricod` and are kept during updates. Uninstalling the app does not remove this folder; delete it manually if you want to remove the data as well.
+
+When you report a problem, please include `lyricod.log` from that folder and the details shown in Settings > About > Diagnostics. The log can contain file paths with your Windows user name, so check it before sharing.
 
 ## NetEase Cloud Music lyrics out of sync?
 
@@ -94,7 +99,9 @@ NetEase Cloud Music generally reports which song is playing but does not provide
 
 For more accurate synchronization, you can use **InfLink-rs**, a third-party plugin that runs through **BetterNCM**. Both are maintained by other developers and change how NetEase Cloud Music runs. Install them only if you are comfortable with that.
 
-The easiest way is through Lyricod: open Settings > General > NetEase Cloud Music sync. Lyricod downloads [a small helper](https://github.com/darkdust-c/Lyricod-CM-Helper) to install BetterNCM and InfLink-rs, and verifies the downloaded files before installation. Windows asks for administrator permission, because NetEase Cloud Music is installed in Program Files. This option supports 64-bit NetEase Cloud Music 3.x. If you'd rather install them manually:
+The easiest way is through Lyricod: open Settings > General > NetEase Cloud Music sync. Lyricod downloads [a small helper](https://github.com/darkdust-c/Lyricod-CM-Helper) to install BetterNCM and InfLink-rs, and verifies the downloaded files before installation. NetEase Cloud Music restarts during setup, and Windows asks for administrator permission, because NetEase Cloud Music is installed in Program Files.
+
+This setting appears when NetEase Cloud Music is installed, and supports 64-bit NetEase Cloud Music 3.x. If you'd rather install them manually:
 
 1. Quit NetEase Cloud Music. Download and run `betterncm_installer.exe` from [BetterNCM Installer releases](https://github.com/std-microblock/BetterNCM-Installer/releases/latest).
 2. Open NetEase Cloud Music and install **InfLink-rs** from the BetterNCM plugin store. Alternatively, download `InfLink-rs.plugin` from [InfLink-rs releases](https://github.com/apoint123/inflink-rs/releases/latest) and copy it to `C:\betterncm\plugins`.
@@ -106,13 +113,13 @@ InfLink-rs has been tested with NetEase Cloud Music 3.1.20 through 3.1.43 and 2.
 
 ## Customization
 
-You can customize lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island mode and theme, animations, hover behaviour, and global shortcuts. The island, desktop lyrics and lyrics window have separate display settings.
+You can customize lyric fonts, sizes, colours, backgrounds, translations, pronunciation, island mode, theme and size, animations, hover behaviour, and global shortcuts. The island, desktop lyrics and lyrics window have separate display settings.
 
-Lyrics use Microsoft YaHei by default. You can choose another installed font, or download **MiSans** by Xiaomi or **LXGW WenKai Lite** (霞鹜文楷) from Settings. Neither is bundled with Lyricod: MiSans is subject to Xiaomi's licence, and LXGW WenKai Lite is an open font under the SIL Open Font License.
+Lyrics use Microsoft YaHei by default. In Settings > General > Font you can choose another installed font, or download **MiSans** by Xiaomi or **LXGW WenKai Lite** (霞鹜文楷). Neither downloadable font is bundled with Lyricod: MiSans is subject to Xiaomi's licence, and LXGW WenKai Lite is an open font under the SIL Open Font License. Lyrics use a newly chosen font immediately; the rest of Lyricod's text uses it after a restart.
 
 ## Privacy
 
-To find lyrics, Lyricod sends the song title, artist, and duration to NetEase Cloud Music, QQ Music, and LRCLIB. If lyric lookups for browsers and other apps are enabled, the title and artist or channel of content playing there may also be used in searches. You can turn this off in Settings > Lyrics. No additional information about your browsing or viewing is sent.
+To find lyrics, Lyricod sends the song title and artist to NetEase Cloud Music and QQ Music, and the title, artist, album and duration to LRCLIB. If lyric lookups for browsers and other apps are enabled, the title and artist or channel of content playing there may also be used in searches. You can turn this off in Settings > Lyrics. No additional information about your browsing or viewing is sent.
 
 The island's audio bars use Windows audio APIs to read audio information from the current player. Lyricod does not record, save, or upload audio. You can disable music-reactive bars in Settings > Lyricod Island.
 
@@ -120,12 +127,17 @@ Lyricod Glass's Liquid effect reads the part of the screen behind the island to 
 
 NetEase Cloud Music sync downloads Lyricod CM Helper from GitHub only when you choose to set it up; the helper then downloads BetterNCM and InfLink-rs from their own releases.
 
-Automatic update checks contact GitHub once a day and can be disabled in Settings > About.
+Fonts are downloaded only when you choose to download one: MiSans from Xiaomi's servers, and LXGW WenKai Lite from GitHub.
+
+Automatic update checks contact GitHub once a day and can be disabled in Settings > About. An update is downloaded from GitHub only when you choose to install it.
+
+Lyricod's error log stays on your PC and is not uploaded.
 
 ## Requirements
 
 - Windows 10 version 1809 or newer, x64 or ARM64.
 - Music-reactive audio bars require Windows 11. On Windows 10, they use a preset animation.
+- Lyricod Glass's Liquid effect requires Windows 11. On Windows 10, the island starts with the Classic theme; if you choose Lyricod Glass there, Clear is used in place of Liquid.
 
 ## Credits
 
