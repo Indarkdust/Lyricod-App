@@ -51,9 +51,11 @@ Lyricod 是一款 Windows 歌词工具，支持逐字同步歌词、桌面歌词
 
 ![歌词窗口的「扫过并浮起」效果：已唱的字浮起并发光](assets/lyrics-window-lift.gif)
 
+### 托盘面板
+
 Lyricod 也会留在系统托盘中。点击图标，可以控制播放，显示、隐藏或锁定歌词岛和桌面歌词，选择歌词，或调整当前歌曲的歌词时间。还可以在「设置 > 快捷键」中为常用操作指定全局快捷键。
 
-<img src="assets/tray-panel.png" alt="Lyricod 托盘面板，包含播放控制和歌词设置" width="360">
+<img src="assets/tray-panel.png" alt="Lyricod 托盘面板，包含播放控制、歌词岛和桌面歌词的开关与锁，以及歌词设置" width="360">
 
 ## 支持哪些播放器？
 

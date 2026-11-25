@@ -51,9 +51,11 @@ In Settings > Lyrics window > Sung lyrics you can change how sung words are high
 
 ![Lyrics window with Sweep with a lift: sung words rise and glow](assets/lyrics-window-lift.gif)
 
+### Tray panel
+
 Lyricod also runs in the system tray. Open its tray panel to control playback, show, hide or lock the lyric views, choose lyrics, or adjust the current song's timing. You can set global shortcuts for common actions in Settings > Shortcuts.
 
-<img src="assets/tray-panel.en.png" alt="Lyricod tray panel with playback controls and lyric settings" width="360">
+<img src="assets/tray-panel.en.png" alt="Lyricod tray panel with playback controls, the two lyric views with their locks, and lyric settings" width="360">
 
 ## Supported players
 
