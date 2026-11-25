@@ -39,7 +39,7 @@ On supported Windows 11 versions, the live Liquid Glass island appears in screen
 
 Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. When locked, clicks pass through the lyrics. To drag them to a different position, unlock them with the lock on the tray panel's Desktop lyrics tile, or in Settings > Desktop lyrics.
 
-![Desktop lyrics with word-by-word highlighting](assets/desktop-lyrics.gif)
+![Desktop lyrics with word-by-word highlighting, pronunciation and translation](assets/desktop-lyrics.gif)
 
 ### Lyrics window
 
@@ -48,6 +48,8 @@ View the whole song in a separate window, with optional album artwork in the bac
 ![Separate lyrics window with album art and synchronized lines](assets/lyrics-window.png)
 
 In Settings > Lyrics window > Sung lyrics you can change how sung words are highlighted in this window: a colour sweep (the default), a glowing sweep, the whole line at once, or **Sweep with a lift**, where each word rises a little as it's sung.
+
+![Lyrics window with Sweep with a lift: sung words rise and glow](assets/lyrics-window-lift.gif)
 
 Lyricod also runs in the system tray. Open its tray panel to control playback, show, hide or lock the lyric views, choose lyrics, or adjust the current song's timing. You can set global shortcuts for common actions in Settings > Shortcuts.
 
