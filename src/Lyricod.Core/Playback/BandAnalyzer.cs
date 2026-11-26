@@ -6,12 +6,23 @@ public sealed class BandAnalyzer
     public const int BandCount = 6;
     public const int FftSize = 2048;
     static readonly float[] Edges = [40, 120, 350, 900, 2200, 5500, 14000];
+    /// <summary>The transform's turns, cos and sin of -2πj/FftSize: worked out once, not for every pair of every block.</summary>
+    static readonly float[] Cos = new float[FftSize / 2], Sin = new float[FftSize / 2];
     readonly float[] _window = new float[FftSize];
     readonly float[] _real = new float[FftSize];
     readonly float[] _imaginary = new float[FftSize];
     readonly float[] _peaks = Enumerable.Repeat(-40f, BandCount).ToArray();
     readonly float[] _levels = new float[BandCount];
     readonly float _sampleRate;
+
+    static BandAnalyzer()
+    {
+        for (int j = 0; j < FftSize / 2; j++)
+        {
+            float angle = -2 * MathF.PI * j / FftSize;
+            (Cos[j], Sin[j]) = (MathF.Cos(angle), MathF.Sin(angle));
+        }
+    }
 
     public BandAnalyzer(float sampleRate = 48000)
     {
@@ -39,12 +50,12 @@ public sealed class BandAnalyzer
         }
         for (int width = 2; width <= FftSize; width <<= 1)
         {
+            int turn = FftSize / width;
             for (int start = 0; start < FftSize; start += width)
             {
                 for (int k = 0; k < width / 2; k++)
                 {
-                    float angle = -2 * MathF.PI * k / width;
-                    float cos = MathF.Cos(angle), sin = MathF.Sin(angle);
+                    float cos = Cos[k * turn], sin = Sin[k * turn];
                     int a = start + k, b = a + width / 2;
                     float re = cos * _real[b] - sin * _imaginary[b];
                     float im = sin * _real[b] + cos * _imaginary[b];
