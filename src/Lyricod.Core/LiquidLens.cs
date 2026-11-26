@@ -22,7 +22,7 @@ public static class LiquidLens
     {
         var pixels = new byte[width * height * 4];
         double band = Band(width, height, radius);
-        Measure(width, height, radius, squareTop, (i, depth, dx, dy) =>
+        Measure(pixels, width, height, radius, squareTop, (i, depth, dx, dy) =>
         {
             double strength = depth >= band || depth < 0 ? 0 : Math.Pow(1 - depth / band, 2);
             pixels[i + 2] = (byte)Math.Round(128 - 127 * dx * strength);
@@ -48,7 +48,7 @@ public static class LiquidLens
         rim = Math.Max(rim, 0.5);
         // Toward the light: mostly up, a little to the left.
         double lightX = -0.35 / Math.Sqrt(1 + 0.35 * 0.35), lightY = -1 / Math.Sqrt(1 + 0.35 * 0.35);
-        Measure(width, height, radius, squareTop, (i, depth, dx, dy) =>
+        Measure(pixels, width, height, radius, squareTop, (i, depth, dx, dy) =>
         {
             // The pixels the edge only partly covers get the full line: the island's clip smooths them.
             if (depth < -1 || depth >= band) return;
@@ -71,25 +71,43 @@ public static class LiquidLens
         Math.Max(2, Math.Min(Math.Min(width, height) / 2.0, Math.Max(radius * 1.5, 12)));
 
     /// <summary>
-    /// Visits each pixel (by its offset in a BGRA buffer) with its depth inside the rounded rectangle
-    /// (negative: outside) and the unit vector pointing out.
+    /// Has <paramref name="visit"/> fill in each pixel of a BGRA buffer (given its offset there) from its
+    /// depth inside the rounded rectangle (negative: outside) and the unit vector pointing out.
     /// </summary>
-    static void Measure(int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit)
+    static void Measure(byte[] pixels, int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit)
     {
         radius = Math.Clamp(radius, 0, Math.Min(width, height) / 2.0);
         // A square top is handled as a shape extending far above, so its top never comes near.
         double top = squareTop ? -height : 0;
         double centreX = width / 2.0, centreY = (top + height) / 2.0, halfX = width / 2.0, halfY = (height - top) / 2.0;
         for (int y = 0; y < height; y++)
-        for (int x = 0; x < width; x++)
         {
-            double px = x + 0.5 - centreX, py = y + 0.5 - centreY;
-            double qx = Math.Abs(px) - (halfX - radius), qy = Math.Abs(py) - (halfY - radius);
-            double outX = Math.Max(qx, 0), outY = Math.Max(qy, 0), corner = Math.Sqrt(outX * outX + outY * outY);
-            double depth = radius - corner - Math.Min(Math.Max(qx, qy), 0);
-            (double dx, double dy) = corner > 0 ? (outX / corner * Math.Sign(px), outY / corner * Math.Sign(py))
-                : qx > qy ? (Math.Sign(px), 0.0) : (0.0, Math.Sign(py));
-            visit((y * width + x) * 4, depth, dx, dy);
+            double py = y + 0.5 - centreY, qy = Math.Abs(py) - (halfY - radius);
+            // Along the straight part of a row every pixel is as far from the same edge, so one is worked
+            // out and copied across: most of a wide island, whose maps are made again for each frame of
+            // a change of size.
+            double reach = halfX - radius + Math.Min(qy, 0);
+            bool Straight(int x) => x >= 0 && x < width && Math.Abs(x + 0.5 - centreX) - (halfX - radius) <= Math.Min(qy, 0);
+            int first = (int)Math.Ceiling(centreX - 0.5 - reach), last = (int)Math.Floor(centreX - 0.5 + reach);
+            while (first <= last && !Straight(first)) first++;
+            while (last >= first && !Straight(last)) last--;
+            for (int x = 0; x < width; x++)
+            {
+                if (x > first && x <= last)
+                {
+                    var row = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(pixels.AsSpan(y * width * 4, width * 4));
+                    row[(first + 1)..(last + 1)].Fill(row[first]);
+                    x = last;
+                    continue;
+                }
+                double px = x + 0.5 - centreX;
+                double qx = Math.Abs(px) - (halfX - radius);
+                double outX = Math.Max(qx, 0), outY = Math.Max(qy, 0), corner = Math.Sqrt(outX * outX + outY * outY);
+                double depth = radius - corner - Math.Min(Math.Max(qx, qy), 0);
+                (double dx, double dy) = corner > 0 ? (outX / corner * Math.Sign(px), outY / corner * Math.Sign(py))
+                    : qx > qy ? (Math.Sign(px), 0.0) : (0.0, Math.Sign(py));
+                visit((y * width + x) * 4, depth, dx, dy);
+            }
         }
     }
 }

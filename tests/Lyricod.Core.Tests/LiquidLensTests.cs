@@ -142,4 +142,65 @@ public class LiquidLensTests
         Assert.Equal(4, LiquidLens.Light(1, 1, 12, squareTop: false, rim: 1.5, ShineStyle.Soft).Length);
         Assert.Equal(7 * 3 * 4, LiquidLens.Light(7, 3, 40, squareTop: true, rim: 0, ShineStyle.Bright).Length);
     }
+
+    /// <summary>The maps as first written, every pixel worked out by itself: what the quicker way has to match exactly.</summary>
+    static (byte[] Map, byte[] Light) PixelByPixel(int width, int height, double radius, bool squareTop, double rim, ShineStyle style)
+    {
+        var (lineMost, glowMost, shadeMost) = style == ShineStyle.Soft ? (0.24, 0.03, 0.1) : (0.6, 0.1, 0.0);
+        byte[] map = new byte[width * height * 4], light = new byte[width * height * 4];
+        double band = Math.Max(2, Math.Min(Math.Min(width, height) / 2.0, Math.Max(radius * 1.5, 12)));
+        rim = Math.Max(rim, 0.5);
+        double lightX = -0.35 / Math.Sqrt(1 + 0.35 * 0.35), lightY = -1 / Math.Sqrt(1 + 0.35 * 0.35);
+        radius = Math.Clamp(radius, 0, Math.Min(width, height) / 2.0);
+        double top = squareTop ? -height : 0;
+        double centreX = width / 2.0, centreY = (top + height) / 2.0, halfX = width / 2.0, halfY = (height - top) / 2.0;
+        for (int y = 0; y < height; y++)
+        for (int x = 0; x < width; x++)
+        {
+            double px = x + 0.5 - centreX, py = y + 0.5 - centreY;
+            double qx = Math.Abs(px) - (halfX - radius), qy = Math.Abs(py) - (halfY - radius);
+            double outX = Math.Max(qx, 0), outY = Math.Max(qy, 0), corner = Math.Sqrt(outX * outX + outY * outY);
+            double depth = radius - corner - Math.Min(Math.Max(qx, qy), 0);
+            (double dx, double dy) = corner > 0 ? (outX / corner * Math.Sign(px), outY / corner * Math.Sign(py))
+                : qx > qy ? (Math.Sign(px), 0.0) : (0.0, Math.Sign(py));
+            int i = (y * width + x) * 4;
+            double strength = depth >= band || depth < 0 ? 0 : Math.Pow(1 - depth / band, 2);
+            map[i + 2] = (byte)Math.Round(128 - 127 * dx * strength);
+            map[i + 1] = (byte)Math.Round(128 - 127 * dy * strength);
+            map[i + 3] = 255;
+            if (depth < -1 || depth >= band) continue;
+            double facing = dx * lightX + dy * lightY;
+            double lit = 0.15 + 0.85 * Math.Max(Math.Pow(Math.Max(facing, 0), 2), 0.55 * Math.Pow(Math.Max(-facing, 0), 2));
+            double t = Math.Clamp(1 - depth / rim, 0, 1);
+            double line = lineMost * lit * t * t * (3 - 2 * t);
+            double near = 1 - Math.Max(depth, 0) / band;
+            double glow = glowMost * Math.Pow(near, 3) * (0.5 + 0.5 * lit);
+            double white = 1 - (1 - line) * (1 - glow);
+            double shade = shadeMost * Math.Max(-facing, 0) * near * near * (1 - t);
+            light[i] = light[i + 1] = light[i + 2] = (byte)Math.Round(255 * white);
+            light[i + 3] = (byte)Math.Round(255 * (1 - (1 - white) * (1 - shade)));
+        }
+        return (map, light);
+    }
+
+    [Theory]
+    [InlineData(300, 60, 12)]
+    [InlineData(1121, 102, 24)]   // the island at 200%
+    [InlineData(1380, 408, 44)]   // its mini player
+    [InlineData(559, 51, 25.5)]   // a floating island: round ends
+    [InlineData(40, 90, 10)]
+    [InlineData(31, 30, 40)]
+    [InlineData(7, 3, 40)]
+    [InlineData(2, 1, 0)]
+    public void CopyingAlongStraightEdgesChangesNoPixel(int width, int height, double radius)
+    {
+        foreach (bool squareTop in new[] { false, true })
+        foreach (var style in new[] { ShineStyle.Bright, ShineStyle.Soft })
+        foreach (double rim in new[] { 0, 1.5, 3 })
+        {
+            var (map, light) = PixelByPixel(width, height, radius, squareTop, rim, style);
+            Assert.Equal(map, LiquidLens.Map(width, height, radius, squareTop));
+            Assert.Equal(light, LiquidLens.Light(width, height, radius, squareTop, rim, style));
+        }
+    }
 }
