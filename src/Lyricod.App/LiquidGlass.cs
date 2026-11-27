@@ -24,7 +24,8 @@ namespace Lyricod;
 /// Windows sends a new frame whenever anything on the screen changes, and drawing the glass is such
 /// a change, so a frame is drawn only when what's behind the island differs from the last one drawn
 /// (see <see cref="Unchanged"/>); otherwise the glass would redraw itself for ever. Frames come no
-/// more often than the animation rate from Settings.
+/// more often than the animation rate from Settings, and less often while nothing behind the
+/// island changes (see <see cref="StillFramesPerSecond"/>).
 /// </para>
 /// </summary>
 sealed class LiquidGlass : IDisposable
@@ -87,6 +88,16 @@ sealed class LiquidGlass : IDisposable
     CanvasRenderTarget? _copy;
     /// <summary>Diagnostics: frames taken from Windows, drawn, and left as they were.</summary>
     int _frames, _draws, _same;
+    /// <summary>
+    /// The island's own bars and sweep are screen changes too, so while music plays frames keep coming,
+    /// each a copy of the whole screen. After a third of a second of frames with nothing new behind the
+    /// island, only this many a second are asked for; the first that does differ brings the full rate back.
+    /// </summary>
+    const int StillFramesPerSecond = 8;
+    int _still;
+    bool _resting;
+    /// <summary>The last frame was compared over another part of the screen than the one before: the island moved or resized.</summary>
+    bool _moved;
     Windows.Foundation.TypedEventHandler<GraphicsCaptureItem, object>? _itemClosed;
     Windows.Foundation.TypedEventHandler<Direct3D11CaptureFramePool, object>? _frameArrived;
     /// <summary>Until when (<see cref="Environment.TickCount64"/>) new frames are left unused after a freeze.</summary>
@@ -118,6 +129,8 @@ sealed class LiquidGlass : IDisposable
             field = value;
             try { if (_session != null && !_disposed) RateLimited = LimitRate(_session, value); }
             catch (Exception) { RateLimited = false; }
+            _still = 0;
+            _resting = false;
         }
     } = 30;
 
@@ -389,7 +402,21 @@ sealed class LiquidGlass : IDisposable
             newest = null; // owned by _frame now
             _frames++;
             if (_look == null) return;
-            if (Unchanged(_screen, _look)) { _same++; return; }
+            if (Unchanged(_screen, _look))
+            {
+                _same++;
+                if (RateLimited && !_resting && ++_still >= Math.Max(FramesPerSecond / 3, 4) && FramesPerSecond > StillFramesPerSecond && _session != null)
+                    _resting = LimitRate(_session, StillFramesPerSecond);
+                return;
+            }
+            // The island moving says nothing about the screen behind it, so the rest is taken up again
+            // as soon as it stops; while it moves it comes over more of that screen, at the full rate.
+            if (!_moved) _still = 0;
+            if (_resting && _session != null)
+            {
+                _resting = false;
+                LimitRate(_session, FramesPerSecond);
+            }
             Draw(_screen, _look);
             Appear();
         }
@@ -417,7 +444,7 @@ sealed class LiquidGlass : IDisposable
 
     internal string FrameDetail =>
         $"{_frames} frames, {_draws} drawn, {_same} unchanged ({(_reading == 0 ? "read directly" : _reading == 1 ? "read through a copy" : "can't be read")})"
-        + $", {(RateLimited ? $"at most {FramesPerSecond} a second" : "no rate limit")}";
+        + $", {(RateLimited ? $"at most {(_resting ? StillFramesPerSecond : FramesPerSecond)} a second" : "no rate limit")}";
 
     /// <summary>
     /// Whether the screen behind the island is as it was when the glass last drew from it: the
@@ -427,6 +454,7 @@ sealed class LiquidGlass : IDisposable
     /// </summary>
     bool Unchanged(CanvasBitmap screen, Look look)
     {
+        _moved = false;
         int margin = (int)Math.Ceiling(look.Refraction + 3 * look.Blur) + 2;
         var size = screen.SizeInPixels;
         int left = Math.Max(look.Source.X - margin, 0), top = Math.Max(look.Source.Y - margin, 0);
@@ -437,8 +465,8 @@ sealed class LiquidGlass : IDisposable
         int length = width * height * 4;
         if (_seeing.Length < length) _seeing = new byte[length + length / 4];
         if (!Read(screen, _seeing, length, left, top, width, height)) return false;
-        bool same = _hasSeen && left == _seenFrom.X && top == _seenFrom.Y && width == _seenFrom.Width && height == _seenFrom.Height
-            && _seeing.AsSpan(0, length).SequenceEqual(_seen.AsSpan(0, length));
+        _moved = _hasSeen && (left != _seenFrom.X || top != _seenFrom.Y || width != _seenFrom.Width || height != _seenFrom.Height);
+        bool same = _hasSeen && !_moved && _seeing.AsSpan(0, length).SequenceEqual(_seen.AsSpan(0, length));
         (_seen, _seeing) = (_seeing, _seen);
         _seenFrom = new RectInt32(left, top, width, height);
         _hasSeen = true;
@@ -598,6 +626,8 @@ sealed class LiquidGlass : IDisposable
         _newestIteration = null;
         _hasSeen = false;
         RateLimited = false;
+        _still = 0;
+        _resting = _moved = false;
         Frozen = false; // the old session's screenshot timer is retired too
         var item = _item;
         var closed = _itemClosed;
