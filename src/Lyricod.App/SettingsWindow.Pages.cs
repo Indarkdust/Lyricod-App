@@ -145,18 +145,9 @@ public sealed partial class SettingsWindow
 
     void GlassSettings()
     {
-        Card(L.Get("GlassTransparency"), null,
-            Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90));
-        Card(L.Get("GlassTint"), null, Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
-            (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum")), (GlassTint.Light, L.Get("GlassTintLight"))));
         // Clear, frosted or liquid (each says what it costs, and where it can't run).
         var effectDetail = Card(L.Get("GlassEffect"), "", Choice(nameof(Settings.GlassEffect), () => _settings.GlassEffect, v => _settings.GlassEffect = v,
             (GlassEffect.Clear, L.Get("GlassEffectClear")), (GlassEffect.Frosted, L.Get("GlassEffectFrosted")), (GlassEffect.Liquid, L.Get("GlassEffectLiquid"))))!;
-        var liquidBlur = new ContentControl { Content = Percent(nameof(Settings.LiquidBlur), () => _settings.LiquidBlur, v => _settings.LiquidBlur = v, 0, 100) };
-        var refraction = new ContentControl
-        {
-            Content = Percent(nameof(Settings.LiquidRefraction), () => _settings.LiquidRefraction, v => _settings.LiquidRefraction = v, 0, 100),
-        };
         // The 3D effect is the liquid glass's: it lights the edge its lens bends. Off, or on in one of its looks.
         Shine ShineNow() => !_settings.GlassShine ? Shine.Off : _settings.GlassShineStyle switch
         {
@@ -192,6 +183,21 @@ public sealed partial class SettingsWindow
             (Shine.Off, L.Get("GlassShineOff")), (Shine.Bright, L.Get("GlassShineBright")), (Shine.Soft, L.Get("GlassShineSoft")),
             (Shine.Lifelike, L.Get("GlassShineLifelike")));
         var shine = new ContentControl { Content = shineBox };
+        shineDetail = Card(L.Get("GlassShine"), "", shine);
+        Watch(nameof(Settings.GlassShine), SyncShine);
+        Watch(nameof(Settings.GlassShineStyle), SyncShine);
+        SyncShine();
+        Card(L.Get("GlassTint"), null, Choice(nameof(Settings.GlassTint), () => _settings.GlassTint, v => _settings.GlassTint = v,
+            (GlassTint.Neutral, L.Get("GlassTintNeutral")), (GlassTint.Album, L.Get("GlassTintAlbum")), (GlassTint.Light, L.Get("GlassTintLight"))));
+        Card(L.Get("GlassTransparency"), null,
+            Percent(nameof(Settings.GlassTransparency), () => _settings.GlassTransparency, v => _settings.GlassTransparency = v, 10, 90));
+        var liquidBlur = new ContentControl { Content = Percent(nameof(Settings.LiquidBlur), () => _settings.LiquidBlur, v => _settings.LiquidBlur = v, 0, 100) };
+        var refraction = new ContentControl
+        {
+            Content = Percent(nameof(Settings.LiquidRefraction), () => _settings.LiquidRefraction, v => _settings.LiquidRefraction = v, 0, 100),
+        };
+        Card(L.Get("LiquidBlur"), null, liquidBlur);
+        Card(L.Get("LiquidRefraction"), null, refraction);
         var screenshot = new ContentControl { Content = ScreenshotButton() };
         void SyncEffect()
         {
@@ -212,12 +218,6 @@ public sealed partial class SettingsWindow
         }
         Watch(nameof(Settings.GlassEffect), SyncEffect);
         SyncEffect();
-        Card(L.Get("LiquidBlur"), null, liquidBlur);
-        Card(L.Get("LiquidRefraction"), null, refraction);
-        shineDetail = Card(L.Get("GlassShine"), "", shine);
-        Watch(nameof(Settings.GlassShine), SyncShine);
-        Watch(nameof(Settings.GlassShineStyle), SyncShine);
-        SyncShine();
         Card(L.Get("LiquidScreenshot"), L.Get("LiquidScreenshotDetail"), screenshot);
     }
 
