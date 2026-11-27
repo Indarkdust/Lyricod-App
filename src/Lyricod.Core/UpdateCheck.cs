@@ -9,11 +9,20 @@ public sealed record AppRelease(Version Version, Uri Url)
 }
 public sealed record UpdateAsset(string Name, long Size, Uri Url, string? Sha256);
 public enum UpdateStatus { UpToDate, Available, CouldntCheck }
-public sealed record UpdateResult(UpdateStatus Status, AppRelease? Release = null);
+/// <summary>Why a check failed, so the app can say what to do about it.</summary>
+public enum CheckFailure { None, Unreachable, RateLimited, ServerError, BadReply }
+public sealed record UpdateResult(UpdateStatus Status, AppRelease? Release = null)
+{
+    public CheckFailure Failure { get; init; }
+    /// <summary>When GitHub takes requests from this network again, if it said.</summary>
+    public DateTimeOffset? RetryAt { get; init; }
+}
 
 public static class UpdateCheck
 {
     public const string Endpoint = "https://api.github.com/repos/Indarkdust/Lyricod-App/releases?per_page=30";
+    /// <summary>For a look by hand when the check itself fails.</summary>
+    public const string ReleasesPage = "https://github.com/Indarkdust/Lyricod-App/releases/latest";
 
     public static Version? ParseVersion(string text)
     {
@@ -84,8 +93,32 @@ public static class UpdateCheck
         try
         {
             using var response = await client.SendAsync(request);
-            return Evaluate(await response.Content.ReadAsStringAsync(), (int)response.StatusCode, currentVersion);
+            var result = Evaluate(await response.Content.ReadAsStringAsync(), (int)response.StatusCode, currentVersion);
+            return result.Status == UpdateStatus.CouldntCheck ? Explain(response, DateTimeOffset.UtcNow) : result;
         }
-        catch (Exception) { return new(UpdateStatus.CouldntCheck); } // offline, timed out, or a cut-off reply
+        // Offline, no route to GitHub, timed out, or a cut-off reply.
+        catch (Exception) { return new(UpdateStatus.CouldntCheck) { Failure = CheckFailure.Unreachable }; }
+    }
+
+    /// <summary>
+    /// Why GitHub's answer wasn't a list of releases. Without a token GitHub takes 60 requests an hour from
+    /// one address, which a shared or proxied network can use up; it then answers 403 or 429 and says when
+    /// it takes requests again.
+    /// </summary>
+    public static UpdateResult Explain(HttpResponseMessage response, DateTimeOffset now)
+    {
+        int code = (int)response.StatusCode;
+        bool spent = response.Headers.TryGetValues("x-ratelimit-remaining", out var left) && left.FirstOrDefault() == "0";
+        var retryAfter = response.Headers.RetryAfter;
+        if (code == 429 || code == 403 && (spent || retryAfter != null))
+        {
+            DateTimeOffset? at = retryAfter?.Date ?? (retryAfter?.Delta is { } wait ? now + wait : null);
+            if (at == null && response.Headers.TryGetValues("x-ratelimit-reset", out var reset)
+                && long.TryParse(reset.FirstOrDefault(), NumberStyles.None, CultureInfo.InvariantCulture, out long seconds)
+                && seconds < 253402300800)
+                at = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            return new(UpdateStatus.CouldntCheck) { Failure = CheckFailure.RateLimited, RetryAt = at > now ? at : null };
+        }
+        return new(UpdateStatus.CouldntCheck) { Failure = code >= 500 ? CheckFailure.ServerError : CheckFailure.BadReply };
     }
 }

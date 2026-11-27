@@ -108,7 +108,9 @@ public sealed partial class UpdateChecker
     {
         try
         {
-            if (Available is { } release) Process.Start(new ProcessStartInfo(release.Url.AbsoluteUri) { UseShellExecute = true })?.Dispose();
+            // With no release known (the check failed), the newest release's page.
+            string url = Available?.Url.AbsoluteUri ?? UpdateCheck.ReleasesPage;
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true })?.Dispose();
         }
         catch (Exception) { Fail("UpdateOpenPageFailed"); }
     }

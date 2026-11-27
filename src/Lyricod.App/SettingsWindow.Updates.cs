@@ -1,3 +1,4 @@
+using System.Globalization;
 using Lyricod.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -25,6 +26,7 @@ public sealed partial class SettingsWindow
         {
             bool busy = _updates.State is UpdateState.Downloading or UpdateState.Applying;
             bool available = _updates.Available != null, install = _updates.CanInstall;
+            bool failed = !available && !_updates.Checking && _updates.Result is { Status: UpdateStatus.CouldntCheck };
             check.IsEnabled = !_updates.Checking && _updates.State != UpdateState.Applying;
             status.Text = available ? L.Format("NewVersionAvailable", _updates.Available!.Version.ToString(3))
                 : _updates.Checking ? L.Get("CheckingUpdates") : _updates.Result?.Status switch
@@ -33,7 +35,7 @@ public sealed partial class SettingsWindow
                     UpdateStatus.CouldntCheck => L.Get("CouldntCheckUpdates"),
                     _ => "",
                 };
-            detail.Text = _updates.Error ?? (_updates.State switch
+            detail.Text = _updates.Error ?? (failed ? CheckFailedTip(_updates.Result!) : _updates.State switch
             {
                 UpdateState.Ready => L.Get("UpdateRestartNote"),
                 UpdateState.Applying => L.Get("UpdateApplying"),
@@ -48,8 +50,8 @@ public sealed partial class SettingsWindow
                 _ => "UpdateDownloadInstall",
             });
             action.Visibility = available && install && !busy ? Visibility.Visible : Visibility.Collapsed;
-            page.Content = L.Get(install ? "UpdateWhatsNew" : "DownloadUpdate");
-            page.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+            page.Content = L.Get(failed ? "OpenReleasePage" : install ? "UpdateWhatsNew" : "DownloadUpdate");
+            page.Visibility = available || failed ? Visibility.Visible : Visibility.Collapsed;
             progressRow.Visibility = _updates.State == UpdateState.Downloading ? Visibility.Visible : Visibility.Collapsed;
             progress.Value = _updates.Progress?.Percent ?? 0;
             progressText.Text = L.Format("UpdatePercent", _updates.Progress?.Percent ?? 0);
@@ -58,4 +60,14 @@ public sealed partial class SettingsWindow
         Sync();
         Group(status, detail, progressRow, Row(check, action, page));
     }
+
+    /// <summary>What to do about a check that failed, by why it failed.</summary>
+    static string CheckFailedTip(UpdateResult result) => result.Failure switch
+    {
+        CheckFailure.RateLimited when result.RetryAt is { } at =>
+            L.Format("CheckFailedRateLimitedUntil", at.ToLocalTime().ToString("t", CultureInfo.CurrentCulture)),
+        CheckFailure.RateLimited => L.Get("CheckFailedRateLimited"),
+        CheckFailure.Unreachable => L.Get("CheckFailedUnreachable"),
+        _ => L.Get("CheckFailedServer"),
+    };
 }

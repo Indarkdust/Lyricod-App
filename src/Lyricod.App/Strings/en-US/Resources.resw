@@ -368,5 +368,10 @@
   <data name="UpdateNotWritable" xml:space="preserve"><value>Lyricod can't write to this folder. Move it somewhere writable or download the update from the release page.</value></data>
   <data name="UpdateApplyFailed" xml:space="preserve"><value>Couldn’t start the update. Please try again, or download it from the release page.</value></data>
   <data name="UpdateOpenPageFailed" xml:space="preserve"><value>Couldn’t open the release page. Please try again.</value></data>
+  <data name="CheckFailedRateLimitedUntil" xml:space="preserve"><value>GitHub limits how often one network can check each hour, and that limit has been reached (common on shared networks and proxies). Try again after {0}, or open the release page.</value></data>
+  <data name="CheckFailedRateLimited" xml:space="preserve"><value>GitHub limits how often one network can check each hour, and that limit has been reached (common on shared networks and proxies). Try again later, or open the release page.</value></data>
+  <data name="CheckFailedUnreachable" xml:space="preserve"><value>Couldn’t reach GitHub. Check your internet connection or proxy settings, then try again.</value></data>
+  <data name="CheckFailedServer" xml:space="preserve"><value>GitHub didn’t respond as expected. Try again later, or open the release page.</value></data>
+  <data name="OpenReleasePage" xml:space="preserve"><value>Open release page</value></data>
   <data name="NotASong" xml:space="preserve"><value>This might not be a song, so no lyrics are shown.</value></data>
 </root>
