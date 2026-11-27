@@ -8,10 +8,8 @@ using Windows.Graphics;
 namespace Lyricod;
 
 /// <summary>
-/// Lyricod Glass's liquid effect (see <see cref="LiquidGlass"/>). It runs only while
-/// it's the chosen glass effect and the island shows (not while the pointer hides it or it's being
-/// moved). Older Windows builds hide the island globally from capture; updated builds exclude
-/// it only from its own session, so screenshots and other recordings can see the live glass.
+/// Lyricod Glass's liquid effect (see <see cref="LiquidGlass"/>): runs only while it's the chosen
+/// effect and the island shows, not while the pointer hides it or it's being moved.
 /// </summary>
 public sealed partial class IslandWindow
 {
@@ -38,48 +36,45 @@ public sealed partial class IslandWindow
         try
         {
             bool on = WantsLiquid && _shown && !(_hovered && _hoverAction == IslandHover.Hide) && _liquid?.Failed != true;
-            if (!on)
+            if (on)
             {
-                if (_liquid is { Failed: true } failed && (failed.Ended || _liquidRetries > 0) && WantsLiquid) RetryLiquidLater();
-                StopLiquid();
-                return false;
-            }
-            if (_liquid == null)
-            {
-                // Not built with the display off (a new song, the island coming up): tried as it comes on.
-                if (DisplayPower.Off)
+                if (_liquid == null)
                 {
-                    _liquidRetries = Math.Max(_liquidRetries, 1);
-                    return false;
-                }
-                // If it fails later (the graphics card reset, the screen went away), fall back to clear glass;
-                // once it has faded in, the pill's own fill underneath goes (see ApplyTheme).
-                LiquidGlass? created = null;
-                created = new LiquidGlass(ElementCompositionPreview.GetElementVisual(LiquidHost).Compositor, DispatcherQueue, _overlay.Handle,
-                    () =>
+                    // Not built with the display off (a new song, the island coming up): tried as it comes on.
+                    if (DisplayPower.Off)
                     {
-                        try
+                        _liquidRetries = Math.Max(_liquidRetries, 1);
+                        return false;
+                    }
+                    // If it fails later (the graphics card reset, the screen went away), fall back to clear glass;
+                    // once it has faded in, the pill's own fill underneath goes (see ApplyTheme).
+                    LiquidGlass? created = null;
+                    created = new LiquidGlass(ElementCompositionPreview.GetElementVisual(LiquidHost).Compositor, DispatcherQueue, _overlay.Handle,
+                        () =>
                         {
-                            DispatcherQueue.TryEnqueue(() =>
+                            try
                             {
-                                try
+                                DispatcherQueue.TryEnqueue(() =>
                                 {
-                                    if (_closed || !ReferenceEquals(_liquid, created)) return;
-                                    if (created.Settled) _liquidRetries = 0;
-                                    ApplyTheme();
-                                }
-                                catch (Exception) { StopLiquid(); }
-                            });
-                        }
-                        catch (Exception) { StopLiquid(); }
-                    });
-                created.FramesPerSecond = (int)_settings.FrameRate;
-                _liquid = created;
-                ElementCompositionPreview.SetElementChildVisual(LiquidHost, _liquid.Visual);
+                                    try
+                                    {
+                                        if (_closed || !ReferenceEquals(_liquid, created)) return;
+                                        if (created.Settled) _liquidRetries = 0;
+                                        ApplyTheme();
+                                    }
+                                    catch (Exception) { StopLiquid(); }
+                                });
+                            }
+                            catch (Exception) { StopLiquid(); }
+                        });
+                    created.FramesPerSecond = (int)_settings.FrameRate;
+                    _liquid = created;
+                    ElementCompositionPreview.SetElementChildVisual(LiquidHost, _liquid.Visual);
+                }
+                UpdateLiquid();
+                if (!_liquid.Failed) return true;
             }
-            UpdateLiquid();
-            if (!_liquid.Failed) return true;
-            if (_liquid.Ended || _liquidRetries > 0) RetryLiquidLater();
+            if (_liquid is { Failed: true } failed && (failed.Ended || _liquidRetries > 0) && WantsLiquid) RetryLiquidLater();
             StopLiquid();
             return false;
         }
@@ -136,12 +131,9 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Windows ended the liquid glass's capture (the screen slept or went away), which left the
-    /// island on clear glass until something else (a new song, a hover) built the glass again. So
-    /// it's built again a few seconds later, and if that fails too, however it fails (the screen
-    /// may not be back yet), again less and less often, up to every 30 seconds, until it runs or
-    /// isn't wanted; while the display is known to be off, not at all. A failure with no capture
-    /// ended before isn't retried.
+    /// After Windows ends the capture (screen asleep or gone), the glass is built again at 3 s,
+    /// backing off to 30 s, until it runs or isn't wanted; not while the display is off. A failure
+    /// with no ended capture before it isn't retried.
     /// </summary>
     void RetryLiquidLater()
     {
@@ -153,8 +145,7 @@ public sealed partial class IslandWindow
             {
                 try
                 {
-                    // Not while the display is off: it's tried again as that comes on (see OnDisplayChanged).
-                    if (_closed || DisplayPower.Off) return;
+                    if (_closed) return;
                     if (!WantsLiquid) { _liquidRetries = 0; return; }
                     if (_liquid == null) ApplyTheme();
                 }

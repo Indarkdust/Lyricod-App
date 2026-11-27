@@ -12,10 +12,8 @@ internal static class DisplayCaptureExclusion
     internal static readonly Guid FrameId = new("71616DC8-FEA5-5741-A3D8-591ACC39A9EE");
 
     /// <summary>Whether this Windows can leave a window out of just this display capture session.</summary>
-    public static bool IsAvailable(nint session, int windowsBuild)
+    public static bool IsAvailable(nint session)
     {
-        // Updated 26100+ builds can expose this; the build number alone doesn't guarantee it.
-        if (windowsBuild < 26100 || session == 0) return false;
         if (Marshal.QueryInterface(session, in SessionId, out nint display) < 0) return false;
         Marshal.Release(display);
         return true;
@@ -25,10 +23,9 @@ internal static class DisplayCaptureExclusion
     /// Leaves <paramref name="window"/> out of the session's capture. <paramref name="iteration"/> is the
     /// configuration that does so; frames say which one they were made with (see <see cref="FrameIteration"/>).
     /// </summary>
-    public static unsafe bool TryExcludeWindow(nint session, nint window, int windowsBuild, out ulong iteration)
+    public static unsafe bool TryExcludeWindow(nint session, nint window, out ulong iteration)
     {
         iteration = 0;
-        if (windowsBuild < 26100 || session == 0 || window == 0) return false;
         if (Marshal.QueryInterface(session, in SessionId, out nint display) < 0) return false;
         nint windows = 0;
         try
@@ -40,11 +37,6 @@ internal static class DisplayCaptureExclusion
             if (set(display, windows, &result) < 0) return false;
             iteration = result;
             return true;
-        }
-        catch (Exception e)
-        {
-            System.Diagnostics.Debug.WriteLine("display capture exclusion: " + e);
-            return false;
         }
         finally
         {
@@ -64,7 +56,6 @@ internal static class DisplayCaptureExclusion
             ulong iteration;
             return get(frame3, &iteration) >= 0 ? iteration : null;
         }
-        catch (Exception) { return null; }
         finally { Marshal.Release(frame3); }
     }
 

@@ -7,18 +7,10 @@ namespace Lyricod.Core.Tests;
 public unsafe class DisplayCaptureExclusionTests
 {
     [Fact]
-    public void OlderBuildsAndMissingHandlesNeverQueryTheSession()
-    {
-        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(1, 1, 26099, out _));
-        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(0, 1, 26100, out _));
-        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(1, 0, 28000, out _));
-    }
-
-    [Fact]
     public void MissingDisplayInterfaceFallsBack()
     {
         using var other = new Native<ICaptureWindowIds>(new CaptureWindowIds(123));
-        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(other, 123, 26100, out _));
+        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(other, 123, out _));
     }
 
     [Theory]
@@ -30,11 +22,11 @@ public unsafe class DisplayCaptureExclusionTests
         var session = new TestDisplaySession { UseGetMany = useGetMany };
         using var native = new Native<ITestDisplaySession>(session);
         nint window = unchecked((nint)0x1234ABCDFFFF1234L);
-        Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, 26100, out ulong first));
+        Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, out ulong first));
         Assert.Equal(unchecked((ulong)(nuint)window), session.Window);
         Assert.Equal(1ul, first); // the configuration Windows says leaves the window out
         // A new session/monitor gets its own exclusion, including the same full-width HWND.
-        Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, 28000, out ulong second));
+        Assert.True(DisplayCaptureExclusion.TryExcludeWindow(native, window, out ulong second));
         Assert.Equal(2, session.Calls);
         Assert.Equal(2ul, second);
     }
@@ -44,7 +36,7 @@ public unsafe class DisplayCaptureExclusionTests
     {
         var session = new TestDisplaySession { Result = unchecked((int)0x80070005) };
         using var native = new Native<ITestDisplaySession>(session);
-        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(native, 123, 26100, out _));
+        Assert.False(DisplayCaptureExclusion.TryExcludeWindow(native, 123, out _));
     }
 
     [Fact]
@@ -52,10 +44,8 @@ public unsafe class DisplayCaptureExclusionTests
     {
         using var native = new Native<ITestDisplaySession>(new TestDisplaySession());
         using var other = new Native<ICaptureWindowIds>(new CaptureWindowIds(123));
-        Assert.True(DisplayCaptureExclusion.IsAvailable(native, 26100));
-        Assert.False(DisplayCaptureExclusion.IsAvailable(native, 26099));
-        Assert.False(DisplayCaptureExclusion.IsAvailable(other, 26100));
-        Assert.False(DisplayCaptureExclusion.IsAvailable(0, 26100));
+        Assert.True(DisplayCaptureExclusion.IsAvailable(native));
+        Assert.False(DisplayCaptureExclusion.IsAvailable(other));
     }
 
     [Fact]
