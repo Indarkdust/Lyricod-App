@@ -74,7 +74,7 @@ public static class LiquidLens
     /// Has <paramref name="visit"/> fill in each pixel of a BGRA buffer (given its offset there) from its
     /// depth inside the rounded rectangle (negative: outside) and the unit vector pointing out.
     /// </summary>
-    static void Measure(byte[] pixels, int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit)
+    internal static void Measure(byte[] pixels, int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit)
     {
         radius = Math.Clamp(radius, 0, Math.Min(width, height) / 2.0);
         // A square top is handled as a shape extending far above, so its top never comes near.
