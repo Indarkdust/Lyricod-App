@@ -1,4 +1,3 @@
-using System.Globalization;
 using Lyricod.Core;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -67,7 +66,7 @@ public sealed partial class SettingsWindow
     static string CheckFailedTip(UpdateResult result) => result.Failure switch
     {
         CheckFailure.RateLimited when result.RetryAt is { } at =>
-            L.Format("CheckFailedRateLimitedUntil", at.ToLocalTime().ToString("t", CultureInfo.CurrentCulture)),
+            L.Format("CheckFailedRateLimitedUntil", at.ToLocalTime().ToString("t", L.Culture)),
         CheckFailure.RateLimited => L.Get("CheckFailedRateLimited"),
         CheckFailure.Unreachable => L.Get("CheckFailedUnreachable"),
         _ => L.Get("CheckFailedServer"),

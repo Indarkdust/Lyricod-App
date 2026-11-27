@@ -57,5 +57,15 @@ static class L
         _ => part,
     }));
 
+    /// <summary>For times and dates inside a string: the chosen language's, so a Chinese UI on an English Windows says 23:51.</summary>
+    public static System.Globalization.CultureInfo Culture
+    {
+        get
+        {
+            try { return Language.Length > 0 ? System.Globalization.CultureInfo.GetCultureInfo(Language) : System.Globalization.CultureInfo.CurrentCulture; }
+            catch (System.Globalization.CultureNotFoundException) { return System.Globalization.CultureInfo.CurrentCulture; }
+        }
+    }
+
     public static string Format(string key, params object[] args) => string.Format(System.Globalization.CultureInfo.CurrentCulture, Get(key), args);
 }
