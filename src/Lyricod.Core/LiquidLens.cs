@@ -1,8 +1,9 @@
 namespace Lyricod.Core;
 
-/// <summary>Lyricod Glass's 3D effect: a bright edge, which reads as thickness over a busy background, or a soft one
-/// with shade on the side away from the light, which keeps its shape over a plain one.</summary>
-public enum ShineStyle { Bright, Soft }
+/// <summary>Lyricod Glass's 3D effect: a bright edge, which reads as thickness over a busy background, a soft one
+/// with shade on the side away from the light, which keeps its shape over a plain one, or a lifelike one, whose
+/// light brightens what shows through along the top and bottom, with a dark line down the sides and a rounder lens.</summary>
+public enum ShineStyle { Bright, Soft, Lifelike }
 
 /// <summary>
 /// The lens of Lyricod Glass's liquid effect: a displacement map that bends what's behind a rounded
@@ -66,15 +67,75 @@ public static class LiquidLens
         return pixels;
     }
 
+    /// <summary>
+    /// Lifelike's map: red and green as in <see cref="Map"/>'s, but 16 bits each around 32768 (RGBA, 8 bytes
+    /// a pixel), since its bend is long enough for 8 bits to show: as steps, and as a shift of what isn't
+    /// bent at all. The bend falls off as a quarter circle over <paramref name="band"/> pixels, steeply
+    /// enough at the edge to mirror what's further in.
+    /// </summary>
+    public static byte[] LifelikeMap(int width, int height, double radius, bool squareTop, double band)
+    {
+        var pixels = new byte[width * height * 8];
+        // The bend turns as round a corner no tighter than the band: where a tighter one's nearest edge changes,
+        // it would turn a right angle along the corner's diagonal. How deep a pixel is stays the real corner's.
+        double most = Math.Min(width, height) / 2.0, tight = Math.Min(radius, most), round = Math.Min(Math.Max(radius, band), most);
+        Measure(pixels, width, height, round, squareTop, (i, depth, dx, dy) =>
+        {
+            if (dx != 0 && dy != 0)
+            {
+                double qx = (round - depth) * Math.Abs(dx) - (round - tight), qy = (round - depth) * Math.Abs(dy) - (round - tight);
+                double outX = Math.Max(qx, 0), outY = Math.Max(qy, 0);
+                depth = tight - Math.Sqrt(outX * outX + outY * outY) - Math.Min(Math.Max(qx, qy), 0);
+            }
+            double u = Math.Clamp(1 - depth / band, 0, 1);
+            double strength = 1 - Math.Sqrt(1 - u * u);
+            var levels = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, ushort>(pixels.AsSpan(i, 8));
+            levels[0] = (ushort)Math.Round(32768 - 32767 * dx * strength);
+            levels[1] = (ushort)Math.Round(32768 - 32767 * dy * strength);
+            levels[3] = ushort.MaxValue;
+        }, size: 8);
+        return pixels;
+    }
+
+    /// <summary>
+    /// Lifelike's light and dark line, as opaque BGRA pixels. Red is how much the glass is lit: a thin
+    /// line with a faint glow inside it along the edges that face up or down, fading to none where
+    /// they face sideways. Blue is how much it's darkened: a hairline along the edges that face sideways.
+    /// </summary>
+    /// <param name="scale">Pixels per view pixel: the lines keep their width in view pixels.</param>
+    public static byte[] LifelikeLight(int width, int height, double radius, bool squareTop, double scale)
+    {
+        var pixels = new byte[width * height * 4];
+        Measure(pixels, width, height, radius, squareTop, (i, depth, dx, dy) =>
+        {
+            pixels[i + 3] = 255;
+            // The pixels the edge only partly covers count as its outermost: the island's clip smooths them.
+            if (depth < -1 || depth >= 6.75 * scale) return;
+            double d = Math.Max(depth, 0), sideways = Math.Abs(dx);
+            double line = Math.Clamp(1 - d / (1.15 * scale), 0, 1);
+            double glow = 0.24 * Math.Pow(Math.Clamp(1 - d / (6.75 * scale), 0, 1), 1.8);
+            pixels[i + 2] = (byte)Math.Round(255 * (1 - sideways) * Math.Min(1, line + glow));
+            pixels[i] = (byte)Math.Round(255 * 0.65 * sideways * Math.Clamp(1 - d / (0.75 * scale), 0, 1));
+        });
+        return pixels;
+    }
+
+    /// <summary>How far in from the edge Lifelike's glass bends, in view pixels: less on a low island.</summary>
+    public static double LifelikeBand(double width, double height) => Math.Min(20, 0.72 * Math.Min(width, height) / 2);
+
+    /// <summary>How far in Lifelike's edge looks at the Edge refraction setting's 50%, in view pixels: more on a taller island.</summary>
+    public static double LifelikeReach(double width, double height) => Math.Min(60, 1.3 * Math.Min(width, height) / 2);
+
     /// <summary>How far in from the edge the glass bends: about the corner's size, never past the middle.</summary>
     static double Band(int width, int height, double radius) =>
         Math.Max(2, Math.Min(Math.Min(width, height) / 2.0, Math.Max(radius * 1.5, 12)));
 
     /// <summary>
-    /// Has <paramref name="visit"/> fill in each pixel of a BGRA buffer (given its offset there) from its
+    /// Has <paramref name="visit"/> fill in each pixel of a buffer (given its offset there) from its
     /// depth inside the rounded rectangle (negative: outside) and the unit vector pointing out.
     /// </summary>
-    internal static void Measure(byte[] pixels, int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit)
+    /// <param name="size">Bytes a pixel: 4 or 8.</param>
+    internal static void Measure(byte[] pixels, int width, int height, double radius, bool squareTop, Action<int, double, double, double> visit, int size = 4)
     {
         radius = Math.Clamp(radius, 0, Math.Min(width, height) / 2.0);
         // A square top is handled as a shape extending far above, so its top never comes near.
@@ -95,8 +156,9 @@ public static class LiquidLens
             {
                 if (x > first && x <= last)
                 {
-                    var row = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(pixels.AsSpan(y * width * 4, width * 4));
-                    row[(first + 1)..(last + 1)].Fill(row[first]);
+                    var row = pixels.AsSpan(y * width * size, width * size);
+                    if (size == 8) Repeat<ulong>(row, first, last);
+                    else Repeat<uint>(row, first, last);
                     x = last;
                     continue;
                 }
@@ -106,8 +168,14 @@ public static class LiquidLens
                 double depth = radius - corner - Math.Min(Math.Max(qx, qy), 0);
                 (double dx, double dy) = corner > 0 ? (outX / corner * Math.Sign(px), outY / corner * Math.Sign(py))
                     : qx > qy ? (Math.Sign(px), 0.0) : (0.0, Math.Sign(py));
-                visit((y * width + x) * 4, depth, dx, dy);
+                visit((y * width + x) * size, depth, dx, dy);
             }
         }
+    }
+
+    static void Repeat<T>(Span<byte> row, int first, int last) where T : unmanaged
+    {
+        var pixels = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, T>(row);
+        pixels[(first + 1)..(last + 1)].Fill(pixels[first]);
     }
 }

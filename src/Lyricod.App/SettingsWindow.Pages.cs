@@ -141,7 +141,7 @@ public sealed partial class SettingsWindow
     }
 
     /// <summary>The 3D effect's choices, in the list's order.</summary>
-    enum Shine { Off, Bright, Soft }
+    enum Shine { Off, Bright, Soft, Lifelike }
 
     void GlassSettings()
     {
@@ -157,8 +157,13 @@ public sealed partial class SettingsWindow
         {
             Content = Percent(nameof(Settings.LiquidRefraction), () => _settings.LiquidRefraction, v => _settings.LiquidRefraction = v, 0, 100),
         };
-        // The 3D effect is the liquid glass's: it lights the edge its lens bends. Off, or on in one of two looks.
-        Shine ShineNow() => !_settings.GlassShine ? Shine.Off : _settings.GlassShineStyle == ShineStyle.Soft ? Shine.Soft : Shine.Bright;
+        // The 3D effect is the liquid glass's: it lights the edge its lens bends. Off, or on in one of its looks.
+        Shine ShineNow() => !_settings.GlassShine ? Shine.Off : _settings.GlassShineStyle switch
+        {
+            ShineStyle.Soft => Shine.Soft,
+            ShineStyle.Lifelike => Shine.Lifelike,
+            _ => Shine.Bright,
+        };
         ComboBox? shineBox = null;
         TextBlock? shineDetail = null;
         // Turning it on sets two settings; the list waits for both, or it would show Off for a moment.
@@ -172,13 +177,20 @@ public sealed partial class SettingsWindow
         void SetShine(Shine v)
         {
             setting = true;
-            if (v != Shine.Off) _settings.GlassShineStyle = v == Shine.Soft ? ShineStyle.Soft : ShineStyle.Bright;
+            if (v != Shine.Off)
+                _settings.GlassShineStyle = v switch
+                {
+                    Shine.Soft => ShineStyle.Soft,
+                    Shine.Lifelike => ShineStyle.Lifelike,
+                    _ => ShineStyle.Bright,
+                };
             _settings.GlassShine = v != Shine.Off;
             setting = false;
             SyncShine();
         }
         shineBox = Choice(nameof(Settings.GlassShine), ShineNow, SetShine,
-            (Shine.Off, L.Get("GlassShineOff")), (Shine.Bright, L.Get("GlassShineBright")), (Shine.Soft, L.Get("GlassShineSoft")));
+            (Shine.Off, L.Get("GlassShineOff")), (Shine.Bright, L.Get("GlassShineBright")), (Shine.Soft, L.Get("GlassShineSoft")),
+            (Shine.Lifelike, L.Get("GlassShineLifelike")));
         var shine = new ContentControl { Content = shineBox };
         var screenshot = new ContentControl { Content = ScreenshotButton() };
         void SyncEffect()

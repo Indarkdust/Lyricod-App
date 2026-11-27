@@ -32,8 +32,13 @@ sealed class LiquidGlass : IDisposable
 {
     public static bool IsSupported => Environment.OSVersion.Version.Build >= 22000 && GraphicsCaptureSession.IsSupported();
 
-    /// <summary>What to draw: the island's pixels on its screen, its corners and the look (<c>Shine</c>: width of the edge light in pixels, 0 for none).</summary>
-    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine, ShineStyle Style);
+    /// <summary>What to draw: the island's pixels on its screen, its corners and the look (<c>Shine</c>: width of the edge light in pixels, 0 for none;
+    /// <c>Band</c>: how far in from the edge Lifelike's lens bends, in pixels; <c>Scale</c>: pixels per view pixel).</summary>
+    sealed record Look(RectInt32 Source, float Radius, bool SquareTop, float Blur, float Refraction, Windows.UI.Color Tint, float Shine, ShineStyle Style,
+        float Band, float Scale)
+    {
+        public bool Lifelike => Shine > 0 && Style == ShineStyle.Lifelike;
+    }
 
     readonly DispatcherQueue _ui;
     readonly Action _changed;
@@ -49,6 +54,15 @@ sealed class LiquidGlass : IDisposable
     DisplacementMapEffect _bend = null!;
     GaussianBlurEffect _blur = null!;
     SaturationEffect _vivid = null!;
+    /// <summary>Lifelike's: the tinted glass, its dark line and light read from the light bitmap, and the lit glass (see <see cref="DrawLifelike"/>).</summary>
+    ColorMatrixEffect _clamped = null!;
+    ColorMatrixEffect _face = null!;
+    ColorMatrixEffect _shade = null!;
+    ColorMatrixEffect _gain = null!;
+    ArithmeticCompositeEffect _dimmed = null!;
+    ArithmeticCompositeEffect _lifted = null!;
+    ArithmeticCompositeEffect _whitened = null!;
+    BlendEffect _lit = null!;
 
     GraphicsCaptureItem? _item;
     Direct3D11CaptureFramePool? _pool;
@@ -59,9 +73,9 @@ sealed class LiquidGlass : IDisposable
     Direct3D11CaptureFrame? _frame;
     CanvasBitmap? _screen;
     CanvasBitmap? _lens;
-    (int Width, int Height, float Radius, bool SquareTop) _lensFor;
+    (int Width, int Height, float Radius, bool SquareTop, float Band) _lensFor;
     CanvasBitmap? _light;
-    (int Width, int Height, float Radius, bool SquareTop, float Rim, ShineStyle Style) _lightFor;
+    (int Width, int Height, float Radius, bool SquareTop, float Size, ShineStyle Style) _lightFor;
     Look? _look;
     int _pending, _generation;
     readonly DispatcherQueueTimer _startDelay;
@@ -166,6 +180,24 @@ sealed class LiquidGlass : IDisposable
             _bend = new DisplacementMapEffect { XChannelSelect = EffectChannelSelect.Red, YChannelSelect = EffectChannelSelect.Green };
             _blur = new GaussianBlurEffect { BorderMode = EffectBorderMode.Hard, Optimization = EffectOptimization.Speed };
             _vivid = new SaturationEffect { Saturation = 1.2f };
+            // The more vivid picture can leave 0 to 1. The other looks' is clamped as it's drawn, before the tint goes over it.
+            _clamped = new ColorMatrixEffect { Source = _vivid, ClampOutput = true };
+            _face = new ColorMatrixEffect { Source = _clamped };
+            // The light bitmap's blue is how dark the line is, its red how much light there is.
+            _shade = new ColorMatrixEffect { ColorMatrix = new Matrix5x4 { M31 = -1, M32 = -1, M33 = -1, M44 = 1, M51 = 1, M52 = 1, M53 = 1 } };
+            _gain = new ColorMatrixEffect { ColorMatrix = new Matrix5x4 { M11 = 1, M12 = 1, M13 = 1, M44 = 1 } };
+            _dimmed = new ArithmeticCompositeEffect { Source1 = _face, Source2 = _shade, MultiplyAmount = 1, Source1Amount = 0, Source2Amount = 0 };
+            // With g the light at a pixel (0 to 1): face + 0.413 g (face + 0.73) lifts what shows through, more the brighter it is.
+            _lifted = new ArithmeticCompositeEffect
+            {
+                Source1 = _dimmed, Source2 = _gain, Source1Amount = 1, MultiplyAmount = 0.413f, Source2Amount = 0.413f * 0.73f, ClampOutput = true,
+            };
+            // face + 1.4 g (1 - face) stops at white, so the light fades out over a bright background. The darker of the two is drawn.
+            _whitened = new ArithmeticCompositeEffect
+            {
+                Source1 = _dimmed, Source2 = _gain, Source1Amount = 1, MultiplyAmount = -1.4f, Source2Amount = 1.4f, ClampOutput = true,
+            };
+            _lit = new BlendEffect { Background = _lifted, Foreground = _whitened, Mode = BlendEffectMode.Darken };
             _graphics = CanvasComposition.CreateCompositionGraphicsDevice(compositor, _device);
             _surface = _graphics.CreateDrawingSurface(new Windows.Foundation.Size(1, 1),
                 Microsoft.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, Microsoft.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
@@ -189,8 +221,8 @@ sealed class LiquidGlass : IDisposable
     /// <summary>
     /// Follows the island: its screen (<paramref name="monitor"/>, whose top-left is <paramref
     /// name="origin"/>), its bounds there (<paramref name="pill"/>, pixels), its size and corner
-    /// radius in view pixels, and the look (blur and refraction in view pixels; whether the edge
-    /// catches the light).
+    /// radius in view pixels, and the look (blur in view pixels; refraction as the setting, 0 to 1;
+    /// whether the edge catches the light).
     /// </summary>
     public void Update(nint monitor, PointInt32 origin, RectInt32 pill, Vector2 size, float radius, bool squareTop,
         float blur, float refraction, Windows.UI.Color tint, bool shine, ShineStyle style)
@@ -204,8 +236,12 @@ sealed class LiquidGlass : IDisposable
             _shape.Size = new Vector2(size.X, size.Y + (squareTop ? radius : 0));
             _shape.CornerRadius = new Vector2(radius, radius);
             float scale = size.X > 0 ? pill.Width / size.X : 1;
+            bool lifelike = shine && style == ShineStyle.Lifelike;
+            // How far the edge looks inward, in view pixels. Lifelike's lens is sized by the island, and half the setting is its natural reach.
+            float reach = lifelike ? (float)LiquidLens.LifelikeReach(size.X, size.Y) * refraction * 2 : refraction * 14;
+            float band = lifelike ? (float)LiquidLens.LifelikeBand(size.X, size.Y) : 0;
             _look = new Look(new RectInt32(pill.X - origin.X, pill.Y - origin.Y, pill.Width, pill.Height), radius * scale, squareTop,
-                blur * scale, refraction * scale, tint, shine ? 1.5f * scale : 0, style);
+                blur * scale, reach * scale, tint, shine ? 1.5f * scale : 0, style, band * scale, scale);
             if (monitor != _monitor) Start(monitor);
             else if (_screen != null)
             {
@@ -442,7 +478,9 @@ sealed class LiquidGlass : IDisposable
     bool Unchanged(CanvasBitmap screen, Look look, out bool moved)
     {
         moved = false;
-        int margin = (int)Math.Ceiling(look.Refraction + 3 * look.Blur) + 2;
+        // Lifelike blurs before it bends, and bends inward: its edge reads outside the island only past the far side.
+        float bend = look.Lifelike ? Math.Max(look.Refraction - Math.Min(look.Source.Width, look.Source.Height), 0) : look.Refraction;
+        int margin = (int)Math.Ceiling(bend + 3 * look.Blur) + 2;
         var size = screen.SizeInPixels;
         int left = Math.Max(look.Source.X - margin, 0), top = Math.Max(look.Source.Y - margin, 0);
         int right = Math.Min(look.Source.X + look.Source.Width + margin, (int)size.Width);
@@ -521,6 +559,11 @@ sealed class LiquidGlass : IDisposable
             CanvasComposition.Resize(_surface, new Windows.Foundation.Size(width, height));
         _behind.Source = screen;
         _behind.TransformMatrix = Matrix3x2.CreateTranslation(-look.Source.X, -look.Source.Y);
+        if (look.Lifelike)
+        {
+            DrawLifelike(width, height, look);
+            return;
+        }
         ICanvasImage image = _behind;
         if (look.Refraction > 0)
         {
@@ -543,25 +586,67 @@ sealed class LiquidGlass : IDisposable
         if (look.Shine > 0) session.DrawImage(Light(width, height, look.Radius, look.SquareTop, look.Shine, look.Style));
     }
 
-    /// <summary>The lens map (see <see cref="LiquidLens"/>), made again only when the island's shape changes.</summary>
-    CanvasBitmap Lens(int width, int height, float radius, bool squareTop)
+    /// <summary>
+    /// Lifelike's glass, drawn as one image: blurred before it's bent, so what the edge squeezes stays sharp, and
+    /// tinted inside the image, since its dark line and light change what shows through instead of covering it.
+    /// </summary>
+    void DrawLifelike(int width, int height, Look look)
     {
-        if (_lens != null && _lensFor == (width, height, radius, squareTop)) return _lens;
+        ICanvasImage image = _behind;
+        if (look.Blur > 0)
+        {
+            _blur.Source = image;
+            _blur.BlurAmount = look.Blur;
+            image = _blur;
+        }
+        if (look.Refraction > 0)
+        {
+            _bend.Source = image;
+            _bend.Displacement = Lens(width, height, look.Radius, look.SquareTop, look.Band);
+            _bend.Amount = look.Refraction * 2;
+            image = _bend;
+        }
+        _vivid.Source = image;
+        float tint = look.Tint.A / 255f;
+        _face.ColorMatrix = new Matrix5x4
+        {
+            M11 = 1 - tint, M22 = 1 - tint, M33 = 1 - tint, M44 = 1,
+            M51 = tint * look.Tint.R / 255f, M52 = tint * look.Tint.G / 255f, M53 = tint * look.Tint.B / 255f,
+        };
+        var light = Light(width, height, look.Radius, look.SquareTop, look.Scale, look.Style);
+        _shade.Source = light;
+        _gain.Source = light;
+        using var session = CanvasComposition.CreateDrawingSession(_surface);
+        session.Clear(Microsoft.UI.Colors.Transparent);
+        session.DrawImage(_lit);
+    }
+
+    /// <summary>The lens map (see <see cref="LiquidLens"/>), made again only when the island's shape changes. With a <paramref name="band"/> (pixels) it's Lifelike's.</summary>
+    CanvasBitmap Lens(int width, int height, float radius, bool squareTop, float band = 0)
+    {
+        if (_lens != null && _lensFor == (width, height, radius, squareTop, band)) return _lens;
         DisposeOwned(ref _lens);
-        _lens = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Map(width, height, radius, squareTop), width, height,
-            Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
-        _lensFor = (width, height, radius, squareTop);
+        _lens = band > 0
+            ? CanvasBitmap.CreateFromBytes(_device, LiquidLens.LifelikeMap(width, height, radius, squareTop, band), width, height,
+                Windows.Graphics.DirectX.DirectXPixelFormat.R16G16B16A16UIntNormalized)
+            : CanvasBitmap.CreateFromBytes(_device, LiquidLens.Map(width, height, radius, squareTop), width, height,
+                Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
+        _lensFor = (width, height, radius, squareTop, band);
         return _lens;
     }
 
-    /// <summary>The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape or the 3D look changes.</summary>
-    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float rim, ShineStyle style)
+    /// <summary>
+    /// The light along the edge (see <see cref="LiquidLens.Light"/>), made again only when the island's shape or the 3D look changes.
+    /// Lifelike's also holds its dark line, and its <paramref name="size"/> is the scale where the others' is the line's width.
+    /// </summary>
+    CanvasBitmap Light(int width, int height, float radius, bool squareTop, float size, ShineStyle style)
     {
-        if (_light != null && _lightFor == (width, height, radius, squareTop, rim, style)) return _light;
+        if (_light != null && _lightFor == (width, height, radius, squareTop, size, style)) return _light;
         DisposeOwned(ref _light);
-        _light = CanvasBitmap.CreateFromBytes(_device, LiquidLens.Light(width, height, radius, squareTop, rim, style), width, height,
-            Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
-        _lightFor = (width, height, radius, squareTop, rim, style);
+        _light = CanvasBitmap.CreateFromBytes(_device,
+            style == ShineStyle.Lifelike ? LiquidLens.LifelikeLight(width, height, radius, squareTop, size) : LiquidLens.Light(width, height, radius, squareTop, size, style),
+            width, height, Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized);
+        _lightFor = (width, height, radius, squareTop, size, style);
         return _light;
     }
 
@@ -638,6 +723,14 @@ sealed class LiquidGlass : IDisposable
         DisposeOwned(ref _clip);
         DisposeOwned(ref _brush);
         DisposeOwned(ref _shape);
+        DisposeOwned(ref _lit);
+        DisposeOwned(ref _whitened);
+        DisposeOwned(ref _lifted);
+        DisposeOwned(ref _dimmed);
+        DisposeOwned(ref _gain);
+        DisposeOwned(ref _shade);
+        DisposeOwned(ref _face);
+        DisposeOwned(ref _clamped);
         DisposeOwned(ref _vivid);
         DisposeOwned(ref _blur);
         DisposeOwned(ref _bend);

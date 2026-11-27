@@ -118,9 +118,11 @@
   <data name="GlassShineOff" xml:space="preserve"><value>Off</value></data>
   <data name="GlassShineBright" xml:space="preserve"><value>Bright</value></data>
   <data name="GlassShineSoft" xml:space="preserve"><value>Soft</value></data>
+  <data name="GlassShineLifelike" xml:space="preserve"><value>Lifelike (experimental)</value></data>
   <data name="GlassShineOffDetail" xml:space="preserve"><value>No light along the edge, and no shadow under a floating island.</value></data>
   <data name="GlassShineBrightDetail" xml:space="preserve"><value>A clear light along the edge. Gives the glass thickness over a busy background.</value></data>
   <data name="GlassShineSoftDetail" xml:space="preserve"><value>A fainter light, with shade on the side away from it. Keeps the edge visible over a plain background.</value></data>
+  <data name="GlassShineLifelikeDetail" xml:space="preserve"><value>Light along the top and bottom brightens what shows through, with a dark line down the sides. The edge bends more, and looks most natural with edge refraction at 50%.</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>Glass effect</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted</value></data>

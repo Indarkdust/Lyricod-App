@@ -97,9 +97,14 @@ public sealed partial class IslandWindow
             _shadow.Shadow = shadow;
             ElementCompositionPreview.SetElementChildVisual(ShadowHost, _shadow);
         }
-        bool soft = _settings.GlassShineStyle == ShineStyle.Soft;
-        _dropShadow!.Opacity = soft ? 0.18f : 0.45f;
-        _dropShadow.Offset = new Vector3(0, soft ? 3 : 6, 0);
+        var (opacity, offset) = _settings.GlassShineStyle switch
+        {
+            ShineStyle.Soft => (0.18f, 3),
+            ShineStyle.Lifelike => (0.05f, 4),
+            _ => (0.45f, 6),
+        };
+        _dropShadow!.Opacity = opacity;
+        _dropShadow.Offset = new Vector3(0, offset, 0);
         float radius = (float)Pill.CornerRadius.BottomLeft;
         _shadowShape!.Size = size;
         _shadowShape.CornerRadius = new Vector2(radius, radius);
