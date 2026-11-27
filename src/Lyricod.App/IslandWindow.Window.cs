@@ -1,3 +1,4 @@
+using Lyricod.Platform;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -49,6 +50,25 @@ public sealed partial class IslandWindow
         _pausedAway = false;
     }
 
+    /// <summary>With the display off, the bars and the listening stop and the pointer isn't followed.</summary>
+    void OnDisplayChanged()
+    {
+        try
+        {
+            if (_closed) return;
+            UpdateBars();
+            if (DisplayPower.Off) _pointerTimer.Stop();
+            else if (_shown) _pointerTimer.Start();
+            // Windows ended the glass's capture as the display went off: now it can run again.
+            if (!DisplayPower.Off && _liquidRetries > 0 && _liquid == null)
+            {
+                _liquidRetries = 0;
+                RetryLiquidLater();
+            }
+        }
+        catch (Exception e) { Log.Write(e); }
+    }
+
     /// <summary>Shows or hides the island. Returns whether it just came up, brought up to date.</summary>
     bool UpdateVisibility()
     {
@@ -62,7 +82,7 @@ public sealed partial class IslandWindow
             AppWindow.Show(false);
             _overlay.StripFrame();
             _overlay.KeepOnTop();
-            _pointerTimer.Start();
+            if (!DisplayPower.Off) _pointerTimer.Start();
             AnimateShown(true);
             // The lyric isn't kept up while it's hidden; the line there now just appears.
             UpdateSong();

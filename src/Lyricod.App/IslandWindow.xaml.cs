@@ -154,6 +154,7 @@ public sealed partial class IslandWindow : Window
 
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
+        DisplayPower.Changed += OnDisplayChanged;
         _settings.PropertyChanged += OnSettingChanged;
         // The island is placed by the screen's size and scale: when those change, it's placed again
         // (and its line fitted to the new width) at once, not when the next line happens to come.
@@ -182,6 +183,7 @@ public sealed partial class IslandWindow : Window
             _closed = true;
             _model.Changed -= OnModelChanged;
             Fonts.Changed -= OnFontChanged;
+            DisplayPower.Changed -= OnDisplayChanged;
             _settings.PropertyChanged -= OnSettingChanged;
             _pieceTimer.Stop();
             _pointerTimer.Stop();

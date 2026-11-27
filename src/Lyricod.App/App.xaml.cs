@@ -77,6 +77,7 @@ public partial class App : Application
         PlaybackModel.GlassStatus = () => _island?.LiquidCaptureStatus ?? "inactive";
         _desktop = new DesktopLyricsWindow(_model, _settings);
         _shortcuts = new GlobalShortcuts(_desktop, _settings, PerformShortcut);
+        DisplayPower.Watch(_desktop);
         _island = new IslandWindow(_model, _settings, OpenLyricsWindow, () => OpenSettings());
 
         _tray = new TrayIcon(1, Path.Combine(AppContext.BaseDirectory, "Assets", "Lyricod.ico"), "Lyricod");
