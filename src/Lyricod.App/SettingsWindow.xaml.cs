@@ -41,6 +41,9 @@ public sealed partial class SettingsWindow : Window
     public SettingsWindow(Settings settings, PlaybackModel model, Action openLyricsWindow, Action openChooseLyrics, GlobalShortcuts shortcuts, UpdateChecker updates, SettingsPane pane = SettingsPane.General)
     {
         InitializeComponent();
+        // The scroller centres the page by the width it asks for, not the width it gets: a page of short texts
+        // asked for less, so in a wide window it was drawn shifted right and cut off. A set width makes them equal.
+        Scroller.SizeChanged += (_, e) => Page.Width = Math.Min(Page.MaxWidth, e.NewSize.Width);
         _updates = updates;
         _updates.Changed += Refresh;
         _settings = settings;
