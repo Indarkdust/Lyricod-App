@@ -128,6 +128,8 @@ public class IslandSettingsTests
     [InlineData("{\"IslandTheme\":\"Classic\"}", IslandTheme.Classic, GlassTint.Neutral)]
     [InlineData("{\"IslandTheme\":\"Glass\",\"GlassTint\":\"Album\"}", IslandTheme.Glass, GlassTint.Album)]
     [InlineData("{\"IslandTheme\":1,\"GlassTint\":1}", IslandTheme.Glass, GlassTint.Album)]
+    [InlineData("{\"IslandTheme\":\"Glass\",\"GlassTint\":\"Light\"}", IslandTheme.Glass, GlassTint.Light)]
+    [InlineData("{\"IslandTheme\":1,\"GlassTint\":2}", IslandTheme.Glass, GlassTint.Light)]
     [InlineData("{\"IslandTheme\":9,\"GlassTint\":9}", IslandTheme.Classic, GlassTint.Neutral)]
     public void ThemeValuesKeepTheirNamesAndNumbers(string json, IslandTheme theme, GlassTint tint)
     {

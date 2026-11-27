@@ -14,7 +14,7 @@ public enum IslandStyle { Default, Floating }
 public enum IslandTheme { Classic, Glass }
 
 /// <summary>The colour of Lyricod Glass: a neutral dark, or the album cover's colour.</summary>
-public enum GlassTint { Neutral, Album }
+public enum GlassTint { Neutral, Album, Light }
 
 /// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it (acrylic), or redraws it blurred and bent at the edges.</summary>
 public enum GlassEffect { Clear, Frosted, Liquid }

@@ -18,6 +18,7 @@ public sealed partial class IslandWindow
 {
     static readonly Color MovingColour = Color.FromArgb(255, 0x26, 0x26, 0x2A);
     static readonly Color NeutralGlass = Color.FromArgb(255, 18, 18, 22);
+    static readonly Color LightGlass = Color.FromArgb(255, 255, 255, 255);
 
     SpriteVisual? _shadow;
     DropShadow? _dropShadow;
@@ -54,8 +55,13 @@ public sealed partial class IslandWindow
         Pill.Background = new SolidColorBrush(Color.FromArgb(alpha, tint.R, tint.G, tint.B));
     }
 
-    /// <summary>The glass's colour: neutral, or the album's darkened (it's tuned to stand out on black) so white lyrics stay readable on it.</summary>
-    Color GlassColour() => _settings.GlassTint == GlassTint.Album && _model.ArtworkColor is { } c ? Darken(c, 0.45) : NeutralGlass;
+    /// <summary>The glass's colour: neutral, the album's darkened (it's tuned to stand out on black) so white lyrics stay readable on it, or a light wash.</summary>
+    Color GlassColour() => _settings.GlassTint switch
+    {
+        GlassTint.Album when _model.ArtworkColor is { } c => Darken(c, 0.45),
+        GlassTint.Light => LightGlass,
+        _ => NeutralGlass,
+    };
 
     /// <summary>The glass's colour at its opacity (the transparency setting).</summary>
     Color GlassTintColour()
