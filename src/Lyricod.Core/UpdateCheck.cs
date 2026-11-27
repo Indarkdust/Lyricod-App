@@ -10,7 +10,7 @@ public sealed record AppRelease(Version Version, Uri Url)
 public sealed record UpdateAsset(string Name, long Size, Uri Url, string? Sha256);
 public enum UpdateStatus { UpToDate, Available, CouldntCheck }
 /// <summary>Why a check failed, so the app can say what to do about it.</summary>
-public enum CheckFailure { None, Unreachable, RateLimited, ServerError, BadReply }
+public enum CheckFailure { None, Unreachable, RateLimited, Other }
 public sealed record UpdateResult(UpdateStatus Status, AppRelease? Release = null)
 {
     public CheckFailure Failure { get; init; }
@@ -114,11 +114,10 @@ public static class UpdateCheck
         {
             DateTimeOffset? at = retryAfter?.Date ?? (retryAfter?.Delta is { } wait ? now + wait : null);
             if (at == null && response.Headers.TryGetValues("x-ratelimit-reset", out var reset)
-                && long.TryParse(reset.FirstOrDefault(), NumberStyles.None, CultureInfo.InvariantCulture, out long seconds)
-                && seconds < 253402300800)
+                && long.TryParse(reset.FirstOrDefault(), NumberStyles.None, CultureInfo.InvariantCulture, out long seconds))
                 at = DateTimeOffset.FromUnixTimeSeconds(seconds);
-            return new(UpdateStatus.CouldntCheck) { Failure = CheckFailure.RateLimited, RetryAt = at > now ? at : null };
+            return new(UpdateStatus.CouldntCheck) { Failure = CheckFailure.RateLimited, RetryAt = at };
         }
-        return new(UpdateStatus.CouldntCheck) { Failure = code >= 500 ? CheckFailure.ServerError : CheckFailure.BadReply };
+        return new(UpdateStatus.CouldntCheck) { Failure = CheckFailure.Other };
     }
 }

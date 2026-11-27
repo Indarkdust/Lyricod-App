@@ -62,21 +62,14 @@ public sealed partial class SettingsWindow
         Group(status, detail, progressRow, Row(check, action, page));
     }
 
-    /// <summary>What to do about a check that failed, by why it failed.</summary>
     static string CheckFailedTip(UpdateResult result) => result.Failure switch
     {
         // The tip is shown again later (back on this page), so a time that has passed isn't named; and it's rounded
         // up to the minute, since "after 14:35" for 14:35:45 would be too early.
         CheckFailure.RateLimited when result.RetryAt is { } at && at > DateTimeOffset.UtcNow =>
-            L.Format("CheckFailedRateLimitedUntil", NextMinute(at).ToLocalTime().ToString("t", L.Culture)),
+            L.Format("CheckFailedRateLimitedUntil", at.AddTicks(TimeSpan.TicksPerMinute - 1).ToLocalTime().ToString("t", L.Culture)),
         CheckFailure.RateLimited => L.Get("CheckFailedRateLimited"),
         CheckFailure.Unreachable => L.Get("CheckFailedUnreachable"),
         _ => L.Get("CheckFailedServer"),
     };
-
-    static DateTimeOffset NextMinute(DateTimeOffset at)
-    {
-        long ticks = at.Ticks + TimeSpan.TicksPerMinute - 1;
-        return new DateTimeOffset(ticks - ticks % TimeSpan.TicksPerMinute, at.Offset);
-    }
 }

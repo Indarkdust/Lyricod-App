@@ -23,22 +23,18 @@ static partial class DisplayPower
     {
         // The display of this session, not the PC's own monitor: that one goes off under a Remote Desktop session.
         var displayState = new Guid("2B84C20E-AD23-4DDF-93DB-05FFBD7EFCA5"); // GUID_SESSION_DISPLAY_STATUS
-        if (_messages != null || RegisterPowerSettingNotification(window.GetWindowHandle(), in displayState, 0) == 0) return;
+        if (RegisterPowerSettingNotification(window.GetWindowHandle(), in displayState, 0) == 0) return;
         _messages = new WindowMessageMonitor(window);
         _messages.WindowMessageReceived += (_, e) =>
         {
             // WM_POWERBROADCAST, PBT_POWERSETTINGCHANGE: a POWERBROADCAST_SETTING (which setting, a length, the value).
             if (e.Message.MessageId != 0x0218 || (long)e.Message.WParam != 0x8013) return;
-            try
-            {
-                nint setting = (nint)(long)e.Message.LParam;
-                if (Marshal.PtrToStructure<Guid>(setting) != displayState) return;
-                bool off = Marshal.ReadInt32(setting, 20) == 0; // 0 off, 1 on, 2 dimmed
-                if (off == Off) return;
-                Off = off;
-                Changed?.Invoke();
-            }
-            catch (Exception e2) { Log.Write(e2); }
+            nint setting = (nint)(long)e.Message.LParam;
+            if (Marshal.PtrToStructure<Guid>(setting) != displayState) return;
+            bool off = Marshal.ReadInt32(setting, 20) == 0; // 0 off, 1 on, 2 dimmed
+            if (off == Off) return;
+            Off = off;
+            Changed?.Invoke();
         };
     }
 }

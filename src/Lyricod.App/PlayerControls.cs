@@ -20,11 +20,11 @@ sealed partial class TransportButtons : StackPanel
         _model = model;
         Orientation = Orientation.Horizontal;
         Spacing = 4;
-        Children.Add(Button("\uE892", size * 0.8, L.Get("Previous"), () => _ = _model.Previous())); // Previous
+        Children.Add(Button("\uE892", size * 0.8, "Previous", () => _ = _model.Previous())); // Previous
         _playIcon = new FontIcon { Glyph = "\uE768", FontSize = size };
-        var play = Button(_playIcon, L.Get("PlayPause"), () => _ = _model.PlayPause());
+        var play = Button(_playIcon, "PlayPause", () => _ = _model.PlayPause());
         Children.Add(play);
-        Children.Add(Button("\uE893", size * 0.8, L.Get("Next"), () => _ = _model.Next())); // Next
+        Children.Add(Button("\uE893", size * 0.8, "Next", () => _ = _model.Next())); // Next
         Update();
     }
 
@@ -42,10 +42,10 @@ sealed partial class TransportButtons : StackPanel
         }
     }
 
-    static Button Button(string glyph, double size, string tip, Action action) =>
-        Button(new FontIcon { Glyph = glyph, FontSize = size }, tip, action);
+    static Button Button(string glyph, double size, string key, Action action) =>
+        Button(new FontIcon { Glyph = glyph, FontSize = size }, key, action);
 
-    static Button Button(FontIcon icon, string tip, Action action)
+    static Button Button(FontIcon icon, string key, Action action)
     {
         var button = new Button
         {
@@ -53,8 +53,7 @@ sealed partial class TransportButtons : StackPanel
             Padding = new Thickness(10, 8, 10, 8), CornerRadius = new CornerRadius(8),
         };
         button.Click += (_, _) => action();
-        ToolTipService.SetToolTip(button, tip);
-        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, tip);
+        L.Tip(button, key);
         return button;
     }
 }

@@ -55,7 +55,6 @@ public sealed partial class IslandWindow
     {
         try
         {
-            if (_closed) return;
             UpdateBars();
             if (DisplayPower.Off) _pointerTimer.Stop();
             else if (_shown) _pointerTimer.Start();

@@ -105,22 +105,13 @@ public class UpdateCheckTests
         Assert.Equal(CheckFailure.RateLimited, result.Failure);
         Assert.Equal(Now.AddSeconds(120), result.RetryAt);
 
-        // Limited, with no time given or one already past: no time to name.
+        // Limited, with no time given: no time to name.
         Assert.Null(UpdateCheck.Explain(Answer(HttpStatusCode.TooManyRequests), Now).RetryAt);
-        Assert.Null(UpdateCheck.Explain(Answer(HttpStatusCode.Forbidden, ("x-ratelimit-remaining", "0"),
-            ("x-ratelimit-reset", Now.AddMinutes(-1).ToUnixTimeSeconds().ToString())), Now).RetryAt);
-        Assert.Null(UpdateCheck.Explain(Answer(HttpStatusCode.Forbidden, ("x-ratelimit-remaining", "0"),
-            ("x-ratelimit-reset", "99999999999999999")), Now).RetryAt);
     }
 
-    [Theory]
-    [InlineData(HttpStatusCode.Forbidden, CheckFailure.BadReply)] // refused, but not for the rate limit
-    [InlineData(HttpStatusCode.NotFound, CheckFailure.BadReply)]
-    [InlineData(HttpStatusCode.OK, CheckFailure.BadReply)] // a page that isn't a release list (a captive portal)
-    [InlineData(HttpStatusCode.BadGateway, CheckFailure.ServerError)]
-    [InlineData(HttpStatusCode.ServiceUnavailable, CheckFailure.ServerError)]
-    public void OtherFailures(HttpStatusCode code, CheckFailure failure) =>
-        Assert.Equal(failure, UpdateCheck.Explain(Answer(code, ("x-ratelimit-remaining", "41")), Now).Failure);
+    [Fact]
+    public void RefusedButNotRateLimited() =>
+        Assert.Equal(CheckFailure.Other, UpdateCheck.Explain(Answer(HttpStatusCode.Forbidden, ("x-ratelimit-remaining", "41")), Now).Failure);
 
     [Fact]
     public async Task FetchSaysWhyItFailed()
@@ -128,7 +119,7 @@ public class UpdateCheckTests
         using var limited = new HttpClient(new StubHandler(_ => Answer(HttpStatusCode.Forbidden, ("x-ratelimit-remaining", "0"))));
         Assert.Equal(CheckFailure.RateLimited, (await UpdateCheck.FetchAsync(limited, "0.4.5")).Failure);
         using var garbled = new HttpClient(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("<html>") }));
-        Assert.Equal(CheckFailure.BadReply, (await UpdateCheck.FetchAsync(garbled, "0.4.5")).Failure);
+        Assert.Equal(CheckFailure.Other, (await UpdateCheck.FetchAsync(garbled, "0.4.5")).Failure);
         using var fine = new HttpClient(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
             { Content = new StringContent(JsonSerializer.Serialize(new[] { Release("v0.4.5") })) }));
         Assert.Equal(CheckFailure.None, (await UpdateCheck.FetchAsync(fine, "0.4.5")).Failure);
