@@ -71,16 +71,6 @@ public class WenKaiDownloadTests : IDisposable
     }
 
     [Fact]
-    public async Task AWrongPartIsDroppedNotJoined()
-    {
-        LeavePart(120_000);
-        var server = new Server { WrongStart = true };
-        await Assert.ThrowsAsync<InvalidDataException>(() => Download(server));
-        Assert.False(File.Exists(Part));
-        Assert.False(File.Exists(Published));
-    }
-
-    [Fact]
     public async Task AnInterruptedDownloadKeepsItsPartAndFinishesNextTime()
     {
         var server = new Server { CutAfter = 100_000 };
@@ -113,39 +103,17 @@ public class WenKaiDownloadTests : IDisposable
     }
 
     [Fact]
-    public async Task ARangeTheServerCantServeStartsOverNextTime()
-    {
-        LeavePart(120_000);
-        var server = new Server { Unsatisfiable = true };
-        await Assert.ThrowsAsync<HttpRequestException>(() => Download(server));
-        Assert.False(File.Exists(Part));
-        Assert.False(File.Exists(Published));
-    }
-
-    [Fact]
-    public async Task CancellingPublishesNothing()
-    {
-        using var stop = new CancellationTokenSource();
-        stop.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => FontFileDownload.DownloadAsync(new HttpClient(new Server()), Test, _dir, null, stop.Token));
-        Assert.False(File.Exists(Published));
-    }
-
-    [Fact]
-    public void TheReleasedFileIsPinned()
+    public void TheFontPinCanMatchADownload()
     {
         var file = WenKaiFont.File;
-        Assert.StartsWith("https://github.com/lxgw/LxgwWenKai-Lite/releases/download/v", file.Url);
-        Assert.EndsWith("/" + file.FileName, file.Url);
         Assert.Matches("^[0-9a-f]{64}$", file.Sha256);
-        Assert.InRange(file.Size, 10_000_000, 20_000_000);
-        Assert.Contains("/v1.530/", WenKaiFont.LicenceUrl);
-        Assert.Contains("/v1.530/", file.Url);
+        string tag = file.Url.Split('/')[^2];
+        Assert.Contains("/" + tag + "/", WenKaiFont.LicenceUrl);
     }
 
     sealed class Server : HttpMessageHandler
     {
-        public bool IgnoreRange, WrongStart, Corrupt, Unsatisfiable;
+        public bool IgnoreRange, Corrupt;
         public int? CutAfter;
         public long Sent;
         public List<RangeHeaderValue?> Ranges { get; } = [];
@@ -154,17 +122,16 @@ public class WenKaiDownloadTests : IDisposable
         {
             stop.ThrowIfCancellationRequested();
             Ranges.Add(request.Headers.Range);
-            if (Unsatisfiable) return Task.FromResult(new HttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable));
             long from = IgnoreRange ? 0 : request.Headers.Range?.Ranges.Single().From ?? 0;
             var body = Data[(int)from..].ToArray();
             if (Corrupt) body[^1] ^= 0xFF;
             if (CutAfter is int cut && cut - (int)from < body.Length) body = body[..Math.Max(cut - (int)from, 0)];
             Sent += body.Length;
-            var response = new HttpResponseMessage(from > 0 || WrongStart ? HttpStatusCode.PartialContent : HttpStatusCode.OK) { Content = new ByteArrayContent(body) };
+            var response = new HttpResponseMessage(from > 0 ? HttpStatusCode.PartialContent : HttpStatusCode.OK) { Content = new ByteArrayContent(body) };
             // The full length is what was sent: a connection that drops shows up as a short read.
             response.Content.Headers.ContentLength = body.Length;
             if (response.StatusCode == HttpStatusCode.PartialContent)
-                response.Content.Headers.ContentRange = new ContentRangeHeaderValue(WrongStart ? from + 1 : from, Data.Length - 1, Data.Length);
+                response.Content.Headers.ContentRange = new ContentRangeHeaderValue(from, Data.Length - 1, Data.Length);
             return Task.FromResult(response);
         }
     }

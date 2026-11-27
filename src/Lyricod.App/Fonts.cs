@@ -18,12 +18,12 @@ static class Fonts
     /// <summary>The fonts Lyricod downloads, as saved in the font setting.</summary>
     public const string MiSans = "MiSans", WenKai = "WenKai";
     public static bool IsDownloadable(string choice) => choice is MiSans or WenKai;
+    public static bool IsDownloaded(string font) => font == WenKai ? WenKaiDownload.IsDownloaded : MiSansDownload.IsDownloaded;
 
     static string _choice = "";
     /// <summary>The chosen downloadable font, once it's on disk and loads; null otherwise.</summary>
-    static string? _download, _hash, _appFont;
-    /// <summary>The downloadable font <see cref="_download"/>, <see cref="_hash"/> and <see cref="Error"/> are about.</summary>
-    static string? _resolvedFor;
+    static string? _download;
+    static string? _hash, _appFont;
 
     public static event Action? Changed;
     public static string? Error { get; private set; }
@@ -86,18 +86,14 @@ static class Fonts
     static void Apply(string choice)
     {
         _choice = choice;
+        _download = _hash = Error = null;
         if (IsDownloadable(choice)) Resolve();
-        else { _resolvedFor = null; _download = _hash = Error = null; }
         Families.Clear();
         Notify();
     }
 
     /// <summary>Probes the chosen font again, after its files changed or on a retry.</summary>
-    public static void Reload()
-    {
-        _resolvedFor = null;
-        Apply(_choice);
-    }
+    public static void Reload() => Apply(_choice);
 
     static void Notify()
     {
@@ -109,17 +105,13 @@ static class Fonts
         }
     }
 
-    /// <summary>A downloadable font's name, as the font list shows it.</summary>
+    /// <summary>For MiSans or WenKai only.</summary>
     public static string NameOf(string choice) => choice == WenKai ? L.Get("FontWenKai") : "MiSans";
 
     static void Resolve()
     {
-        // Probed once per font chosen, until the files change or the user retries.
-        if (_resolvedFor == _choice) return;
-        _resolvedFor = _choice;
-        _download = _hash = Error = null;
+        if (!IsDownloaded(_choice)) return;
         bool wenKai = _choice == WenKai;
-        if (!(wenKai ? WenKaiDownload.IsDownloaded : MiSansDownload.IsDownloaded)) return;
         try
         {
             if (wenKai) _download = Load(WenKaiDownload.FontPath, WenKaiDownload.AppCopyPath, WenKaiFont.Families);

@@ -21,7 +21,7 @@ public static class WenKaiFont
 
     public const string LicenceUrl = "https://github.com/lxgw/LxgwWenKai-Lite/blob/v1.530/OFL.txt";
 
-    /// <summary>The licence, as Lyricod ships it in its licenses folder.</summary>
+    /// <summary>Its name in Lyricod's licenses folder.</summary>
     public const string LicenceFileName = "LXGWWenKaiLite-OFL.txt";
 
     /// <summary>The names Windows may know it by: the family, then the Medium face's own (older apps' view of it).</summary>
@@ -41,7 +41,6 @@ public static class FontFileDownload
         Directory.CreateDirectory(directory);
         string target = Path.Combine(directory, file.FileName), part = target + ".part";
         long have = System.IO.File.Exists(part) ? new FileInfo(part).Length : 0;
-        if (have > file.Size) { System.IO.File.Delete(part); have = 0; }
         if (have < file.Size)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, file.Url);
@@ -49,16 +48,8 @@ public static class FontFileDownload
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(stop);
             timeout.CancelAfter(TimeSpan.FromSeconds(45));
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
-            // The part doesn't fit the file the server has now: start over next time.
-            if (response.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable) System.IO.File.Delete(part);
             response.EnsureSuccessStatusCode();
-            bool resumed = have > 0 && response.StatusCode == HttpStatusCode.PartialContent
-                && response.Content.Headers.ContentRange is { From: long from, Length: var length } && from == have && (length == null || length == file.Size);
-            if (response.StatusCode == HttpStatusCode.PartialContent && !resumed)
-            {
-                System.IO.File.Delete(part);
-                throw new InvalidDataException("The server sent a different part of the font than asked for.");
-            }
+            bool resumed = have > 0 && response.StatusCode == HttpStatusCode.PartialContent;
             if (!resumed) have = 0;
             long start = have;
             using var source = await response.Content.ReadAsStreamAsync(stop).ConfigureAwait(false);
@@ -71,14 +62,13 @@ public static class FontFileDownload
         string hash;
         await using (var font = System.IO.File.OpenRead(part))
         {
-            hash = font.Length == file.Size ? Convert.ToHexStringLower(await SHA256.HashDataAsync(font, stop).ConfigureAwait(false)) : "";
+            hash = Convert.ToHexStringLower(await SHA256.HashDataAsync(font, stop).ConfigureAwait(false));
         }
         if (hash != file.Sha256)
         {
             System.IO.File.Delete(part);
             throw new InvalidDataException("The downloaded font isn't the expected file.");
         }
-        stop.ThrowIfCancellationRequested();
         System.IO.File.Move(part, target, true);
     }
 
