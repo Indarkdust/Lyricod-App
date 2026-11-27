@@ -98,7 +98,7 @@ sealed partial class ProgressLine : Grid
         RowSpacing = 4;
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        _bar = new ProgressBar { Minimum = 0, Maximum = 1, Height = 4, CornerRadius = new CornerRadius(2) };
+        _bar = new ProgressBar { Minimum = 0, Maximum = 1, Height = 4, CornerRadius = new CornerRadius(2), Template = BarTemplate(2) };
         Children.Add(_bar);
         _elapsed = new TextBlock { FontSize = 11, Opacity = 0.6, HorizontalAlignment = HorizontalAlignment.Left };
         _left = new TextBlock { FontSize = 11, Opacity = 0.6, HorizontalAlignment = HorizontalAlignment.Right };
@@ -111,10 +111,36 @@ sealed partial class ProgressLine : Grid
 
     public Brush BarBrush { set => _bar.Foreground = value; }
 
+    /// <summary>
+    /// The bar as WinUI draws it, a thin track and a thicker rounded part for what has played, without
+    /// WinUI's slide to each new value: that animation is still running when the next value comes,
+    /// so a window showing the bar never rested. (Taking the transitions out of WinUI's own template
+    /// crashes the bar at its next value; WinUI's clip isn't copied, since two templates of one bar
+    /// can't share it and the bar's layout scale swaps templates.)
+    /// </summary>
+    static ControlTemplate BarTemplate(double radius)
+    {
+        string r = radius.ToString(CultureInfo.InvariantCulture);
+        return (ControlTemplate)Microsoft.UI.Xaml.Markup.XamlReader.Load(
+            $$"""
+            <ControlTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" TargetType="ProgressBar">
+                <Grid x:Name="LayoutRoot">
+                    <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid Height="{TemplateBinding MinHeight}">
+                            <Rectangle Fill="{TemplateBinding Background}" Height="1" RadiusX="0.5" RadiusY="0.5" VerticalAlignment="Center" />
+                            <Rectangle x:Name="DeterminateProgressBarIndicator" Fill="{TemplateBinding Foreground}" RadiusX="{{r}}" RadiusY="{{r}}" HorizontalAlignment="Left" />
+                        </Grid>
+                    </Border>
+                </Grid>
+            </ControlTemplate>
+            """);
+    }
+
     public void SetLayoutScale(double scale)
     {
         RowSpacing = 4 * scale;
         _bar.Height = 4 * scale;
+        if (_bar.CornerRadius.TopLeft != 2 * scale) _bar.Template = BarTemplate(2 * scale);
         _bar.CornerRadius = new CornerRadius(2 * scale);
         _elapsed.FontSize = _left.FontSize = 11 * scale;
     }
