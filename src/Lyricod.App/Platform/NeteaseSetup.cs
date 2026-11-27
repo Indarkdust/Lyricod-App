@@ -13,8 +13,8 @@ public sealed record NeteaseInstall(string Folder, Version Version, bool Is64Bit
 
 /// <summary>
 /// Sets up NetEase Cloud Music sync through Lyricod CM Helper (see <see cref="NeteaseSync"/>): downloads
-/// the release of the helper this Lyricod was made with, checks it against the SHA-256 Lyricod expects
-/// (which GitHub must list too), runs it as administrator, then opens NetEase Cloud Music again if it was open.
+/// the release of the helper this Lyricod was made with, checks it against the SHA-256 Lyricod expects,
+/// runs it as administrator, then opens NetEase Cloud Music again if it was open.
 /// </summary>
 public static class NeteaseSetup
 {
@@ -147,19 +147,17 @@ public static class NeteaseSetup
             using var request = new HttpRequestMessage(HttpMethod.Get, NeteaseSync.HelperEndpoint);
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
             using var reply = await http.SendAsync(request);
-            if (!reply.IsSuccessStatusCode || NeteaseSync.FindHelper(await reply.Content.ReadAsStringAsync()) is not { } helper
-                || !NeteaseSync.IsPinned(helper)) return null;
+            if (!reply.IsSuccessStatusCode || NeteaseSync.FindHelper(await reply.Content.ReadAsStringAsync()) is not { } helper) return null;
             string path = Path.Combine(folder, NeteaseSync.HelperName);
             using (var response = await http.GetAsync(helper.Url, HttpCompletionOption.ResponseHeadersRead))
             {
                 response.EnsureSuccessStatusCode();
-                if (response.RequestMessage?.RequestUri?.Scheme != "https" || response.Content.Headers.ContentLength is { } length && length != helper.Size)
-                    return null;
+                if (response.Content.Headers.ContentLength is { } length && length != helper.Size) return null;
                 await using var body = await response.Content.ReadAsStreamAsync();
                 await using var file = File.Create(path);
                 await body.CopyToAsync(file);
             }
-            return await NeteaseSync.OpenVerifiedHelperAsync(path, helper.Size, helper.Sha256);
+            return await NeteaseSync.OpenVerifiedHelperAsync(path, helper.Size, NeteaseSync.HelperSha256);
         }
         catch (Exception) { return null; } // offline, GitHub unreachable, or a cut-off download
     }

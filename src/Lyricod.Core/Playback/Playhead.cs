@@ -86,31 +86,26 @@ public static class Sweep
     }
 
     /// <summary>
-    /// Keyframes from <paramref name="position"/> to the end of the piece: times in seconds
-    /// from now, and sung widths. A line without word timing lights up as it starts.
+    /// Keyframes from <paramref name="position"/> to the end of the piece, each straight from the
+    /// one before. A line without word timing lights up as it starts.
     /// </summary>
-    public static (List<double> Times, List<double> Values) Plan(IReadOnlyList<SweepStop> stops, LyricLine piece, double width, double position)
+    public static List<SweepKey> Plan(IReadOnlyList<SweepStop> stops, LyricLine piece, double width, double position)
     {
-        var times = new List<double> { 0 };
-        var values = new List<double> { SungWidth(stops, piece, width, position) };
+        var keys = new List<SweepKey> { new(0, SungWidth(stops, piece, width, position)) };
         if (stops.Count == 0)
         {
             if (piece.Start > position)
-            {
-                times.AddRange([piece.Start - position, piece.Start - position + 0.08]);
-                values.AddRange([0, width]);
-            }
+                keys.AddRange([new(piece.Start - position, 0), new(piece.Start - position + 0.08, width)]);
         }
         else
         {
             foreach (var w in stops.Where(w => w.End > position))
             {
-                if (w.Start > position) { times.Add(w.Start - position); values.Add(w.From); }
-                times.Add(Math.Max(w.End - position, times[^1]));
-                values.Add(w.To);
+                if (w.Start > position) keys.Add(new(w.Start - position, w.From));
+                keys.Add(new(Math.Max(w.End - position, keys[^1].Time), w.To));
             }
         }
-        for (int i = 1; i < times.Count; i++) times[i] = Math.Max(times[i], times[i - 1]);
-        return (times, values);
+        for (int i = 1; i < keys.Count; i++) keys[i] = keys[i] with { Time = Math.Max(keys[i].Time, keys[i - 1].Time) };
+        return keys;
     }
 }

@@ -6,12 +6,11 @@ public enum InstallKind { Unknown, Installer, Portable }
 
 public static class UpdateFiles
 {
-    /// <summary>The launcher's layout: Lyricod runs from an "app" folder with the launcher one level up. A portable
-    /// copy has it, and so does an installed one since Setup began laying down the same files.</summary>
+    /// <summary>The launcher's layout: Lyricod runs from an "app" folder with the launcher one level up.</summary>
     public static bool HasLauncher(string baseDirectoryName, bool hasParentLauncher) =>
         hasParentLauncher && baseDirectoryName.Equals("app", StringComparison.OrdinalIgnoreCase);
 
-    /// <param name="hasUninstaller">Setup's uninstaller is beside Lyricod: an installed copy from before the launcher's layout.</param>
+    /// <param name="hasUninstaller">Setup's uninstaller is beside Lyricod: an installed copy without the launcher.</param>
     /// <param name="hasParentUninstaller">It is beside the launcher: an installed copy with that layout.</param>
     public static InstallKind DetectKind(string baseDirectoryName, bool hasUninstaller, bool hasParentLauncher, bool hasParentUninstaller = false) =>
         hasUninstaller ? InstallKind.Installer : !HasLauncher(baseDirectoryName, hasParentLauncher) ? InstallKind.Unknown

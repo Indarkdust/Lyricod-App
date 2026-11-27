@@ -1,12 +1,10 @@
 namespace Lyricod.Core;
 
 /// <summary>
-/// A note that the launcher is about to swap a patched version in, kept across the restart. An installed
-/// copy has two ways to update, the launcher's swap and Setup. If it comes back on the old version with the
-/// note still there, the launcher never got as far as starting the new one (it was stopped, or couldn't
-/// move the folders): the patch is not tried again for that release, and Setup is. A new version the
-/// launcher did start removes the note at once, so one that then fails and is put back doesn't lead to
-/// Setup, which would install the same files with no way back.
+/// Written just before the launcher swaps a patch in. Found at the next start with the old version still
+/// running, the swap never happened, so that release goes to Setup. A version the launcher started clears
+/// it at once: one that then fails and is put back mustn't go to Setup, which would install the same files
+/// with no way back.
 /// </summary>
 public static class UpdateAttempt
 {

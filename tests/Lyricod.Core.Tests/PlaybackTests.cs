@@ -67,18 +67,18 @@ public class PlaybackTests
     public void PlanRunsFromNowToTheLinesEnd()
     {
         var stops = Sweep.Stops(Line, 50, Measure);
-        var (times, values) = Sweep.Plan(stops, Line, 50, position: 10.5);
-        Assert.Equal([0, 0.5, 1.5, 2.5], times);
-        Assert.Equal([15, 30, 30, 50], values);
+        var keys = Sweep.Plan(stops, Line, 50, position: 10.5);
+        Assert.Equal([0, 0.5, 1.5, 2.5], keys.Select(k => k.Time));
+        Assert.Equal([15, 30, 30, 50], keys.Select(k => k.Value));
     }
 
     [Fact]
     public void LineWithoutWordTimingLightsUpAsItStarts()
     {
         var plain = Line with { Words = null };
-        var (times, values) = Sweep.Plan([], plain, 50, position: 9);
-        Assert.Equal([0, 1, 1.08], times.Select(t => Math.Round(t, 9)));
-        Assert.Equal([0, 0, 50], values);
+        var keys = Sweep.Plan([], plain, 50, position: 9);
+        Assert.Equal([0, 1, 1.08], keys.Select(k => Math.Round(k.Time, 9)));
+        Assert.Equal([0, 0, 50], keys.Select(k => k.Value));
         Assert.Equal(50, Sweep.SungWidth([], plain, 50, 10), 9);
     }
 }

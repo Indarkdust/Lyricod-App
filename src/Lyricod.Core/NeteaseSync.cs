@@ -4,8 +4,8 @@ using System.Text.Json;
 
 namespace Lyricod.Core;
 
-/// <summary>The helper's download: where it is, how big, and its SHA-256 as GitHub lists it.</summary>
-public sealed record NeteaseHelperFile(Uri Url, long Size, string Sha256);
+/// <summary>The helper's download: where it is and how big.</summary>
+public sealed record NeteaseHelperFile(Uri Url, long Size);
 
 /// <summary>How running the helper went: done, or what went wrong (its own words).</summary>
 public sealed record NeteaseHelperOutcome(bool Ok, string? Error);
@@ -71,7 +71,7 @@ public static class NeteaseSync
         return release >= TestedFrom && release <= TestedTo;
     }
 
-    /// <summary>The helper in its latest release, if it comes from that repository's own releases on github.com and GitHub lists its SHA-256 (without one it can't be checked).</summary>
+    /// <summary>The helper's download in that release.</summary>
     public static NeteaseHelperFile? FindHelper(string json)
     {
         try
@@ -84,22 +84,13 @@ public static class NeteaseSync
                 if (asset.ValueKind != JsonValueKind.Object || Text(asset, "name") != HelperName) continue;
                 if (!asset.TryGetProperty("size", out var size) || size.ValueKind != JsonValueKind.Number
                     || !size.TryGetInt64(out long bytes) || bytes <= 0
-                    || !Uri.TryCreate(Text(asset, "browser_download_url"), UriKind.Absolute, out var url)
-                    || url.Scheme != "https" || !url.IsDefaultPort || url.UserInfo.Length != 0
-                    || !url.Host.Equals("github.com", StringComparison.OrdinalIgnoreCase)
-                    || !url.AbsolutePath.StartsWith($"/{HelperRepository}/releases/download/", StringComparison.OrdinalIgnoreCase)) return null;
-                string? digest = Text(asset, "digest");
-                if (digest is not { Length: 71 } || !digest.StartsWith("sha256:", StringComparison.Ordinal) || !digest[7..].All(Uri.IsHexDigit))
-                    return null;
-                return new NeteaseHelperFile(url, bytes, digest[7..]);
+                    || !Uri.TryCreate(Text(asset, "browser_download_url"), UriKind.Absolute, out var url)) return null;
+                return new NeteaseHelperFile(url, bytes);
             }
             return null;
         }
         catch (JsonException) { return null; }
     }
-
-    /// <summary>Whether this is the helper Lyricod was released with (see <see cref="HelperSha256"/>).</summary>
-    public static bool IsPinned(NeteaseHelperFile helper) => helper.Sha256.Equals(HelperSha256, StringComparison.OrdinalIgnoreCase);
 
     static string? Text(JsonElement element, string property) =>
         element.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

@@ -177,7 +177,7 @@ public sealed class SweepCurve
             double time = _t[i] - position, rise = _x[i] - width, took = _t[i] - from;
             // A cubic in time is a Bézier with its control points at 1/3 and 2/3 of the way.
             keys.Add(rise > 0
-                ? new(time, _x[i], Math.Clamp(speed * took / (3 * rise), 0, 1), Math.Clamp(1 - _in[i] * took / (3 * rise), 0, 1))
+                ? new(time, _x[i], speed * took / (3 * rise), 1 - _in[i] * took / (3 * rise))
                 : new(time, _x[i]));
             (from, width, speed) = (_t[i], _x[i], _out[i]);
         }

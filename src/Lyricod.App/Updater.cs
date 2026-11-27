@@ -27,7 +27,7 @@ public sealed partial class UpdateChecker
     public static InstallKind Kind { get; } = UpdateFiles.DetectKind(Path.GetFileName(BaseDirectory),
         File.Exists(Path.Combine(BaseDirectory, "unins000.exe")), ParentLauncher, File.Exists(Path.Combine(BaseDirectory, "..", "unins000.exe")));
     /// <summary>The folder with the launcher and the app folder, where the launcher can swap in a new version:
-    /// a portable copy, or an installed one laid out the same way. An installed copy from before that has none.</summary>
+    /// a portable copy, or an installed one laid out the same way.</summary>
     static string? LauncherRoot { get; } = UpdateFiles.HasLauncher(Path.GetFileName(BaseDirectory), ParentLauncher) ? Path.GetDirectoryName(BaseDirectory) : null;
     /// <summary>Only a portable copy stages its whole download (the zip) there; an installed one runs Setup.</summary>
     static string? PortableRoot => Kind == InstallKind.Portable ? LauncherRoot : null;
@@ -35,8 +35,7 @@ public sealed partial class UpdateChecker
     static bool HasSetup => Kind == InstallKind.Installer;
     static string UpdatesDirectory => Path.Combine(Settings.DataDir, "Updates");
 
-    /// <summary>The launcher started this Lyricod, so its swap worked: whatever becomes of this start, Setup
-    /// (which can't put the old version back) is not the answer to it. Called first, before anything that can fail.</summary>
+    /// <summary>Before anything that can fail: see <see cref="UpdateAttempt"/>.</summary>
     public static void StartedByLauncher()
     {
         if (HasSetup && Platform.UpdateHealth.Pending) UpdateAttempt.Clear(UpdatesDirectory);
@@ -246,8 +245,6 @@ public sealed partial class UpdateChecker
                 await UseWholeDownloadAsync(release, e);
                 return;
             }
-            // Setup doesn't use the launcher, so it can work where the launcher's swap didn't: note the try,
-            // and a start that finds the note with the old version still running leaves the patch be.
             bool noted = patched && HasSetup;
             try
             {

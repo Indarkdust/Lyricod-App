@@ -321,11 +321,10 @@ sealed class SweepPainter
         Set(curve?.At(position) ?? Sweep.SungWidth(stops, piece, width, position), width);
         AnimateLift(position, playing);
         if (!playing) return;
-        var keys = curve?.Plan(position) ?? Straight(Sweep.Plan(stops, piece, width, position));
+        var keys = curve?.Plan(position) ?? Sweep.Plan(stops, piece, width, position);
         double total = keys[^1].Time;
         if (total < 0.01) return;
         var linear = _compositor.CreateLinearEasingFunction();
-        // The smooth sweep's cubic between two keys is a Bézier with its control points at 1/3 and 2/3 of the time.
         var eases = keys.Select(k => k.Ease1 == 1.0 / 3 && k.Ease2 == 2.0 / 3 ? (CompositionEasingFunction)linear
             : _compositor.CreateCubicBezierEasingFunction(new Vector2(1f / 3, (float)k.Ease1), new Vector2(2f / 3, (float)k.Ease2))).ToList();
         var animation = _compositor.CreateVector2KeyFrameAnimation();
@@ -342,9 +341,6 @@ sealed class SweepPainter
             _halo[layer].Shown.StartAnimation("Right", shown);
         }
     }
-
-    static List<SweepKey> Straight((List<double> Times, List<double> Values) plan) =>
-        [.. plan.Times.Select((time, k) => new SweepKey(time, plan.Values[k]))];
 
     /// <summary>
     /// Where the fade ends for <paramref name="sung"/> pixels sung: at 0 when nothing is, just past

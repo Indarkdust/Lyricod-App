@@ -4,39 +4,21 @@ namespace Lyricod.Core.Tests;
 
 public class NeteaseSyncTests
 {
-    const string Hash = "a7c77af418d7940e63faa58ea036fba1f4baad497947109ea52ed78c8e86608f";
-
-    static string Release(string name = NeteaseSync.HelperName, long size = 3_000_000,
-        string url = "https://github.com/darkdust-c/Lyricod-CM-Helper/releases/download/v1.0.0/Lyricod-CM-Helper.exe",
-        string? digest = "sha256:" + Hash) =>
+    static string Release(string name = NeteaseSync.HelperName, long size = 3_000_000) =>
         $$"""
         {"tag_name":"v1.0.0","assets":[
-          {"name":"{{name}}","size":{{size}},"browser_download_url":"{{url}}"{{(digest == null ? "" : $",\"digest\":\"{digest}\"")}}}
+          {"name":"{{name}}","size":{{size}},"browser_download_url":"https://github.com/darkdust-c/Lyricod-CM-Helper/releases/download/v1.0.0/Lyricod-CM-Helper.exe"}
         ]}
         """;
 
     [Fact]
-    public void FindsTheHelperWithItsChecksum()
+    public void FindsTheHelper()
     {
         var helper = NeteaseSync.FindHelper(Release());
         Assert.NotNull(helper);
         Assert.Equal(3_000_000, helper.Size);
-        Assert.Equal(Hash, helper.Sha256);
         Assert.Equal("https://github.com/darkdust-c/Lyricod-CM-Helper/releases/download/v1.0.0/Lyricod-CM-Helper.exe", helper.Url.ToString());
     }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("md5:0123")]
-    [InlineData("sha256:not-hex")]
-    public void WithoutAChecksumTheHelperIsntUsed(string? digest) => Assert.Null(NeteaseSync.FindHelper(Release(digest: digest)));
-
-    [Theory]
-    [InlineData("http://github.com/darkdust-c/Lyricod-CM-Helper/releases/download/v1.0.0/Lyricod-CM-Helper.exe")]
-    [InlineData("https://example.com/darkdust-c/Lyricod-CM-Helper/releases/download/v1.0.0/Lyricod-CM-Helper.exe")]
-    [InlineData("https://github.com/someone/else/releases/download/v1.0.0/Lyricod-CM-Helper.exe")]
-    [InlineData("https://user@github.com/darkdust-c/Lyricod-CM-Helper/releases/download/v1.0.0/Lyricod-CM-Helper.exe")]
-    public void OnlyFromTheHelpersOwnReleases(string url) => Assert.Null(NeteaseSync.FindHelper(Release(url: url)));
 
     [Theory]
     [InlineData("")]
@@ -146,13 +128,5 @@ public class NeteaseSyncTests
         Assert.Equal(NeteaseSync.X64, NeteaseSync.Machine(Exe(0x8664)));
         Assert.Equal(0x014C, NeteaseSync.Machine(Exe(0x014C)));
         Assert.Equal(0, NeteaseSync.Machine(new MemoryStream("not an exe, just text long enough to have a header slot"u8.ToArray())));
-    }
-
-    [Fact]
-    public void OnlyTheReviewedHelperRuns()
-    {
-        Assert.False(NeteaseSync.IsPinned(NeteaseSync.FindHelper(Release())!));
-        var reviewed = NeteaseSync.FindHelper(Release(digest: "sha256:" + NeteaseSync.HelperSha256.ToUpperInvariant()));
-        Assert.True(NeteaseSync.IsPinned(reviewed!));
     }
 }

@@ -39,7 +39,6 @@ public sealed partial class UpdateChecker : IDisposable
         _cleanup = Task.Run(() =>
         {
             PortableUpdate.Cleanup(LauncherRoot, UpdatesDirectory, running, keepOldCopies);
-            // Setup wrote the version Windows lists; after the launcher's update, Lyricod does.
             if (HasSetup && LauncherRoot is { } root) Platform.InstalledEntry.Refresh(root, Version);
         });
         _timer = queue.CreateTimer();

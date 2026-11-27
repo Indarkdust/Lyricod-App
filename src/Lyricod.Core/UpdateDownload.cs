@@ -24,10 +24,8 @@ public static class UpdateDownload
 
     /// <summary>
     /// Downloads <paramref name="asset"/> into <paramref name="directory"/> and returns it once its size and
-    /// hash match. What has arrived is kept as a part: when the connection drops or stalls, the download
-    /// carries on from there, now or at the next call, for as long as each try brings something new. A
-    /// slow connection that keeps breaking would otherwise never get to the end. The part is deleted only
-    /// when its bytes turn out wrong; the check at the end is what a wrong part can't get past.
+    /// hash match, which a wrong part can't get past. What arrived is kept as a part and resumed while tries
+    /// bring something new: a slow link that keeps breaking would otherwise never finish.
     /// </summary>
     public static async Task<string> DownloadAsync(HttpClient http, UpdateAsset asset, string directory, string currentVersion,
         IProgress<UpdateProgress>? progress, CancellationToken stop, Uri? testFeed = null, TimeSpan? stallTimeout = null,
