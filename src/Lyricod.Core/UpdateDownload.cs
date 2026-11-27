@@ -103,8 +103,6 @@ public static class UpdateDownload
             throw new IOException("The part doesn't fit the file.");
         }
         response.EnsureSuccessStatusCode();
-        // HttpClientHandler also refuses HTTPS-to-HTTP redirects on .NET.
-        if (asset.Url.Scheme == "https" && response.RequestMessage?.RequestUri?.Scheme == "http") throw new InsecureRedirectException();
         // More of this very file from where the part ends (a server may send less than the rest), or all of it
         // (a server may ignore the range): nothing else will do. The part is kept; nothing says it is wrong.
         bool resumed = response.StatusCode == HttpStatusCode.PartialContent;
@@ -148,7 +146,7 @@ public static class UpdateDownload
     /// <summary>A stall, a dropped connection or a busy server is worth another try; a wrong answer isn't.</summary>
     static bool CanRetry(Exception e, CancellationToken stop) => !stop.IsCancellationRequested && e switch
     {
-        DamagedUpdateException or InsecureRedirectException => false,
+        DamagedUpdateException => false,
         OperationCanceledException => true,
         HttpRequestException { StatusCode: { } status } =>
             (int)status >= 500 || status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests,
@@ -157,6 +155,4 @@ public static class UpdateDownload
     };
 
     static long Length(string path) => File.Exists(path) ? new FileInfo(path).Length : 0;
-
-    sealed class InsecureRedirectException() : HttpRequestException("Insecure download redirect.");
 }

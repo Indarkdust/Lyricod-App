@@ -172,14 +172,15 @@ public static class UpdatePatch
             files.Add(new(path, new FileInfo(made).Length, hash, !File.Exists(had) || Hash(had) != hash));
         }
         var manifest = new PatchManifest(from, to, arch, full.ToLowerInvariant(), files);
+        string json = Write(manifest);
         // Read it back: what the app would refuse, the workflow should hear about now.
-        Read(Write(manifest));
+        Read(json);
         using var zip = ZipFile.Open(patch, ZipArchiveMode.Create);
         // One date for every entry, so the same two folders always make the same patch.
         var date = new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var list = zip.CreateEntry(ManifestName, CompressionLevel.SmallestSize);
         list.LastWriteTime = date;
-        using (var writer = new StreamWriter(list.Open(), new UTF8Encoding(false))) writer.Write(Write(manifest));
+        using (var writer = new StreamWriter(list.Open(), new UTF8Encoding(false))) writer.Write(json);
         foreach (var file in files.Where(f => f.New))
         {
             var entry = zip.CreateEntry(Carried + file.Path, CompressionLevel.SmallestSize);

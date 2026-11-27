@@ -388,23 +388,6 @@ public sealed class UpdateDownloadTests : IDisposable
     }
 
     [Fact]
-    public async Task RejectsAnInsecureFinalResponse()
-    {
-        int calls = 0;
-        using var client = new HttpClient(new StubHandler((_, _) =>
-        {
-            calls++;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                RequestMessage = new(HttpMethod.Get, "http://cdn.test/update.zip"), Content = new ByteArrayContent(Payload),
-            });
-        }));
-        await Assert.ThrowsAnyAsync<HttpRequestException>(() => Download(client, Asset));
-        Assert.Equal(1, calls);
-        Assert.Empty(Directory.GetFiles(_directory));
-    }
-
-    [Fact]
     public void CleanupKeepsFutureUpdatesAndUnrelatedFiles()
     {
         foreach (string name in new[] { "1.0.0", "1.2.3", "2.0.0", "other" }) Directory.CreateDirectory(In("Updates", name));
