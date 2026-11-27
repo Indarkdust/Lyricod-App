@@ -63,6 +63,8 @@ public sealed partial class UpdateChecker : IDisposable
     {
         if (Checking || _disposed || State == UpdateState.Applying) return;
         Checking = true;
+        // Left by a release page that wouldn't open after a failed check: no release is involved, so a new check clears it.
+        if (Available == null && State == UpdateState.Error) { Error = null; State = UpdateState.Idle; }
         UpdateResult outcome;
         try
         {
