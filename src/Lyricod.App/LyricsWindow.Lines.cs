@@ -441,12 +441,14 @@ public sealed partial class LyricsWindow
         double now = _model.Position();
         var font = Fonts.For(_views[i].Line.Text, _model.Lyrics is { } l ? Romanizer.SongLanguage(l) : null);
         var measure = Measure(font);
+        // Unseen, the line is only put where the song is; it moves again when the window is seen.
+        bool playing = _model.IsPlaying && Seen;
         foreach (var (piece, width, sweep) in _views[i].Rows)
-            sweep.Animate(piece, width, now, _model.IsPlaying, measure);
+            sweep.Animate(piece, width, now, playing, measure);
         foreach (var (piece, width, sweep, extraFont) in _views[i].ExtraRows)
         {
             _extraRuler.Use(extraFont, Math.Round(_fontSize * 0.5), Fonts.SemiboldWeight);
-            sweep.Animate(piece, width, now, _model.IsPlaying, _extraRuler.Measure);
+            sweep.Animate(piece, width, now, playing, _extraRuler.Measure);
         }
     }
 

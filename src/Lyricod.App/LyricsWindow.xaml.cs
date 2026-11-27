@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Lyricod.Core;
+using Lyricod.Platform;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -29,7 +30,7 @@ public sealed partial class LyricsWindow : Window
     readonly ArtworkDrift _drift;
     /// <summary>Fires when the pointer has rested a few seconds (controls then fade, when wide).</summary>
     readonly DispatcherQueueTimer _idle;
-    bool _pointerIdle, _closed;
+    bool _pointerIdle, _closed, _minimised;
     readonly List<LineView> _views = [];
     int? _current;
     bool _wide;
@@ -142,12 +143,21 @@ public sealed partial class LyricsWindow : Window
         Fonts.Changed += OnFontChanged;
         _settings.PropertyChanged += OnSettingChanged;
         Activated += (_, e) => UpdateTimer();
+        VisibilityChanged += (_, e) =>
+        {
+            if (_minimised == !e.Visible) return;
+            _minimised = !e.Visible;
+            OnSeenChanged();
+        };
+        DisplayPower.Changed += OnSeenChanged;
         Closed += (_, _) =>
         {
             _closed = true;
             _model.Changed -= OnModelChanged;
             Fonts.Changed -= OnFontChanged;
+            DisplayPower.Changed -= OnSeenChanged;
             _settings.PropertyChanged -= OnSettingChanged;
+            _drift.Moving = false;
             _progressTimer.Stop();
             _relayout.Stop();
             _idle.Stop();
@@ -182,11 +192,11 @@ public sealed partial class LyricsWindow : Window
             _ = ApplyArtwork();
         }
         if (change.HasFlag(PlaybackModel.Change.Lyrics) || change.HasFlag(PlaybackModel.Change.Track)) BuildLines();
-        else if (change.HasFlag(PlaybackModel.Change.Line)) MoveToCurrent(animate: true);
+        else if (change.HasFlag(PlaybackModel.Change.Line)) MoveToCurrent(animate: Seen);
         if (change.HasFlag(PlaybackModel.Change.Clock))
         {
             AnimateCurrent();
-            _drift.Moving = _model.IsPlaying && _settings.LyricsBackground == LyricsBackground.Artwork;
+            UpdateDrift();
             _transport.Update();
             _progress.Update();
             UpdateTimer();
@@ -228,7 +238,25 @@ public sealed partial class LyricsWindow : Window
     void UpdateTimer()
     {
         // Closing deactivates the window, which comes here too.
-        if (!_closed && _model.IsPlaying && _model.Duration > 0) _progressTimer.Start(); else _progressTimer.Stop();
+        if (Seen && _model.IsPlaying && _model.Duration > 0) _progressTimer.Start(); else _progressTimer.Stop();
+    }
+
+    /// <summary>Minimised, or with the display off, the window isn't seen: the backdrop, the sung line and the progress line rest.</summary>
+    bool Seen => !_closed && !_minimised && !DisplayPower.Off;
+
+    void UpdateDrift() => _drift.Moving = Seen && _model.IsPlaying && _settings.LyricsBackground == LyricsBackground.Artwork;
+
+    void OnSeenChanged()
+    {
+        try
+        {
+            if (_closed) return;
+            UpdateDrift();
+            AnimateCurrent();
+            _progress.Update();
+            UpdateTimer();
+        }
+        catch (Exception e) { Log.Write(e); }
     }
 
     void UpdateSong()
@@ -254,7 +282,7 @@ public sealed partial class LyricsWindow : Window
         BigCover.Source = cover;
         SmallCover.Source = small;
         var style = _settings.LyricsBackground;
-        _drift.Moving = _model.IsPlaying && style == LyricsBackground.Artwork;
+        UpdateDrift();
         await _drift.SetCover(style is LyricsBackground.Artwork or LyricsBackground.StillArtwork ? bytes : null);
         if (style == LyricsBackground.Colour && _model.ArtworkColor is { } c)
         {
