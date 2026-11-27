@@ -119,11 +119,11 @@
   <data name="GlassShineOff" xml:space="preserve"><value>Off</value></data>
   <data name="GlassShineBright" xml:space="preserve"><value>Bright</value></data>
   <data name="GlassShineSoft" xml:space="preserve"><value>Soft</value></data>
-  <data name="GlassShineLifelike" xml:space="preserve"><value>Lifelike (experimental)</value></data>
+  <data name="GlassShineLifelike" xml:space="preserve"><value>Lifelike</value></data>
   <data name="GlassShineOffDetail" xml:space="preserve"><value>No light along the edge, and no shadow under a floating island.</value></data>
   <data name="GlassShineBrightDetail" xml:space="preserve"><value>A clear light along the edge. Gives the glass thickness over a busy background.</value></data>
   <data name="GlassShineSoftDetail" xml:space="preserve"><value>A fainter light, with shade on the side away from it. Keeps the edge visible over a plain background.</value></data>
-  <data name="GlassShineLifelikeDetail" xml:space="preserve"><value>Light along the top and bottom brightens what shows through, with a dark line down the sides. The edge bends more, and looks most natural with edge refraction at 50%.</value></data>
+  <data name="GlassShineLifelikeDetail" xml:space="preserve"><value>Light along the top and bottom brightens what shows through, with a dark line down the sides. Keeps its own tint, transparency, blur and edge refraction.</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>Glass effect</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>Clear</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>Frosted</value></data>
@@ -138,6 +138,9 @@
   <data name="LiquidScreenshotDetail" xml:space="preserve"><value>On newer Windows 11 builds the island already appears in screenshots. On older builds, click the button, then take your screenshot within 10 seconds; the glass background briefly pauses.</value></data>
   <data name="LiquidScreenshotButton" xml:space="preserve"><value>Show in screenshots</value></data>
   <data name="LiquidScreenshotCountdown" xml:space="preserve"><value>Take your screenshot ({0})</value></data>
+  <data name="GlassRestore" xml:space="preserve"><value>Defaults</value></data>
+  <data name="GlassRestoreDetail" xml:space="preserve"><value>Returns every Lyricod Glass option to its default, for all 3D effects.</value></data>
+  <data name="GlassRestoreButton" xml:space="preserve"><value>Restore defaults</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>Expand into a mini player</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>Keep as is</value></data>

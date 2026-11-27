@@ -155,7 +155,7 @@ public sealed partial class SettingsWindow
     FrameworkElement Percent(string property, Func<int> get, Action<int> set, int min, int max)
     {
         var label = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Style = Style("Detail"), MinWidth = 44, TextAlignment = TextAlignment.Right };
-        var slider = new Slider { Minimum = min, Maximum = max, StepFrequency = 5, Width = 220, Value = get(), VerticalAlignment = VerticalAlignment.Center };
+        var slider = new Slider { Minimum = min, Maximum = max, StepFrequency = 1, Width = 220, Value = get(), VerticalAlignment = VerticalAlignment.Center };
         void Sync()
         {
             label.Text = $"{get()}%";

@@ -168,14 +168,13 @@ public sealed partial class SettingsWindow
         void SetShine(Shine v)
         {
             setting = true;
-            if (v != Shine.Off)
-                _settings.GlassShineStyle = v switch
-                {
-                    Shine.Soft => ShineStyle.Soft,
-                    Shine.Lifelike => ShineStyle.Lifelike,
-                    _ => ShineStyle.Bright,
-                };
-            _settings.GlassShine = v != Shine.Off;
+            _settings.ChooseGlassShine(v switch
+            {
+                Shine.Off => null,
+                Shine.Soft => ShineStyle.Soft,
+                Shine.Lifelike => ShineStyle.Lifelike,
+                _ => ShineStyle.Bright,
+            });
             setting = false;
             SyncShine();
         }
@@ -219,6 +218,9 @@ public sealed partial class SettingsWindow
         Watch(nameof(Settings.GlassEffect), SyncEffect);
         SyncEffect();
         Card(L.Get("LiquidScreenshot"), L.Get("LiquidScreenshotDetail"), screenshot);
+        var restore = new Button { Content = L.Get("GlassRestoreButton") };
+        restore.Click += (_, _) => _settings.RestoreGlassDefaults();
+        Card(L.Get("GlassRestore"), L.Get("GlassRestoreDetail"), restore);
     }
 
     /// <summary>Shows the island in screenshots for a few seconds, counting them down.</summary>

@@ -119,11 +119,11 @@
   <data name="GlassShineOff" xml:space="preserve"><value>关</value></data>
   <data name="GlassShineBright" xml:space="preserve"><value>明亮</value></data>
   <data name="GlassShineSoft" xml:space="preserve"><value>柔和</value></data>
-  <data name="GlassShineLifelike" xml:space="preserve"><value>拟真（实验性）</value></data>
+  <data name="GlassShineLifelike" xml:space="preserve"><value>拟真</value></data>
   <data name="GlassShineOffDetail" xml:space="preserve"><value>边缘不加光影，悬浮的歌词岛下方也不显示阴影。</value></data>
   <data name="GlassShineBrightDetail" xml:space="preserve"><value>边缘带有清晰的高光，在内容丰富的背景上更有厚度感。</value></data>
   <data name="GlassShineSoftDetail" xml:space="preserve"><value>高光较淡，背光一侧带有阴影，在纯色背景上边缘依然清楚。</value></data>
-  <data name="GlassShineLifelikeDetail" xml:space="preserve"><value>上下边缘的高光会提亮背后的画面，两侧带有一道暗线。边缘折射更强，「边缘折射」设为 50% 时最自然。</value></data>
+  <data name="GlassShineLifelikeDetail" xml:space="preserve"><value>上下边缘的高光会提亮背后的画面，两侧带有一道暗线。「玻璃色调」「透明度」「模糊程度」和「边缘折射」会为这一效果单独保存。</value></data>
   <data name="GlassEffect" xml:space="preserve"><value>玻璃效果</value></data>
   <data name="GlassEffectClear" xml:space="preserve"><value>透明</value></data>
   <data name="GlassEffectFrosted" xml:space="preserve"><value>毛玻璃</value></data>
@@ -138,6 +138,9 @@
   <data name="LiquidScreenshotDetail" xml:space="preserve"><value>在较新的 Windows 11 版本上，截图中会直接显示歌词岛。较旧版本需点击右侧按钮，再在 10 秒内截图；此时玻璃背景会短暂停止更新。</value></data>
   <data name="LiquidScreenshotButton" xml:space="preserve"><value>在截图中显示</value></data>
   <data name="LiquidScreenshotCountdown" xml:space="preserve"><value>请截图（{0}）</value></data>
+  <data name="GlassRestore" xml:space="preserve"><value>默认设置</value></data>
+  <data name="GlassRestoreDetail" xml:space="preserve"><value>将 Lyricod Glass 的全部设置恢复为默认值，包括为各立体效果保存的设置。</value></data>
+  <data name="GlassRestoreButton" xml:space="preserve"><value>恢复默认设置</value></data>
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
   <data name="HoverExpand" xml:space="preserve"><value>展开为迷你播放器</value></data>
   <data name="HoverNothing" xml:space="preserve"><value>保持原样</value></data>

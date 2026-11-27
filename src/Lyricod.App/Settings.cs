@@ -13,11 +13,18 @@ public enum IslandStyle { Default, Floating }
 /// <summary>How the island looks: Classic black, or Lyricod Glass (see-through, with a shine along its edge).</summary>
 public enum IslandTheme { Classic, Glass }
 
-/// <summary>The colour of Lyricod Glass: a neutral dark, or the album cover's colour.</summary>
+/// <summary>The colour of Lyricod Glass: a neutral dark, the album cover's colour, or a light wash.</summary>
 public enum GlassTint { Neutral, Album, Light }
 
 /// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it (acrylic), or redraws it blurred and bent at the edges.</summary>
 public enum GlassEffect { Clear, Frosted, Liquid }
+
+/// <summary>Lyricod Glass's tint and amounts. Lifelike keeps a set of its own; the other 3D effects, and none, share one.</summary>
+public sealed record GlassLook(GlassTint Tint, int Transparency, int Blur, int Refraction)
+{
+    /// <summary>What each set starts as: the values its looks were tuned with.</summary>
+    public static readonly GlassLook Lifelike = new(GlassTint.Light, 88, 7, 50), Others = new(GlassTint.Neutral, 90, 10, 50);
+}
 
 public enum IslandHover { Expand, Hide, Nothing, ByDirection }
 
@@ -62,12 +69,13 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     bool _islandLocked = true;
     int? _islandX, _islandY, _islandDisplayX, _islandDisplayY;
     IslandTheme _islandTheme = IslandTheme.Classic;
-    int _glassTransparency = 90;
-    GlassTint _glassTint = GlassTint.Neutral;
+    int _glassTransparency = GlassLook.Lifelike.Transparency;
+    GlassTint _glassTint = GlassLook.Lifelike.Tint;
     bool _glassShine = true;
-    ShineStyle _glassShineStyle = ShineStyle.Bright;
+    ShineStyle _glassShineStyle = ShineStyle.Lifelike;
     GlassEffect _glassEffect = GlassEffect.Liquid;
-    int _liquidBlur = 10, _liquidRefraction = 50;
+    int _liquidBlur = GlassLook.Lifelike.Blur, _liquidRefraction = GlassLook.Lifelike.Refraction;
+    GlassLook? _glassLookAside;
     // Hide when the pointer comes in, open the mini player on a sweep then a pull down.
     IslandHover _islandHover = IslandHover.ByDirection;
     bool _islandHideWhenPaused = true;
@@ -152,6 +160,58 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public int LiquidBlur { get => _liquidBlur; set => Set(ref _liquidBlur, Math.Clamp(value, 0, 100)); }
     /// <summary>Liquid glass: how strongly its edges bend what's behind, in percent.</summary>
     public int LiquidRefraction { get => _liquidRefraction; set => Set(ref _liquidRefraction, Math.Clamp(value, 0, 100)); }
+    /// <summary>The set that isn't showing: the other 3D effects' while Lifelike is chosen, Lifelike's otherwise.
+    /// Null until the first swap, which starts that set from its tuned values.</summary>
+    public GlassLook? GlassLookAside { get => _glassLookAside; set => Set(ref _glassLookAside, value); }
+    /// <summary>Which set is showing. Lifelike with the 3D effect off shows the others'.</summary>
+    [JsonIgnore] public bool GlassIsLifelike => _glassShine && _glassShineStyle == ShineStyle.Lifelike;
+
+    /// <summary>Chooses the 3D effect: a style, or null for off, which keeps the style. Moving between Lifelike and anything else trades the sets.</summary>
+    public void ChooseGlassShine(ShineStyle? style) => Together(() =>
+    {
+        bool lifelike = GlassIsLifelike;
+        if (style is { } chosen) GlassShineStyle = chosen;
+        GlassShine = style != null;
+        if (GlassIsLifelike != lifelike) SwapGlassLook();
+    });
+
+    void SwapGlassLook()
+    {
+        var shown = _glassLookAside ?? (GlassIsLifelike ? GlassLook.Lifelike : GlassLook.Others);
+        GlassLookAside = new(_glassTint, _glassTransparency, _liquidBlur, _liquidRefraction);
+        GlassTint = shown.Tint;
+        GlassTransparency = shown.Transparency;
+        LiquidBlur = shown.Blur;
+        LiquidRefraction = shown.Refraction;
+    }
+
+    /// <summary>Puts Lyricod Glass's settings back to a new install's, both sets.</summary>
+    public void RestoreGlassDefaults()
+    {
+        var fresh = new Settings();
+        Together(() =>
+        {
+            GlassEffect = fresh.GlassEffect;
+            GlassShineStyle = fresh.GlassShineStyle;
+            GlassShine = fresh.GlassShine;
+            GlassTint = fresh.GlassTint;
+            GlassTransparency = fresh.GlassTransparency;
+            LiquidBlur = fresh.LiquidBlur;
+            LiquidRefraction = fresh.LiquidRefraction;
+            GlassLookAside = fresh.GlassLookAside;
+        });
+    }
+
+    /// <summary>Settings that change as one are saved once, when all are set: a write that fails part-way would leave half of them in the file.</summary>
+    void Together(Action change)
+    {
+        bool ready = _ready;
+        _ready = false;
+        try { change(); }
+        finally { _ready = ready; }
+        Save();
+    }
+
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }
@@ -231,6 +291,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
         var file = JsonNode.Parse(json) as JsonObject;
         while (true)
         {
+            // Saved before the 3D effect had styles, or with one this version can't read: its glass is the bright one's.
+            if (file?.ContainsKey(nameof(GlassTransparency)) == true) file.TryAdd(nameof(GlassShineStyle), nameof(ShineStyle.Bright));
             try { return file.Deserialize<Settings>(Json); }
             catch (JsonException e) when (e.Path?.Split('.', '[') is [_, var name, ..] && file!.Remove(name)) { }
         }
