@@ -5,8 +5,9 @@ public static class StripPlacement
 {
     /// <summary>
     /// The strip's new top edge. It grows and shrinks upward from its bottom edge, so it stays where it was put,
-    /// but it doesn't grow above the top of its screen: from there it grows downward.
+    /// but it doesn't grow above the top of its screen: at the top, it grows and shrinks from its top edge,
+    /// so a bigger font and back leaves it where it was.
     /// </summary>
     public static int Top(int top, int grow, int screenTop) =>
-        grow > 0 ? Math.Max(top - grow, Math.Min(top, screenTop)) : top - grow;
+        grow > 0 ? Math.Max(top - grow, Math.Min(top, screenTop)) : top <= screenTop ? top : top - grow;
 }
