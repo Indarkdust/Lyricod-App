@@ -177,6 +177,9 @@ public sealed class UpdateDownloadTests : IDisposable
     [InlineData("bytes 4-16/17")]
     [InlineData("bytes 5-16/18")]
     [InlineData("bytes 5-16/*")]
+    // The parser refuses an end before the start or at the length: ContentRange reads as null.
+    [InlineData("bytes 5-4/17")]
+    [InlineData("bytes 5-17/17")]
     public async Task AnAnswerForAnotherRangeOrFileIsDamagedButThePartStays(string range)
     {
         Directory.CreateDirectory(_directory);
@@ -235,6 +238,38 @@ public sealed class UpdateDownloadTests : IDisposable
         string path = await Download(client, Asset);
         // Six tries of three bytes for seventeen (the last one is cut too, with nothing left to send), and four busy answers.
         Assert.Equal(10, calls);
+        Assert.Equal(Payload, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task APartThatShrinksAndGrowsAgainIsNoProgress()
+    {
+        // A server that ignores the range sends it all again, and the link cuts it at ten bytes, then five.
+        var ranges = new List<string?>();
+        using var client = new HttpClient(new StubHandler((request, _) =>
+        {
+            ranges.Add(request.Headers.Range?.ToString());
+            return Send(0, new DroppedStream(Payload[..(ranges.Count % 2 == 1 ? 10 : 5)]));
+        }));
+        await Assert.ThrowsAsync<HttpIOException>(() => Download(client, Asset));
+        Assert.Equal([null, "bytes=10-", "bytes=5-", "bytes=10-"], ranges);
+        Assert.Equal(Payload[..5], await File.ReadAllBytesAsync(In(Asset.Name + ".part"), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task APartLongerThanTheFileIsNoMarkForTheTriesAfterIt()
+    {
+        Directory.CreateDirectory(_directory);
+        await File.WriteAllBytesAsync(In(Asset.Name + ".part"), new byte[40], TestContext.Current.CancellationToken);
+        int calls = 0;
+        using var client = new HttpClient(new StubHandler((request, _) =>
+        {
+            calls++;
+            int from = (int?)request.Headers.Range?.Ranges.Single().From ?? 0;
+            return Send(from, new DroppedStream(Payload[from..Math.Min(from + 3, Payload.Length)]));
+        }));
+        string path = await Download(client, Asset);
+        Assert.Equal(6, calls);
         Assert.Equal(Payload, await File.ReadAllBytesAsync(path, TestContext.Current.CancellationToken));
     }
 

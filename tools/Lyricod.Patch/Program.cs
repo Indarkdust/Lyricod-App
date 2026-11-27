@@ -45,10 +45,11 @@ try
     long size = new FileInfo(patch).Length, whole = new FileInfo(args[1]).Length;
     Console.WriteLine($"{Path.GetFileName(patch)}: {manifest.Files.Count(f => f.New)} of {manifest.Files.Count} files, {size:N0} bytes ({100.0 * size / whole:0.#}% of the whole zip)");
 
+    UpdatePatch.StageAsync(patch, installed, from, to, arch, full, CancellationToken.None).GetAwaiter().GetResult();
     // Only Windows reads a Windows program's version; elsewhere that one check is left to the release workflow.
-    Func<string, string?>? version = OperatingSystem.IsWindows() ? null : _ => to.ToString(3) + ".0";
-    if (version != null) Console.WriteLine("Not on Windows: the program's version isn't read.");
-    UpdatePatch.StageAsync(patch, installed, from, to, arch, full, CancellationToken.None, version).GetAwaiter().GetResult();
+    if (!OperatingSystem.IsWindows()) Console.WriteLine("Not on Windows: the program's version isn't read.");
+    else if (!PortableUpdate.MatchesVersion(FileVersionInfo.GetVersionInfo(Path.Combine(installed, "app.new", "Lyricod.exe")).FileVersion, to))
+        return Fail("The patch makes the wrong version.");
     var made = Tree(Path.Combine(installed, "app.new")).Select(f => ("app/" + f.Path, f.Hash))
         .Append(("Lyricod.exe", Hash(Path.Combine(installed, "Lyricod.exe.new")))).Append(("README.txt", Hash(Path.Combine(installed, "README.txt.new"))));
     var expected = Tree(wanted);

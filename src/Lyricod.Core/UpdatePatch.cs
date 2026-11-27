@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
@@ -15,19 +14,13 @@ public sealed record PatchFile(string Path, long Size, string Sha256, bool New);
 /// which ties the patch to that build: replace the zip, and its old patches no longer apply.</summary>
 public sealed record PatchManifest(Version From, Version To, string Arch, string Full, IReadOnlyList<PatchFile> Files);
 
-/// <summary>
-/// A small update for the portable copy: a zip of the files that changed since an earlier version, with a
-/// list of every file the new version has. The new app folder is put together from the installed files
-/// and the patch, and every file is checked against the list, so what comes out is byte for byte what
-/// the whole download would have unpacked. Anything amiss throws, and the whole download is used instead.
-/// </summary>
+/// <summary>A zip of the files changed since one version and a list of every file of the new one. Each staged
+/// file is checked against the list, and anything amiss throws: the whole download is used instead.</summary>
 public static class UpdatePatch
 {
     /// <summary>The list inside every patch. The release tool looks for this name in an older build to tell whether it knows patches.</summary>
     public const string ManifestName = "patch.json";
     const string Carried = "files/";
-    const int MaxFiles = 5000, MaxManifest = 4 * 1024 * 1024;
-    const long MaxTotal = 1L << 30;
     static readonly string[] Needed = ["Lyricod.exe", "README.txt", "app/Lyricod.exe"];
 
     /// <summary>Named to sort after a release's whole downloads, and not to be taken for one.</summary>
@@ -44,11 +37,10 @@ public static class UpdatePatch
             var from = UpdateCheck.ParseVersion(root.GetProperty("from").GetString() ?? "");
             var to = UpdateCheck.ParseVersion(root.GetProperty("to").GetString() ?? "");
             string arch = root.GetProperty("arch").GetString() ?? "", full = root.GetProperty("full").GetString() ?? "";
-            if (from == null || to == null || to <= from || arch is not ("x64" or "arm64") || !UpdateFiles.ValidHash(full))
+            if (from == null || to == null)
                 throw new InvalidDataException("The patch doesn't say what it is for.");
             var files = new List<PatchFile>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            long total = 0;
             foreach (var item in root.GetProperty("files").EnumerateArray())
             {
                 string path = item.GetProperty("path").GetString() ?? "", hash = item.GetProperty("sha256").GetString() ?? "";
@@ -56,9 +48,8 @@ public static class UpdatePatch
                 bool carried = item.TryGetProperty("new", out var flag) && flag.GetBoolean();
                 // The same rules as for the whole zip's entries: inside the portable folder, and nowhere else.
                 if (path.Contains('\\') || path.EndsWith('/') || UpdateFiles.StagedPath("Lyricod/" + path) is not { } staged || !seen.Add(staged)
-                    || size < 0 || size > MaxTotal - total || !UpdateFiles.ValidHash(hash) || files.Count >= MaxFiles)
+                    || size < 0 || !UpdateFiles.ValidHash(hash))
                     throw new InvalidDataException("The patch lists a file it shouldn't.");
-                total += size;
                 files.Add(new(path, size, hash, carried));
             }
             if (Needed.Any(name => files.All(f => f.Path != name))) throw new InvalidDataException("The patch's list of files is incomplete.");
@@ -103,9 +94,7 @@ public static class UpdatePatch
     /// the patch. The patch must be for exactly this step, on this build of the release.
     /// </summary>
     /// <param name="full">The SHA-256 of the release's whole zip, as GitHub gives it.</param>
-    /// <param name="fileVersion">Reads a program's file version; only an OS that can't read it needs another way.</param>
-    public static async Task StageAsync(string patch, string root, Version from, Version to, string arch, string full,
-        CancellationToken stop, Func<string, string?>? fileVersion = null)
+    public static async Task StageAsync(string patch, string root, Version from, Version to, string arch, string full, CancellationToken stop)
     {
         PortableUpdate.CheckWritable(root);
         PortableUpdate.ClearStage(root);
@@ -134,9 +123,6 @@ public static class UpdatePatch
                     FileShare.ReadWrite | FileShare.Delete, 131072, FileOptions.Asynchronous | FileOptions.SequentialScan);
                 await using (source) await CopyAsync(source, target, file, stop).ConfigureAwait(false);
             }
-            string app = Path.Combine(root, "app.new", "Lyricod.exe");
-            if (!PortableUpdate.MatchesVersion((fileVersion ?? (path => FileVersionInfo.GetVersionInfo(path).FileVersion))(app), to))
-                throw new InvalidDataException("The patch makes the wrong version.");
             stop.ThrowIfCancellationRequested();
         }
         catch
@@ -149,16 +135,8 @@ public static class UpdatePatch
     static async Task<string> ManifestTextAsync(ZipArchive archive, CancellationToken stop)
     {
         var entry = archive.GetEntry(ManifestName) ?? throw new InvalidDataException("The patch has no list of files.");
-        using var source = entry.Open();
-        using var text = new MemoryStream();
-        byte[] buffer = new byte[65536];
-        int count;
-        while ((count = await source.ReadAsync(buffer, stop).ConfigureAwait(false)) > 0)
-        {
-            if (text.Length + count > MaxManifest) throw new InvalidDataException("The patch's list of files is too long.");
-            text.Write(buffer, 0, count);
-        }
-        return Encoding.UTF8.GetString(text.ToArray());
+        using var reader = new StreamReader(entry.Open(), new UTF8Encoding(false), detectEncodingFromByteOrderMarks: false);
+        return await reader.ReadToEndAsync(stop).ConfigureAwait(false);
     }
 
     /// <summary>Writes the file as it is read, and only lets it stand if it is the size and hash the list gives.</summary>

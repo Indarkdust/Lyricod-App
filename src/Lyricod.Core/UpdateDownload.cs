@@ -46,9 +46,11 @@ public static class UpdateDownload
         var stall = stallTimeout ?? TimeSpan.FromSeconds(45);
         var wait = retryDelay ?? TimeSpan.FromSeconds(2);
         long most = Length(part);
+        // FetchAsync throws away a part longer than the file, so no try could ever beat its length.
+        if (most > asset.Size) most = 0;
         int idle = 0;
         bool startedOver = false;
-        for (int tries = 1; ; tries++)
+        for (;;)
         {
             try
             {
@@ -66,8 +68,9 @@ public static class UpdateDownload
                 long have = Length(part);
                 if (have == 0) File.Delete(part);
                 idle = have > most ? 0 : idle + 1;
-                most = have;
-                if (idle >= 3 || tries >= 300) throw;
+                // The best so far, not the last: a server that ignores the range cuts the part back each try.
+                most = Math.Max(most, have);
+                if (idle >= 3) throw;
                 await Task.Delay(wait * (1 << Math.Min(idle, 2)), stop).ConfigureAwait(false);
             }
         }
@@ -109,7 +112,7 @@ public static class UpdateDownload
         if (resumed)
         {
             if (have == 0 || response.Content.Headers.ContentRange is not { Unit: "bytes", From: long from, To: long to, Length: long length }
-                || from != have || to < from || to >= asset.Size || length != asset.Size) throw new DamagedUpdateException();
+                || from != have || length != asset.Size) throw new DamagedUpdateException();
             end = to + 1;
         }
         else if (response.StatusCode != HttpStatusCode.OK) throw new DamagedUpdateException();

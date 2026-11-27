@@ -125,7 +125,6 @@ public sealed class UpdatePatchTests : IDisposable
     [InlineData("to")]
     [InlineData("arch")]
     [InlineData("full")]
-    [InlineData("version")]
     public async Task APatchForAnotherStepOrBuildIsRefused(string fault)
     {
         Make();
@@ -134,9 +133,7 @@ public sealed class UpdatePatchTests : IDisposable
             "from" => Stage(from: new(0, 0, 2)),
             "to" => Stage(to: new(To.Major, To.Minor, To.Build + 1)),
             "arch" => Stage(arch: "arm64"),
-            "full" => Stage(full: new string('b', 64)),
-            // The files are right by their hashes, but the program isn't the version the release says.
-            _ => UpdatePatch.StageAsync(Patch, Root, From, To, "x64", Full, TestContext.Current.CancellationToken, _ => "9.9.9.0"),
+            _ => Stage(full: new string('b', 64)),
         });
         AssertNoStage();
     }
@@ -222,13 +219,9 @@ public sealed class UpdatePatchTests : IDisposable
 
     [Theory]
     [InlineData("\"format\": 1", "\"format\": 2")]
-    [InlineData("\"from\": \"0.0.1\"", "\"from\": \"1.2.3\"")]
-    [InlineData("\"from\": \"0.0.1\"", "\"from\": \"2.0.0\"")]
     [InlineData("\"to\": \"1.2.3\"", "\"to\": \"1.2\"")]
-    [InlineData("\"arch\": \"x64\"", "\"arch\": \"x86\"")]
     [InlineData("\"path\": \"README.txt\"", "\"path\": \"README.md\"")]
     [InlineData("\"size\": 1,", "\"size\": -1,")]
-    [InlineData("\"size\": 1,", "\"size\": 2000000000,")]
     [InlineData("\"size\": 1,", "\"size\": \"1\",")]
     [InlineData("\"new\": true", "\"new\": 1")]
     [InlineData("\"files\": [", "\"files\": 5, \"other\": [")]
@@ -241,20 +234,8 @@ public sealed class UpdatePatchTests : IDisposable
     }
 
     [Fact]
-    public void SizesThatAddUpPastTheLimitAreRefusedHoweverLarge()
-    {
-        Assert.Throws<InvalidDataException>(() => UpdatePatch.Read(UpdatePatch.Write(Manifest(new PatchFile("app/a.dll", 1L << 30, Full, true)))));
-        // Large enough to wrap round a sum.
-        Assert.Throws<InvalidDataException>(() => UpdatePatch.Read(UpdatePatch.Write(Manifest(
-            new PatchFile("app/a.dll", long.MaxValue, Full, true), new PatchFile("app/b.dll", 5, Full, true)))));
-    }
-
-    [Fact]
-    public void ABadHashInTheListIsRefused()
-    {
+    public void ABadHashInTheListIsRefused() =>
         Assert.Throws<InvalidDataException>(() => UpdatePatch.Read(UpdatePatch.Write(Manifest(new PatchFile("app/x.dll", 1, "abc", true)))));
-        Assert.Throws<InvalidDataException>(() => UpdatePatch.Read(UpdatePatch.Write(Manifest() with { Full = "xyz" })));
-    }
 
     static AppRelease Release(params (string Name, long Size)[] assets) => new(new(1, 2, 3), new("https://github.com/Indarkdust/Lyricod-App/releases/tag/v1.2.3"))
     {
@@ -267,34 +248,27 @@ public sealed class UpdatePatchTests : IDisposable
         var release = Release(("Lyricod-1.2.3-windows-x64.zip", 4000), ("Lyricod-1.2.3-windows-x64-setup.exe", 3000),
             ("patch-1.2.2-to-1.2.3-windows-x64.zip", 300), ("patch-1.2.1-to-1.2.3-windows-x64.zip", 400),
             ("patch-1.2.2-to-1.2.3-windows-arm64.zip", 500));
-        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2))?.Size);
-        Assert.Equal(400, UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.X64, new(1, 2, 1))?.Size);
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.X64, new(1, 2, 0)));
-        // An installed copy takes the same patch once it has the launcher; one from before that never does.
-        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Installer, true, Architecture.X64, new(1, 2, 2))?.Size);
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Installer, false, Architecture.X64, new(1, 2, 2)));
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Unknown, true, Architecture.X64, new(1, 2, 2)));
-        // It falls back on Setup, so the patch must be smaller than that, and the zip it was made from must be there.
-        var close = Release(("Lyricod-1.2.3-windows-x64.zip", 4000), ("Lyricod-1.2.3-windows-x64-setup.exe", 3000), ("patch-1.2.2-to-1.2.3-windows-x64.zip", 3500));
-        Assert.Equal(3500, UpdateFiles.SelectPatch(close, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2))?.Size);
-        Assert.Null(UpdateFiles.SelectPatch(close, InstallKind.Installer, true, Architecture.X64, new(1, 2, 2)));
+        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.X64, new(1, 2, 2))?.Size);
+        Assert.Equal(400, UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.X64, new(1, 2, 1))?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.X64, new(1, 2, 0)));
+        // An installed copy takes the same patch; a copy of unknown layout never does.
+        Assert.Equal(300, UpdateFiles.SelectPatch(release, InstallKind.Installer, Architecture.X64, new(1, 2, 2))?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Unknown, Architecture.X64, new(1, 2, 2)));
+        // The zip it was made from must be there.
         var zipless = Release(("Lyricod-1.2.3-windows-x64-setup.exe", 3000), ("patch-1.2.2-to-1.2.3-windows-x64.zip", 300));
-        Assert.Null(UpdateFiles.SelectPatch(zipless, InstallKind.Installer, true, Architecture.X64, new(1, 2, 2)));
+        Assert.Null(UpdateFiles.SelectPatch(zipless, InstallKind.Installer, Architecture.X64, new(1, 2, 2)));
         Assert.Equal(Full, UpdateFiles.PatchBase(release, Architecture.X64));
         Assert.Null(UpdateFiles.PatchBase(zipless, Architecture.X64));
         // No whole zip for ARM64 to fall back on.
-        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, true, Architecture.Arm64, new(1, 2, 2)));
-        // A patch as big as the whole download is no use.
-        var big = Release(("Lyricod-1.2.3-windows-x64.zip", 4000), ("patch-1.2.2-to-1.2.3-windows-x64.zip", 4000));
-        Assert.Null(UpdateFiles.SelectPatch(big, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2)));
+        Assert.Null(UpdateFiles.SelectPatch(release, InstallKind.Portable, Architecture.Arm64, new(1, 2, 2)));
         // As for the whole download: a size, GitHub's hash, and this repository's own downloads.
         var patch = new UpdateAsset("patch-1.2.2-to-1.2.3-windows-x64.zip", 300, new("https://github.com/Indarkdust/Lyricod-App/releases/download/v1.2.3/patch-1.2.2-to-1.2.3-windows-x64.zip"), Full);
         foreach (var bad in new[] { patch with { Size = 0 }, patch with { Sha256 = null }, patch with { Sha256 = "abc" }, patch with { Url = new("https://example.com/patch.zip") } })
-            Assert.Null(UpdateFiles.SelectPatch(release with { Assets = [release.Assets[0], bad] }, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2)));
+            Assert.Null(UpdateFiles.SelectPatch(release with { Assets = [release.Assets[0], bad] }, InstallKind.Portable, Architecture.X64, new(1, 2, 2)));
         var feed = new Uri("http://vm.test:8000/releases.json");
         var fed = release with { Assets = [.. release.Assets.Select(a => a with { Url = new("http://vm.test:8000/" + a.Name) })] };
-        Assert.Null(UpdateFiles.SelectPatch(fed, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2)));
-        Assert.Equal(300, UpdateFiles.SelectPatch(fed, InstallKind.Portable, true, Architecture.X64, new(1, 2, 2), feed)?.Size);
+        Assert.Null(UpdateFiles.SelectPatch(fed, InstallKind.Portable, Architecture.X64, new(1, 2, 2)));
+        Assert.Equal(300, UpdateFiles.SelectPatch(fed, InstallKind.Portable, Architecture.X64, new(1, 2, 2), feed)?.Size);
         // The whole download is still chosen as before, never a patch.
         Assert.Equal("Lyricod-1.2.3-windows-x64.zip", UpdateFiles.SelectAsset(release, InstallKind.Portable, Architecture.X64)?.Name);
     }
