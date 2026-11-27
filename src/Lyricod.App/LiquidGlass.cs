@@ -103,7 +103,8 @@ sealed class LiquidGlass : IDisposable
     /// <summary>
     /// The island's own bars and sweep are screen changes too, so while music plays frames keep coming,
     /// each a copy of the whole screen. After a third of a second of frames with nothing new behind the
-    /// island, only this many a second are asked for; the first that does differ brings the full rate back.
+    /// island, only this many a second are asked for; the first that does differ brings the full rate back,
+    /// and so does another window coming forward (see <see cref="Wake"/>).
     /// </summary>
     const int StillFramesPerSecond = 8;
     int _still;
@@ -393,6 +394,20 @@ sealed class LiquidGlass : IDisposable
             if (!_ui.TryEnqueue(drawNewest)) Interlocked.CompareExchange(ref _pending, 0, generation);
         }
         catch (Exception) { Interlocked.CompareExchange(ref _pending, 0, generation); }
+    }
+
+    /// <summary>
+    /// Back to the full rate at once: another window came forward, and at the resting rate the glass
+    /// would show what was there before for a moment longer than the screen does.
+    /// </summary>
+    public void Wake()
+    {
+        if (_disposed || Failed || _session == null) return;
+        // Counted from here even when not resting: a rest about to begin would hold the new window's first frame back.
+        _still = 0;
+        if (!_resting) return;
+        _resting = false;
+        LimitRate(_session, FramesPerSecond);
     }
 
     void DrawNewest()

@@ -134,6 +134,7 @@ sealed class Overlay
                     if (overlay._hwnd == hwnd) overlay.KeepOnTop();
                 return;
             }
+            foreach (var overlay in Showing.ToArray()) overlay.ForegroundChanged?.Invoke();
             Win32.GetWindowThreadProcessId(hwnd, out uint process);
             if (process == OwnProcess) return;
             GuardAll(process);
@@ -142,6 +143,9 @@ sealed class Overlay
     }
 
     public nint Handle => _hwnd;
+
+    /// <summary>A window came forward, Lyricod's own included: what's behind this one is about to change.</summary>
+    public event Action? ForegroundChanged;
 
     /// <summary>
     /// The screens changed (a resolution, their arrangement, one plugged in or out) or the window's

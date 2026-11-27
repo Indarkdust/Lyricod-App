@@ -164,6 +164,7 @@ public sealed partial class IslandWindow : Window
             Place();
             Render();
         };
+        _overlay.ForegroundChanged += () => _liquid?.Wake();
         // Dragged while floating and unlocked.
         Pill.PointerPressed += OnPillPressed;
         // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and
