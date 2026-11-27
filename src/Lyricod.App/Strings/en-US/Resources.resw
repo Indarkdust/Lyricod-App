@@ -11,7 +11,7 @@
   <data name="DesktopLyrics" xml:space="preserve"><value>Desktop lyrics</value></data>
   <data name="LockDesktopLyrics" xml:space="preserve"><value>Lock desktop lyrics</value></data>
   <data name="Quit" xml:space="preserve"><value>Quit Lyricod</value></data>
-  <data name="MoveHint" xml:space="preserve"><value>Drag to reposition · lock again from the tray menu</value></data>
+  <data name="MoveHint" xml:space="preserve"><value>Drag to reposition · lock again from the tray panel</value></data>
   <data name="Version" xml:space="preserve"><value>Version {0}</value></data>
   <data name="TestBuildVersion" xml:space="preserve"><value>{0} (test build {1})</value></data>
   <data name="Tagline" xml:space="preserve"><value>Synced lyrics for Windows.</value></data>
@@ -22,14 +22,14 @@
   <data name="LyricsHelperDetail" xml:space="preserve"><value>QQ Music word-by-word lyrics are decrypted with code ported from Lyrics Helper, licensed under the Apache License 2.0.</value></data>
   <data name="LrclibDetail" xml:space="preserve"><value>Open, community-maintained synced lyrics.</value></data>
   <data name="LyricsRights" xml:space="preserve"><value>Lyrics are the property of their respective copyright holders and are shown for personal use only.</value></data>
-  <data name="FontHeader" xml:space="preserve"><value>Font</value></data>
+  <data name="FontHeader" xml:space="preserve"><value>Fonts</value></data>
   <data name="MiSansName" xml:space="preserve"><value>MiSans by Xiaomi</value></data>
-  <data name="MiSansDetail" xml:space="preserve"><value>Lyrics use Microsoft YaHei by default. MiSans by Xiaomi can be downloaded in Settings › General.</value></data>
-  <data name="ViewLicence" xml:space="preserve"><value>View the MiSans licence</value></data>
-  <data name="BuiltWith" xml:space="preserve"><value>Built With</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>A font for mixed Chinese, English and Japanese text, under Xiaomi's licence. It can be downloaded in Settings › General.</value></data>
+  <data name="ViewLicence" xml:space="preserve"><value>View the licence</value></data>
+  <data name="BuiltWith" xml:space="preserve"><value>Built with</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>Tray icon and window helpers. MIT License.</value></data>
   <data name="ToolGoodDetail" xml:space="preserve"><value>Pinyin and Traditional–Simplified Chinese conversion. Apache License 2.0.</value></data>
-  <data name="Win2DDetail" xml:space="preserve"><value>Used to render Lyricod Glass's liquid effect.</value></data>
+  <data name="Win2DDetail" xml:space="preserve"><value>Used to render Lyricod Glass's liquid effect. MIT License.</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>Built on .NET and the Windows App SDK by Microsoft.</value></data>
   <data name="Trademarks" xml:space="preserve"><value>Trademarks</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows is a trademark of the Microsoft group of companies. NetEase Cloud Music is a trademark of NetEase, Inc. QQ Music is a trademark of Tencent. MiSans is a trademark of Xiaomi. Klee is a trademark of Fontworks. Lyricod is an independent project and is not affiliated with, endorsed or sponsored by Microsoft, NetEase, Tencent, Xiaomi or Fontworks.</value></data>
@@ -45,16 +45,16 @@
   <data name="OpenAtStartupDetail" xml:space="preserve"><value>Starts in the system tray.</value></data>
   <data name="PlayerHeading" xml:space="preserve"><value>Player</value></data>
   <data name="NowPlayingLabel" xml:space="preserve"><value>Now playing</value></data>
-  <data name="PlayerLabel" xml:space="preserve"><value>Player</value></data>
-  <data name="PlayerNote" xml:space="preserve"><value>Lyricod follows players available through Windows media controls, including Spotify, Apple Music, QQ Music and NetEase Cloud Music. If several are open, it follows the one that's playing.</value></data>
-  <data name="NeteaseSyncTitle" xml:space="preserve"><value>NetEase Cloud Music sync</value></data>
+  <data name="PlayerLabel" xml:space="preserve"><value>Current player</value></data>
+  <data name="PlayerNote" xml:space="preserve"><value>Lyricod follows players available through Windows media controls, including Spotify, Apple Music, QQ Music and NetEase Cloud Music. By default, if several are open, it follows the one that's playing.</value></data>
+  <data name="NeteaseSyncTitle" xml:space="preserve"><value>NetEase Cloud Music lyrics sync</value></data>
   <data name="NeteaseSyncDetail" xml:space="preserve"><value>Keep lyrics in sync after pausing or seeking in NetEase Cloud Music.</value></data>
   <data name="NeteaseSyncWhat" xml:space="preserve"><value>What gets installed</value></data>
   <data name="NeteaseSyncWhatDetail" xml:space="preserve"><value>Lyricod downloads an installer for BetterNCM 1.3.4 and the latest InfLink-rs, both developed by third parties. Together, they allow NetEase Cloud Music to report its playback position. Downloaded files are verified before installation.</value></data>
   <data name="NeteaseSyncLearnMore" xml:space="preserve"><value>Learn more</value></data>
   <data name="NeteaseSyncManual" xml:space="preserve"><value>Set up manually</value></data>
   <data name="NeteaseSyncBefore" xml:space="preserve"><value>Before installing</value></data>
-  <data name="NeteaseSyncBeforeDetail" xml:space="preserve"><value>NetEase Cloud Music will restart during installation, and Windows will request administrator permission. Some antivirus software may flag the add-ons. BetterNCM is no longer maintained, so future NetEase Cloud Music updates may cause compatibility issues.</value></data>
+  <data name="NeteaseSyncBeforeDetail" xml:space="preserve"><value>NetEase Cloud Music will restart during installation, and Windows will request administrator permission. Some antivirus software may flag the add-ons. BetterNCM is no longer maintained, so future NetEase Cloud Music updates may stop the add-ons from working.</value></data>
   <data name="NeteaseSyncVersion" xml:space="preserve"><value>NetEase Cloud Music version</value></data>
   <data name="NeteaseSyncTested" xml:space="preserve"><value>{0} (tested)</value></data>
   <data name="NeteaseSyncUntested" xml:space="preserve"><value>{0} (untested; verified with 3.1.20–3.1.43)</value></data>
@@ -68,11 +68,12 @@
   <data name="NeteaseSyncRemove" xml:space="preserve"><value>Remove</value></data>
   <data name="NeteaseSyncDownloading" xml:space="preserve"><value>Downloading installer…</value></data>
   <data name="NeteaseSyncWaiting" xml:space="preserve"><value>Confirm the Windows administrator permission prompt to continue…</value></data>
-  <data name="NeteaseSyncDone" xml:space="preserve"><value>Installation complete. Play a song in NetEase Cloud Music to check synchronization.</value></data>
+  <data name="NeteaseSyncDone" xml:space="preserve"><value>Installation complete. Play a song in NetEase Cloud Music to check that the lyrics stay in sync.</value></data>
   <data name="NeteaseSyncRemoved" xml:space="preserve"><value>Removed.</value></data>
   <data name="NeteaseSyncCancelled" xml:space="preserve"><value>Cancelled.</value></data>
   <data name="NeteaseSyncCouldntDownload" xml:space="preserve"><value>Couldn't download the installer. Check your connection and try again.</value></data>
   <data name="NeteaseSyncFailed" xml:space="preserve"><value>Couldn't complete the operation: {0}</value></data>
+  <data name="NeteaseSyncFailedPlain" xml:space="preserve"><value>Couldn't complete the operation.</value></data>
   <data name="ShowDesktopLyrics" xml:space="preserve"><value>Show desktop lyrics</value></data>
   <data name="LockDetail" xml:space="preserve"><value>When locked, clicks pass through the lyrics. Unlock to move them.</value></data>
   <data name="PositionLabel" xml:space="preserve"><value>Position</value></data>
@@ -94,14 +95,14 @@
   <data name="ShowIsland" xml:space="preserve"><value>Show Lyricod Island</value></data>
   <data name="ShowIslandDetail" xml:space="preserve"><value>Shows the current lyric at the top of your screen. When collapsed, clicks pass through it.</value></data>
   <data name="IslandStyle" xml:space="preserve"><value>Island mode</value></data>
-  <data name="IslandStyleDetail" xml:space="preserve"><value>Choose Floating to move the island around your screen.</value></data>
+  <data name="IslandStyleDetail" xml:space="preserve"><value>Choose Floating, then unlock the island to drag it around your screen.</value></data>
   <data name="IslandStyleDefault" xml:space="preserve"><value>Default</value></data>
   <data name="IslandStyleFloating" xml:space="preserve"><value>Floating</value></data>
   <data name="LockIsland" xml:space="preserve"><value>Lock island position</value></data>
   <data name="UnlockDesktopLyrics" xml:space="preserve"><value>Unlock desktop lyrics</value></data>
   <data name="UnlockIsland" xml:space="preserve"><value>Unlock island position</value></data>
   <data name="LockIslandDetail" xml:space="preserve"><value>Unlock to move the island. Lock it to use hover actions again.</value></data>
-  <data name="ResetIslandPosition" xml:space="preserve"><value>Reset to top center</value></data>
+  <data name="ResetIslandPosition" xml:space="preserve"><value>Reset to top centre</value></data>
   <data name="FoldFloating" xml:space="preserve"><value>Floating options</value></data>
   <data name="FoldGlass" xml:space="preserve"><value>Lyricod Glass options</value></data>
   <data name="FoldText" xml:space="preserve"><value>Text and animation</value></data>
@@ -126,12 +127,12 @@
   <data name="GlassEffectLiquid" xml:space="preserve"><value>Liquid</value></data>
   <data name="GlassEffectClearDetail" xml:space="preserve"><value>Shows what's behind the island without blurring it.</value></data>
   <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>Blurs the background using Windows acrylic. The corners may look slightly jagged.</value></data>
-  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>Adds a slight blur and refracted edges to the background, drawn from the part of the screen behind the island. On older Windows 11 builds, the island doesn't appear in screenshots, recordings or screen sharing while this is on.</value></data>
+  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>Adds blur and refracted edges to the background, drawn from the part of the screen behind the island. On older Windows 11 builds, the island doesn't appear in screenshots, recordings or screen sharing while this is on.</value></data>
   <data name="GlassEffectUnsupported" xml:space="preserve"><value>This Windows version doesn't support the selected effect. Clear will be used instead.</value></data>
   <data name="LiquidBlur" xml:space="preserve"><value>Blur</value></data>
   <data name="LiquidRefraction" xml:space="preserve"><value>Edge refraction</value></data>
   <data name="LiquidScreenshot" xml:space="preserve"><value>Screenshots</value></data>
-  <data name="LiquidScreenshotDetail" xml:space="preserve"><value>On updated Windows builds the live island already appears in screenshots. On older builds, click the button, then take your screenshot within 10 seconds; the glass background briefly pauses.</value></data>
+  <data name="LiquidScreenshotDetail" xml:space="preserve"><value>On newer Windows 11 builds the island already appears in screenshots. On older builds, click the button, then take your screenshot within 10 seconds; the glass background briefly pauses.</value></data>
   <data name="LiquidScreenshotButton" xml:space="preserve"><value>Show in screenshots</value></data>
   <data name="LiquidScreenshotCountdown" xml:space="preserve"><value>Take your screenshot ({0})</value></data>
   <data name="OnHover" xml:space="preserve"><value>When the pointer enters</value></data>
@@ -140,7 +141,7 @@
   <data name="HoverByDirection" xml:space="preserve"><value>Hide or expand based on entry direction</value></data>
   <data name="HoverByDirectionDetail" xml:space="preserve"><value>Moving onto the island hides it. To open the mini player, move sideways across the island, then down.</value></data>
   <data name="HoverByDirectionFloatingDetail" xml:space="preserve"><value>Moving onto the island hides it. To open the mini player, move sideways across the island, then up or down.</value></data>
-  <data name="AlbumColour" xml:space="preserve"><value>Match lyric colour to album artwork</value></data>
+  <data name="AlbumColour" xml:space="preserve"><value>Match lyric colour to album art</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>Turn off to use the colour selected below.</value></data>
   <data name="IslandColour" xml:space="preserve"><value>Lyric colour</value></data>
   <data name="Open" xml:space="preserve"><value>Open</value></data>
@@ -171,7 +172,7 @@
   <data name="OffsetEarlier" xml:space="preserve"><value>Lyrics earlier</value></data>
   <data name="OffsetLater" xml:space="preserve"><value>Lyrics later</value></data>
   <data name="Reset" xml:space="preserve"><value>Reset</value></data>
-  <data name="TimingNote" xml:space="preserve"><value>Positive values show lyrics earlier; negative values show them later. All songs and This song have separate adjustments. Per-song adjustments are saved.</value></data>
+  <data name="TimingNote" xml:space="preserve"><value>Positive values show lyrics earlier; negative values show them later. The two adjustments add up; This song is saved separately for each song.</value></data>
   <data name="DisplayHeading" xml:space="preserve"><value>Display</value></data>
   <data name="PronunciationFor" xml:space="preserve"><value>Pronunciation for</value></data>
   <data name="PronunciationForDetail" xml:space="preserve"><value>Show lyric pronunciation in Latin letters, such as romaji or pinyin.</value></data>
@@ -181,12 +182,12 @@
   <data name="FoldExperimental" xml:space="preserve"><value>Experimental</value></data>
   <data name="FoldExperimentalDetail" xml:space="preserve"><value>Still being tried out. These may change or go away.</value></data>
   <data name="RomajiByWord" xml:space="preserve"><value>Romaji by word</value></data>
-  <data name="RomajiByWordDetail" xml:space="preserve"><value>Spaces Japanese romaji by word instead of by syllable. Needs Japanese added in Windows' language settings; some words may still be split.</value></data>
+  <data name="RomajiByWordDetail" xml:space="preserve"><value>Spaces Japanese romaji by word instead of by syllable. Needs Japanese added in Windows language settings; some words may still be split.</value></data>
   <data name="SmoothSweep" xml:space="preserve"><value>Smooth sweep</value></data>
   <data name="SmoothSweepDetail" xml:space="preserve"><value>Keeps the sung colour moving evenly when a long note is followed by quick ones, instead of crawling and then rushing. Quick words may light up slightly early, and the colour's edge is softer.</value></data>
-  <data name="ShowCredits" xml:space="preserve"><value>Show songwriter credits</value></data>
-  <data name="PronunciationNote" xml:space="preserve"><value>Japanese uses romaji from the lyrics source when available. Otherwise, Windows may generate it, although some kanji may be read incorrectly. Each lyrics view has its own translation and pronunciation settings.</value></data>
-  <data name="PronunciationNoteNoReader" xml:space="preserve"><value>Japanese romaji comes from the lyrics source when it has some. For Lyricod to work it out for other songs, add Japanese in Windows Settings › Time &amp; language › Language &amp; region.</value></data>
+  <data name="ShowCredits" xml:space="preserve"><value>Show credits</value></data>
+  <data name="PronunciationNote" xml:space="preserve"><value>Japanese uses romaji from the lyrics source when available. Otherwise, Windows may generate it, although some kanji may be read incorrectly. Desktop lyrics, Lyricod Island and the lyrics window each have their own translation and pronunciation settings.</value></data>
+  <data name="PronunciationNoteNoReader" xml:space="preserve"><value>Japanese uses romaji from the lyrics source when available. To have Lyricod generate it when the source has none, add Japanese in Windows Settings › Time &amp; language › Language &amp; region. Desktop lyrics, Lyricod Island and the lyrics window each have their own translation and pronunciation settings.</value></data>
   <data name="LookUpOtherPlayers" xml:space="preserve"><value>Look up lyrics for browsers and other apps</value></data>
   <data name="LookUpOtherPlayersDetail" xml:space="preserve"><value>Also looks for songs played in browsers and other apps. Lyricod sends the media title and artist or channel to NetEase Cloud Music, QQ Music and LRCLIB for matching. Turn off to search only music players.</value></data>
   <data name="SourcesHeading" xml:space="preserve"><value>Sources</value></data>
@@ -202,7 +203,7 @@
   <data name="Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="PaneShortcuts" xml:space="preserve"><value>Shortcuts</value></data>
   <data name="ShortcutPlayback" xml:space="preserve"><value>Playback</value></data>
-  <data name="ShortcutShow" xml:space="preserve"><value>Show</value></data>
+  <data name="ShortcutShow" xml:space="preserve"><value>Display</value></data>
   <data name="ShortcutPlayPause" xml:space="preserve"><value>Play/pause</value></data>
   <data name="ShortcutNext" xml:space="preserve"><value>Next track</value></data>
   <data name="ShortcutPrevious" xml:space="preserve"><value>Previous track</value></data>
@@ -211,13 +212,13 @@
   <data name="ShortcutToggleLyricsWindow" xml:space="preserve"><value>Open/close lyrics window</value></data>
   <data name="ShortcutLyricsEarlier" xml:space="preserve"><value>Lyrics 0.5 s earlier</value></data>
   <data name="ShortcutLyricsLater" xml:space="preserve"><value>Lyrics 0.5 s later</value></data>
-  <data name="ShortcutTimingNote" xml:space="preserve"><value>Affects only the current song, like This song in Lyrics settings.</value></data>
-  <data name="ShortcutNote" xml:space="preserve"><value>Shortcuts work in other apps too. Click a field and press a key combination containing Ctrl, Alt or Win, or a function key on its own. Esc cancels; Backspace or Delete clears. Unavailable shortcuts may already be used by Windows or another app.</value></data>
+  <data name="ShortcutTimingNote" xml:space="preserve"><value>Affects only the current song, like This song in Settings › Lyrics.</value></data>
+  <data name="ShortcutNote" xml:space="preserve"><value>Shortcuts work in other apps too. Click a button, then press a key combination containing Ctrl, Alt or Win, or a function key on its own. Esc cancels; Backspace or Delete clears.</value></data>
   <data name="ShortcutRecord" xml:space="preserve"><value>Record shortcut</value></data>
   <data name="ShortcutPressKeys" xml:space="preserve"><value>Press keys…</value></data>
   <data name="ShortcutInvalid" xml:space="preserve"><value>Use Ctrl, Alt or Win, or a function key.</value></data>
   <data name="ShortcutDuplicate" xml:space="preserve"><value>Already used for “{0}”.</value></data>
-  <data name="ShortcutUnavailable" xml:space="preserve"><value>Not working. Windows or another app may be using this shortcut.</value></data>
+  <data name="ShortcutUnavailable" xml:space="preserve"><value>Unavailable. Windows or another app may be using this shortcut.</value></data>
   <data name="KeyCtrl" xml:space="preserve"><value>Ctrl</value></data>
   <data name="KeyAlt" xml:space="preserve"><value>Alt</value></data>
   <data name="KeyWin" xml:space="preserve"><value>Win</value></data>
@@ -244,24 +245,24 @@
   <data name="NoneFoundChoose" xml:space="preserve"><value>No lyrics found · Choose manually…</value></data>
   <data name="LyricsEarlierBy" xml:space="preserve"><value>Lyrics {0} s earlier</value></data>
   <data name="LyricsLaterBy" xml:space="preserve"><value>Lyrics {0} s later</value></data>
-  <data name="MatchesTheSong" xml:space="preserve"><value>Matches the song</value></data>
+  <data name="MatchesTheSong" xml:space="preserve"><value>No adjustment</value></data>
   <data name="AnimationLabel" xml:space="preserve"><value>Animation</value></data>
   <data name="AnimationDetail" xml:space="preserve"><value>Sets the frame rate of the island's audio bars and of Lyricod Glass's liquid effect. Higher rates are usually smoother but may use more power.</value></data>
   <data name="FrameRateLow" xml:space="preserve"><value>Battery saver (15 fps)</value></data>
   <data name="FrameRateBalanced" xml:space="preserve"><value>Balanced (30 fps)</value></data>
   <data name="FrameRateSmooth" xml:space="preserve"><value>Smooth (60 fps)</value></data>
   <data name="LanguageLabel" xml:space="preserve"><value>Language</value></data>
-  <data name="LanguageSystem" xml:space="preserve"><value>Windows' language</value></data>
+  <data name="LanguageSystem" xml:space="preserve"><value>Same as Windows</value></data>
   <data name="RestartNow" xml:space="preserve"><value>Restart now</value></data>
   <data name="RestartToApply" xml:space="preserve"><value>Lyricod needs to restart to apply this change.</value></data>
   <data name="FollowLabel" xml:space="preserve"><value>Follow</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>Whichever is playing</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>Players appear here after they've played a song.</value></data>
   <data name="HoverHide" xml:space="preserve"><value>Hide temporarily to access what's underneath</value></data>
-  <data name="AudioBars" xml:space="preserve"><value>Bars follow the music</value></data>
+  <data name="AudioBars" xml:space="preserve"><value>Audio bars follow the music</value></data>
   <data name="AudioBarsDetail" xml:space="preserve"><value>Uses audio information from the current player for animation. No audio is recorded or uploaded.</value></data>
   <data name="HideWhenPaused" xml:space="preserve"><value>Hide when paused</value></data>
-  <data name="HideWhenPausedDetail" xml:space="preserve"><value>The island fades out after playback is paused for a while and returns when playback resumes.</value></data>
+  <data name="HideWhenPausedDetail" xml:space="preserve"><value>The island fades out shortly after playback pauses and comes back when it resumes.</value></data>
   <data name="StyleHeading" xml:space="preserve"><value>Style</value></data>
   <data name="IslandBehaviourHeading" xml:space="preserve"><value>Position and behaviour</value></data>
   <data name="IslandSize" xml:space="preserve"><value>Size</value></data>
@@ -282,7 +283,7 @@
   <data name="EffectGlow" xml:space="preserve"><value>Glowing sweep</value></data>
   <data name="EffectLift" xml:space="preserve"><value>Sweep with a lift</value></data>
   <data name="EffectLine" xml:space="preserve"><value>Whole line</value></data>
-  <data name="NextLine" xml:space="preserve"><value>Next line</value></data>
+  <data name="NextLine" xml:space="preserve"><value>Line transition</value></data>
   <data name="TransitionInstant" xml:space="preserve"><value>Instant</value></data>
   <data name="TransitionSlide" xml:space="preserve"><value>Slide up</value></data>
   <data name="TransitionFade" xml:space="preserve"><value>Fade</value></data>
@@ -314,17 +315,17 @@
   <data name="ToggleOff" xml:space="preserve"><value>Off</value></data>
   <data name="Updates" xml:space="preserve"><value>Updates</value></data>
   <data name="AutomaticUpdates" xml:space="preserve"><value>Check for updates automatically</value></data>
-  <data name="CheckNow" xml:space="preserve"><value>Check Now</value></data>
+  <data name="CheckNow" xml:space="preserve"><value>Check now</value></data>
   <data name="CheckingUpdates" xml:space="preserve"><value>Checking…</value></data>
   <data name="UpToDate" xml:space="preserve"><value>Lyricod is up to date.</value></data>
-  <data name="CouldntCheckUpdates" xml:space="preserve"><value>Couldn’t check for updates.</value></data>
-  <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} is available</value></data>
-  <data name="DownloadUpdate" xml:space="preserve"><value>Download…</value></data>
+  <data name="CouldntCheckUpdates" xml:space="preserve"><value>Couldn't check for updates.</value></data>
+  <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} is available.</value></data>
+  <data name="DownloadUpdate" xml:space="preserve"><value>Download from the release page</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>Update available: {0}</value></data>
-  <data name="NeteaseTip" xml:space="preserve"><value>NetEase isn’t sharing its position, so lyrics can drift. How to fix</value></data>
+  <data name="NeteaseTip" xml:space="preserve"><value>NetEase isn't sharing its position, so lyrics can drift. How to fix</value></data>
   <data name="NeteaseGuideUrl" xml:space="preserve"><value>https://github.com/Indarkdust/Lyricod-App#netease-cloud-music-lyrics-out-of-sync</value></data>
   <data name="Diagnostics" xml:space="preserve"><value>Diagnostics</value></data>
-  <data name="CopyDiagnostics" xml:space="preserve"><value>Copy Diagnostics</value></data>
+  <data name="CopyDiagnostics" xml:space="preserve"><value>Copy diagnostics</value></data>
   <data name="ShowDiagnostics" xml:space="preserve"><value>Show</value></data>
   <data name="HideDiagnostics" xml:space="preserve"><value>Hide</value></data>
   <data name="DiagnosticsDetail" xml:space="preserve"><value>Copy these details to help troubleshoot a problem.</value></data>
@@ -332,46 +333,46 @@
   <data name="FontDefault" xml:space="preserve"><value>Microsoft YaHei (default)</value></data>
   <data name="FontRecommended" xml:space="preserve"><value>MiSans (recommended)</value></data>
   <data name="FontSearch" xml:space="preserve"><value>Search installed fonts</value></data>
-  <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans by Xiaomi works well with Chinese, English and Japanese text. The usual download is about 15 MB, although some cases require the full font archive. Use is subject to Xiaomi's licence.</value></data>
+  <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans by Xiaomi works well with mixed Chinese, English and Japanese text. It downloads from Xiaomi, usually about 15 MB, although some cases need the full font archive. Use is subject to Xiaomi's licence.</value></data>
   <data name="FontDownload" xml:space="preserve"><value>Download</value></data>
   <data name="FontRemove" xml:space="preserve"><value>Remove</value></data>
   <data name="FontRetry" xml:space="preserve"><value>Retry</value></data>
   <data name="FontDownloading" xml:space="preserve"><value>Downloading {0}…</value></data>
   <data name="FontDownloadingArchive" xml:space="preserve"><value>Downloading the full font archive (about 228 MB)…</value></data>
   <data name="FontDownloadingLicence" xml:space="preserve"><value>Downloading the licence…</value></data>
-  <data name="FontDownloadFailed" xml:space="preserve"><value>Could not download {0}.</value></data>
-  <data name="FontDownloadTimeout" xml:space="preserve"><value>The download timed out. Please retry.</value></data>
-  <data name="FontRemoveFailed" xml:space="preserve"><value>Could not remove all {0} files. Close Lyricod and try again.</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>{0} could not be loaded or copied to the app folder. Lyricod is using its default font.</value></data>
-  <data name="FontListFailed" xml:space="preserve"><value>Could not list installed fonts.</value></data>
+  <data name="FontDownloadFailed" xml:space="preserve"><value>Couldn't download {0}.</value></data>
+  <data name="FontDownloadTimeout" xml:space="preserve"><value>The download timed out. Try again.</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>Couldn't remove all {0} files. Restart Lyricod and try again.</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>Couldn't load {0}. Lyricod is using its default font for now.</value></data>
+  <data name="FontListFailed" xml:space="preserve"><value>Couldn't list installed fonts.</value></data>
   <data name="FontWenKai" xml:space="preserve"><value>LXGW WenKai Lite</value></data>
-  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>LXGW WenKai is an open-source font in a handwritten kai style, for Chinese and Japanese kana. The Lite version has no Korean, so Korean lyrics use another font. Choosing it downloads the font from GitHub, about 14 MB. Use is subject to the SIL Open Font License.</value></data>
+  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>LXGW WenKai is an open-source font in a handwritten kai style, for Chinese and Japanese kana. The Lite version has no Korean, so Korean lyrics use another font. It downloads from GitHub, about 14 MB. Use is subject to the SIL Open Font License.</value></data>
   <data name="FontViewLicence" xml:space="preserve"><value>View the licence</value></data>
   <data name="FontsDownloaded" xml:space="preserve"><value>Downloaded fonts</value></data>
   <data name="FontInUse" xml:space="preserve"><value>In use</value></data>
   <data name="FontPartial" xml:space="preserve"><value>Download not finished</value></data>
-  <data name="WenKaiName" xml:space="preserve"><value>LXGW WenKai Lite by LXGW</value></data>
-  <data name="WenKaiDetail" xml:space="preserve"><value>An open font based on Fontworks' Klee One, under the SIL Open Font License. It can be downloaded in Settings › General.</value></data>
-  <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and Install</value></data>
-  <data name="UpdateWhatsNew" xml:space="preserve"><value>What’s new</value></data>
-  <data name="UpdateRestart" xml:space="preserve"><value>Restart to Update</value></data>
+  <data name="WenKaiName" xml:space="preserve"><value>LXGW WenKai Lite</value></data>
+  <data name="WenKaiDetail" xml:space="preserve"><value>An open-source font based on Fontworks' Klee One, under the SIL Open Font License. It can be downloaded in Settings › General.</value></data>
+  <data name="UpdateDownloadInstall" xml:space="preserve"><value>Download and install</value></data>
+  <data name="UpdateWhatsNew" xml:space="preserve"><value>What's new</value></data>
+  <data name="UpdateRestart" xml:space="preserve"><value>Restart to update</value></data>
   <data name="UpdateRestartNote" xml:space="preserve"><value>Lyricod will close and open again to finish the update.</value></data>
   <data name="UpdateDownloading" xml:space="preserve"><value>Downloading update… {0}%</value></data>
   <data name="UpdatePercent" xml:space="preserve"><value>{0}%</value></data>
   <data name="UpdateRestartVersion" xml:space="preserve"><value>Restart to update to {0}</value></data>
-  <data name="UpdatePreparing" xml:space="preserve"><value>Checking and preparing the update…</value></data>
+  <data name="UpdatePreparing" xml:space="preserve"><value>Verifying and preparing the update…</value></data>
   <data name="UpdateApplying" xml:space="preserve"><value>Preparing to restart…</value></data>
   <data name="UpdateRetry" xml:space="preserve"><value>Retry</value></data>
-  <data name="UpdateDamaged" xml:space="preserve"><value>The download was damaged. Please try again.</value></data>
-  <data name="UpdateTimeout" xml:space="preserve"><value>The download stopped responding. Please try again.</value></data>
-  <data name="UpdateFailed" xml:space="preserve"><value>The update didn't finish. Try again or download it from the release page.</value></data>
-  <data name="UpdateNotWritable" xml:space="preserve"><value>Lyricod can't write to this folder. Move it somewhere writable or download the update from the release page.</value></data>
-  <data name="UpdateApplyFailed" xml:space="preserve"><value>Couldn’t start the update. Please try again, or download it from the release page.</value></data>
-  <data name="UpdateOpenPageFailed" xml:space="preserve"><value>Couldn’t open the release page. Please try again.</value></data>
-  <data name="CheckFailedRateLimitedUntil" xml:space="preserve"><value>GitHub limits how often one network can check each hour, and that limit has been reached (common on shared networks and proxies). Try again after {0}, or open the release page.</value></data>
-  <data name="CheckFailedRateLimited" xml:space="preserve"><value>GitHub limits how often one network can check each hour, and that limit has been reached (common on shared networks and proxies). Try again later, or open the release page.</value></data>
-  <data name="CheckFailedUnreachable" xml:space="preserve"><value>Couldn’t reach GitHub. Check your internet connection or proxy settings, then try again.</value></data>
-  <data name="CheckFailedServer" xml:space="preserve"><value>GitHub didn’t respond as expected. Try again later, or open the release page.</value></data>
+  <data name="UpdateDamaged" xml:space="preserve"><value>The download was damaged. Try again.</value></data>
+  <data name="UpdateTimeout" xml:space="preserve"><value>The download stopped responding. Try again.</value></data>
+  <data name="UpdateFailed" xml:space="preserve"><value>The update didn't finish. Try again, or download it from the release page.</value></data>
+  <data name="UpdateNotWritable" xml:space="preserve"><value>Lyricod can't write to its folder. Move it somewhere writable, or download the update from the release page.</value></data>
+  <data name="UpdateApplyFailed" xml:space="preserve"><value>Couldn't start the update. Try again, or download it from the release page.</value></data>
+  <data name="UpdateOpenPageFailed" xml:space="preserve"><value>Couldn't open the release page. Try again.</value></data>
+  <data name="CheckFailedRateLimitedUntil" xml:space="preserve"><value>GitHub's hourly check limit for this network has been reached (common on shared networks and proxies). Try again after {0}, or open the release page.</value></data>
+  <data name="CheckFailedRateLimited" xml:space="preserve"><value>GitHub's hourly check limit for this network has been reached (common on shared networks and proxies). Try again later, or open the release page.</value></data>
+  <data name="CheckFailedUnreachable" xml:space="preserve"><value>Couldn't reach GitHub. Check your internet connection or proxy settings, then try again.</value></data>
+  <data name="CheckFailedServer" xml:space="preserve"><value>GitHub didn't respond as expected. Try again later, or open the release page.</value></data>
   <data name="OpenReleasePage" xml:space="preserve"><value>Open release page</value></data>
   <data name="NotASong" xml:space="preserve"><value>This might not be a song, so no lyrics are shown.</value></data>
 </root>

@@ -131,7 +131,7 @@ public sealed partial class SettingsWindow
                     NeteaseResult.Done => L.Get(NeteaseState.Removing ? "NeteaseSyncRemoved" : "NeteaseSyncDone"),
                     NeteaseResult.Cancelled => L.Get("NeteaseSyncCancelled"),
                     NeteaseResult.CouldntDownload => L.Get("NeteaseSyncCouldntDownload"),
-                    _ => L.Format("NeteaseSyncFailed", outcome.Error ?? ""),
+                    _ => outcome.Error is { Length: > 0 } error ? L.Format("NeteaseSyncFailed", error) : L.Get("NeteaseSyncFailedPlain"),
                 } : null;
                 line.Text = NeteaseState.Busy
                     ? L.Get(NeteaseState.Stage == NeteaseStage.Downloading ? "NeteaseSyncDownloading" : "NeteaseSyncWaiting")

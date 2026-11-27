@@ -243,7 +243,8 @@ public sealed partial class TrayPanel : Window
         if (_model.IsNotSong) return L.Get("NotASong");
         if (_model.Lyrics is not { } l) return L.Get("NoneFoundChoose");
         var kind = !l.IsSynced ? L.Get("KindPlain") : l.IsWordSynced ? L.Get("KindWords") : L.Get("KindLines");
-        return _model.LyricsPinned ? $"{kind} · {l.Source} · {L.Get("ChooseLyricsPinned")}" : $"{kind} · {l.Source}";
+        string source = L.Source(l.Source);
+        return _model.LyricsPinned ? $"{kind} · {source} · {L.Get("ChooseLyricsPinned")}" : $"{kind} · {source}";
     }
 
     /// <summary>A tile's lock toggle, bottom right: filled while locked, outlined while not. It draws its own face so it shows on a lit (accent) tile too.</summary>

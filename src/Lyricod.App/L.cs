@@ -48,5 +48,14 @@ static class L
         AutomationProperties.SetName(control, text);
     }
 
+    /// <summary>A lyrics source in the UI's language: the providers name it in English ("QQ Music + NetEase").</summary>
+    public static string Source(string source) => string.Join(" + ", source.Split(" + ").Select(part => part switch
+    {
+        "QQ Music" => Get("QQMusic"),
+        "NetEase" => Get("ChooseLyricsNetease"),
+        "LRCLIB" => Get("ChooseLyricsLrclib"),
+        _ => part,
+    }));
+
     public static string Format(string key, params object[] args) => string.Format(System.Globalization.CultureInfo.CurrentCulture, Get(key), args);
 }

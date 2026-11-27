@@ -29,7 +29,8 @@ public sealed partial class SettingsWindow
         ShortcutRow(ShortcutAction.LyricsEarlier);
         ShortcutRow(ShortcutAction.LyricsLater);
         Note(L.Get("ShortcutTimingNote"));
-        Note(L.Get("ShortcutNote"));
+        // Apart from the Timing note above it, which is about those two rows only.
+        Page.Children.Add(new TextBlock { Text = L.Get("ShortcutNote"), Style = Style("Note"), Margin = new Thickness(2, 24, 2, 0) });
     }
 
     void ShortcutRow(ShortcutAction action)

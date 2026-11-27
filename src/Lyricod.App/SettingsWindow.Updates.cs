@@ -35,6 +35,7 @@ public sealed partial class SettingsWindow
                     UpdateStatus.CouldntCheck => L.Get("CouldntCheckUpdates"),
                     _ => "",
                 };
+            status.Visibility = status.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
             detail.Text = _updates.Error ?? (failed ? CheckFailedTip(_updates.Result!) : _updates.State switch
             {
                 UpdateState.Ready => L.Get("UpdateRestartNote"),
@@ -50,7 +51,8 @@ public sealed partial class SettingsWindow
                 _ => "UpdateDownloadInstall",
             });
             action.Visibility = available && install && !busy ? Visibility.Visible : Visibility.Collapsed;
-            page.Content = L.Get(failed ? "OpenReleasePage" : install ? "UpdateWhatsNew" : "DownloadUpdate");
+            // After a failed download or start, the errors point to the release page.
+            page.Content = L.Get(failed || _updates.State == UpdateState.Error ? "OpenReleasePage" : install ? "UpdateWhatsNew" : "DownloadUpdate");
             page.Visibility = available || failed ? Visibility.Visible : Visibility.Collapsed;
             progressRow.Visibility = _updates.State == UpdateState.Downloading ? Visibility.Visible : Visibility.Collapsed;
             progress.Value = _updates.Progress?.Percent ?? 0;

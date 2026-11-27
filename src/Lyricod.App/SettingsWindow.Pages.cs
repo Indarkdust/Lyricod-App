@@ -355,7 +355,7 @@ public sealed partial class SettingsWindow
         if (_model.IsSearching) return L.Get("Searching");
         if (_model.Lyrics is not { } l) return L.Get("NoLyrics");
         var kind = !l.IsSynced ? L.Get("KindPlain") : l.IsWordSynced ? L.Get("KindWords") : L.Get("KindLines");
-        return $"{l.Source} · {kind}";
+        return $"{L.Source(l.Source)} · {kind}";
     }
 
     void About()

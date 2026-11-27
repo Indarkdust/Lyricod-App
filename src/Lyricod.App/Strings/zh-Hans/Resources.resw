@@ -11,7 +11,7 @@
   <data name="DesktopLyrics" xml:space="preserve"><value>桌面歌词</value></data>
   <data name="LockDesktopLyrics" xml:space="preserve"><value>锁定桌面歌词</value></data>
   <data name="Quit" xml:space="preserve"><value>退出 Lyricod</value></data>
-  <data name="MoveHint" xml:space="preserve"><value>拖动调整位置 · 可在托盘菜单中重新锁定</value></data>
+  <data name="MoveHint" xml:space="preserve"><value>拖动调整位置 · 可在托盘面板中重新锁定</value></data>
   <data name="Version" xml:space="preserve"><value>版本 {0}</value></data>
   <data name="TestBuildVersion" xml:space="preserve"><value>{0}（测试版 {1}）</value></data>
   <data name="Tagline" xml:space="preserve"><value>Windows 同步歌词工具。</value></data>
@@ -24,12 +24,12 @@
   <data name="LyricsRights" xml:space="preserve"><value>歌词版权归各自的权利人所有，仅供个人使用。</value></data>
   <data name="FontHeader" xml:space="preserve"><value>字体</value></data>
   <data name="MiSansName" xml:space="preserve"><value>MiSans（小米）</value></data>
-  <data name="MiSansDetail" xml:space="preserve"><value>歌词默认使用微软雅黑。你可以在「设置 › 通用」中下载小米 MiSans 字体。</value></data>
-  <data name="ViewLicence" xml:space="preserve"><value>查看 MiSans 许可协议</value></data>
+  <data name="MiSansDetail" xml:space="preserve"><value>适合中、英、日文混排的字体，遵循小米的许可协议。可在「设置 › 通用」中下载。</value></data>
+  <data name="ViewLicence" xml:space="preserve"><value>查看许可协议</value></data>
   <data name="BuiltWith" xml:space="preserve"><value>使用的组件</value></data>
   <data name="WinUIExDetail" xml:space="preserve"><value>托盘图标和窗口辅助功能。MIT 许可证。</value></data>
   <data name="ToolGoodDetail" xml:space="preserve"><value>拼音及繁简中文转换。Apache License 2.0。</value></data>
-  <data name="Win2DDetail" xml:space="preserve"><value>用于绘制 Lyricod Glass 的液态玻璃效果。</value></data>
+  <data name="Win2DDetail" xml:space="preserve"><value>用于绘制 Lyricod Glass 的液态玻璃效果。MIT 许可证。</value></data>
   <data name="PlatformNote" xml:space="preserve"><value>基于 Microsoft 的 .NET 和 Windows App SDK 构建。</value></data>
   <data name="Trademarks" xml:space="preserve"><value>商标</value></data>
   <data name="TrademarksText" xml:space="preserve"><value>Windows 是 Microsoft 集团公司的商标。网易云音乐是网易公司的商标。QQ音乐是腾讯的商标。MiSans 是小米的商标。Klee 是 Fontworks 的商标。Lyricod 是独立项目，与 Microsoft、网易、腾讯、小米或 Fontworks 没有关联，也未获得其认可或赞助。</value></data>
@@ -45,12 +45,12 @@
   <data name="OpenAtStartupDetail" xml:space="preserve"><value>启动后显示在系统托盘中。</value></data>
   <data name="PlayerHeading" xml:space="preserve"><value>播放器</value></data>
   <data name="NowPlayingLabel" xml:space="preserve"><value>正在播放</value></data>
-  <data name="PlayerLabel" xml:space="preserve"><value>播放器</value></data>
-  <data name="PlayerNote" xml:space="preserve"><value>Lyricod 会跟随 Windows 媒体控件中的播放器，例如 Spotify、Apple Music、QQ 音乐、网易云音乐等。同时打开多个播放器时，默认跟随正在播放的一个。</value></data>
+  <data name="PlayerLabel" xml:space="preserve"><value>当前播放器</value></data>
+  <data name="PlayerNote" xml:space="preserve"><value>Lyricod 会跟随 Windows 媒体控件中的播放器，例如 Spotify、Apple Music、QQ音乐、网易云音乐等。同时打开多个播放器时，默认跟随正在播放的那个。</value></data>
   <data name="NeteaseSyncTitle" xml:space="preserve"><value>网易云音乐歌词同步</value></data>
-  <data name="NeteaseSyncDetail" xml:space="preserve"><value>暂停或拖动播放进度后，歌词仍能与音乐同步。</value></data>
+  <data name="NeteaseSyncDetail" xml:space="preserve"><value>让歌词在暂停或拖动进度后仍保持同步。</value></data>
   <data name="NeteaseSyncWhat" xml:space="preserve"><value>安装内容</value></data>
-  <data name="NeteaseSyncWhatDetail" xml:space="preserve"><value>Lyricod 会下载一个安装工具，安装第三方开发的 BetterNCM 1.3.4 和最新版 InfLink-rs，让网易云音乐能够提供播放进度。下载的文件会在安装前进行校验。</value></data>
+  <data name="NeteaseSyncWhatDetail" xml:space="preserve"><value>Lyricod 会下载一个安装工具，安装第三方开发的 BetterNCM 1.3.4 和最新版 InfLink-rs，让网易云音乐能够提供播放进度。安装前会校验下载的文件。</value></data>
   <data name="NeteaseSyncLearnMore" xml:space="preserve"><value>了解详情</value></data>
   <data name="NeteaseSyncManual" xml:space="preserve"><value>手动设置</value></data>
   <data name="NeteaseSyncBefore" xml:space="preserve"><value>安装前须知</value></data>
@@ -67,12 +67,13 @@
   <data name="NeteaseSyncUpdate" xml:space="preserve"><value>更新</value></data>
   <data name="NeteaseSyncRemove" xml:space="preserve"><value>移除</value></data>
   <data name="NeteaseSyncDownloading" xml:space="preserve"><value>正在下载安装工具…</value></data>
-  <data name="NeteaseSyncWaiting" xml:space="preserve"><value>请在 Windows 弹出的管理员权限提示中确认，以继续安装…</value></data>
+  <data name="NeteaseSyncWaiting" xml:space="preserve"><value>请在 Windows 弹出的管理员权限提示中确认…</value></data>
   <data name="NeteaseSyncDone" xml:space="preserve"><value>安装完成。打开网易云音乐播放一首歌，检查歌词是否同步。</value></data>
   <data name="NeteaseSyncRemoved" xml:space="preserve"><value>已移除。</value></data>
   <data name="NeteaseSyncCancelled" xml:space="preserve"><value>已取消。</value></data>
   <data name="NeteaseSyncCouldntDownload" xml:space="preserve"><value>下载失败，请检查网络连接后重试。</value></data>
   <data name="NeteaseSyncFailed" xml:space="preserve"><value>操作未完成：{0}</value></data>
+  <data name="NeteaseSyncFailedPlain" xml:space="preserve"><value>操作未完成。</value></data>
   <data name="ShowDesktopLyrics" xml:space="preserve"><value>显示桌面歌词</value></data>
   <data name="LockDetail" xml:space="preserve"><value>锁定后不会挡住鼠标操作。解锁后可以拖动歌词。</value></data>
   <data name="PositionLabel" xml:space="preserve"><value>位置</value></data>
@@ -89,7 +90,7 @@
   <data name="LayoutPronunciationOrTranslation" xml:space="preserve"><value>优先显示音译，否则显示翻译</value></data>
   <data name="LayoutPronunciation" xml:space="preserve"><value>音译</value></data>
   <data name="LayoutPronunciationAndTranslation" xml:space="preserve"><value>音译和翻译</value></data>
-  <data name="LayoutNext" xml:space="preserve"><value>下一行</value></data>
+  <data name="LayoutNext" xml:space="preserve"><value>下一句</value></data>
   <data name="LayoutNone" xml:space="preserve"><value>不显示（单行）</value></data>
   <data name="ShowIsland" xml:space="preserve"><value>显示歌词岛</value></data>
   <data name="ShowIslandDetail" xml:space="preserve"><value>在屏幕顶部显示当前歌词。收起时不会挡住鼠标操作。</value></data>
@@ -100,8 +101,8 @@
   <data name="LockIsland" xml:space="preserve"><value>锁定歌词岛位置</value></data>
   <data name="UnlockDesktopLyrics" xml:space="preserve"><value>解锁桌面歌词</value></data>
   <data name="UnlockIsland" xml:space="preserve"><value>解锁歌词岛位置</value></data>
-  <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛，锁定后恢复鼠标悬停操作。</value></data>
-  <data name="ResetIslandPosition" xml:space="preserve"><value>恢复顶部居中</value></data>
+  <data name="LockIslandDetail" xml:space="preserve"><value>解锁后可以拖动歌词岛，锁定后恢复鼠标移入时的操作。</value></data>
+  <data name="ResetIslandPosition" xml:space="preserve"><value>恢复到顶部居中</value></data>
   <data name="FoldFloating" xml:space="preserve"><value>悬浮设置</value></data>
   <data name="FoldGlass" xml:space="preserve"><value>Lyricod Glass 设置</value></data>
   <data name="FoldText" xml:space="preserve"><value>文字与动画</value></data>
@@ -112,7 +113,7 @@
   <data name="GlassTransparency" xml:space="preserve"><value>透明度</value></data>
   <data name="GlassTint" xml:space="preserve"><value>玻璃色调</value></data>
   <data name="GlassTintNeutral" xml:space="preserve"><value>中性</value></data>
-  <data name="GlassTintAlbum" xml:space="preserve"><value>跟随专辑封面</value></data>
+  <data name="GlassTintAlbum" xml:space="preserve"><value>专辑颜色</value></data>
   <data name="GlassShine" xml:space="preserve"><value>立体效果</value></data>
   <data name="GlassShineOff" xml:space="preserve"><value>关</value></data>
   <data name="GlassShineBright" xml:space="preserve"><value>明亮</value></data>
@@ -126,12 +127,12 @@
   <data name="GlassEffectLiquid" xml:space="preserve"><value>液态玻璃</value></data>
   <data name="GlassEffectClearDetail" xml:space="preserve"><value>歌词岛后面的内容清晰可见。</value></data>
   <data name="GlassEffectFrostedDetail" xml:space="preserve"><value>使用 Windows 亚克力效果模糊背景，圆角处可能出现轻微锯齿。</value></data>
-  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>根据歌词岛背后的屏幕画面，为背景添加轻微模糊和边缘折射效果。在较旧的 Windows 11 版本上，开启后截图、录屏和屏幕共享中将不会显示歌词岛。</value></data>
+  <data name="GlassEffectLiquidDetail" xml:space="preserve"><value>根据歌词岛背后的屏幕画面，为背景添加模糊和边缘折射效果。在较旧的 Windows 11 版本上，开启后截图、录屏和屏幕共享中将不会显示歌词岛。</value></data>
   <data name="GlassEffectUnsupported" xml:space="preserve"><value>当前 Windows 版本不支持此效果，将改用透明效果。</value></data>
   <data name="LiquidBlur" xml:space="preserve"><value>模糊程度</value></data>
   <data name="LiquidRefraction" xml:space="preserve"><value>边缘折射</value></data>
   <data name="LiquidScreenshot" xml:space="preserve"><value>截图</value></data>
-  <data name="LiquidScreenshotDetail" xml:space="preserve"><value>更新后的 Windows 版本可直接截取实时歌词岛。较旧版本需点击右侧按钮，再在 10 秒内截图；此时玻璃背景会短暂停止更新。</value></data>
+  <data name="LiquidScreenshotDetail" xml:space="preserve"><value>在较新的 Windows 11 版本上，截图中会直接显示歌词岛。较旧版本需点击右侧按钮，再在 10 秒内截图；此时玻璃背景会短暂停止更新。</value></data>
   <data name="LiquidScreenshotButton" xml:space="preserve"><value>在截图中显示</value></data>
   <data name="LiquidScreenshotCountdown" xml:space="preserve"><value>请截图（{0}）</value></data>
   <data name="OnHover" xml:space="preserve"><value>鼠标移入时</value></data>
@@ -160,18 +161,18 @@
   <data name="CentreLines" xml:space="preserve"><value>居中显示</value></data>
   <data name="TranslationsTip" xml:space="preserve"><value>显示或隐藏翻译</value></data>
   <data name="PronunciationTip" xml:space="preserve"><value>显示或隐藏音译</value></data>
-  <data name="FullScreenTip" xml:space="preserve"><value>全屏 (F11)</value></data>
+  <data name="FullScreenTip" xml:space="preserve"><value>全屏（F11）</value></data>
   <data name="Previous" xml:space="preserve"><value>上一首</value></data>
   <data name="PlayPause" xml:space="preserve"><value>播放/暂停</value></data>
   <data name="CantSeek" xml:space="preserve"><value>这个播放器不支持通过 Lyricod 调整播放进度。</value></data>
   <data name="Next" xml:space="preserve"><value>下一首</value></data>
   <data name="TimingHeading" xml:space="preserve"><value>时间</value></data>
   <data name="AllSongs" xml:space="preserve"><value>所有歌曲</value></data>
-  <data name="ThisSong" xml:space="preserve"><value>本歌曲</value></data>
+  <data name="ThisSong" xml:space="preserve"><value>这首歌</value></data>
   <data name="OffsetEarlier" xml:space="preserve"><value>歌词提前</value></data>
-  <data name="OffsetLater" xml:space="preserve"><value>歌词推后</value></data>
+  <data name="OffsetLater" xml:space="preserve"><value>歌词延后</value></data>
   <data name="Reset" xml:space="preserve"><value>重置</value></data>
-  <data name="TimingNote" xml:space="preserve"><value>正数让歌词提前，负数让歌词延后。「所有歌曲」和「本歌曲」的调整分别生效；本歌曲的设置会保存。</value></data>
+  <data name="TimingNote" xml:space="preserve"><value>正数让歌词提前，负数让歌词延后。两项调整会叠加，「这首歌」的调整按歌曲分别保存。</value></data>
   <data name="DisplayHeading" xml:space="preserve"><value>显示</value></data>
   <data name="PronunciationFor" xml:space="preserve"><value>音译语言</value></data>
   <data name="PronunciationForDetail" xml:space="preserve"><value>使用罗马音或拼音标注歌词读音。</value></data>
@@ -184,11 +185,11 @@
   <data name="RomajiByWordDetail" xml:space="preserve"><value>按词而不是按音节分隔日语罗马音。需要在 Windows 语言设置中添加日语；部分词语仍可能被拆开。</value></data>
   <data name="SmoothSweep" xml:space="preserve"><value>平滑扫过</value></data>
   <data name="SmoothSweepDetail" xml:space="preserve"><value>长音后面紧跟短音时，让已唱颜色移动得更均匀，不会先慢后突然加快。短音可能稍微提前亮起，颜色边缘也更柔和。</value></data>
-  <data name="ShowCredits" xml:space="preserve"><value>显示词曲作者信息</value></data>
-  <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词自带的罗马音；没有时尝试通过 Windows 生成，部分汉字可能读错。各个歌词视图可以分别设置是否显示翻译和音译。</value></data>
-  <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语罗马音来自歌词来源（如有）。如需 Lyricod 为其他歌曲生成，请在 Windows 设置 › 时间和语言 › 语言和区域 中添加日语。</value></data>
+  <data name="ShowCredits" xml:space="preserve"><value>显示制作人员信息</value></data>
+  <data name="PronunciationNote" xml:space="preserve"><value>日语优先使用歌词自带的罗马音；没有时尝试通过 Windows 生成，部分汉字可能读错。桌面歌词、歌词岛和歌词窗口可以分别设置是否显示翻译和音译。</value></data>
+  <data name="PronunciationNoteNoReader" xml:space="preserve"><value>日语优先使用歌词自带的罗马音；如需在没有罗马音时由 Lyricod 生成，请在「Windows 设置 › 时间和语言 › 语言和区域」中添加日语。桌面歌词、歌词岛和歌词窗口可以分别设置是否显示翻译和音译。</value></data>
   <data name="LookUpOtherPlayers" xml:space="preserve"><value>为浏览器等应用查找歌词</value></data>
-  <data name="LookUpOtherPlayersDetail" xml:space="preserve"><value>开启后，也会尝试识别浏览器等应用中的歌曲。搜索时会将媒体标题及歌手或频道信息发送给网易云音乐、QQ 音乐和 LRCLIB。关闭后只搜索音乐播放器中的歌曲。</value></data>
+  <data name="LookUpOtherPlayersDetail" xml:space="preserve"><value>开启后，也会尝试识别浏览器等应用中的歌曲。搜索时会将媒体标题及歌手或频道信息发送给网易云音乐、QQ音乐和 LRCLIB。关闭后只搜索音乐播放器中的歌曲。</value></data>
   <data name="SourcesHeading" xml:space="preserve"><value>来源</value></data>
   <data name="CurrentSong" xml:space="preserve"><value>当前歌曲</value></data>
   <data name="SearchAgain" xml:space="preserve"><value>重新搜索</value></data>
@@ -210,13 +211,13 @@
   <data name="ShortcutToggleIsland" xml:space="preserve"><value>显示/隐藏歌词岛</value></data>
   <data name="ShortcutToggleLyricsWindow" xml:space="preserve"><value>打开/关闭歌词窗口</value></data>
   <data name="ShortcutLyricsEarlier" xml:space="preserve"><value>歌词提前 0.5 秒</value></data>
-  <data name="ShortcutLyricsLater" xml:space="preserve"><value>歌词推后 0.5 秒</value></data>
-  <data name="ShortcutTimingNote" xml:space="preserve"><value>仅调整当前歌曲，与「歌词 &gt; 本歌曲」中的设置相同。</value></data>
-  <data name="ShortcutNote" xml:space="preserve"><value>快捷键在其他应用中也能使用。点击输入框并按下组合键（需包含 Ctrl、Alt 或 Win，或单独使用功能键）。Esc 取消，Backspace 或 Delete 清除。如果提示不可用，说明可能已被系统或其他应用占用。</value></data>
+  <data name="ShortcutLyricsLater" xml:space="preserve"><value>歌词延后 0.5 秒</value></data>
+  <data name="ShortcutTimingNote" xml:space="preserve"><value>仅调整当前歌曲，与「设置 › 歌词 › 这首歌」相同。</value></data>
+  <data name="ShortcutNote" xml:space="preserve"><value>快捷键在其他应用中也能使用。点击按钮后按下组合键（需包含 Ctrl、Alt 或 Win，或单独使用功能键）。Esc 取消，Backspace 或 Delete 清除。</value></data>
   <data name="ShortcutRecord" xml:space="preserve"><value>录制快捷键</value></data>
   <data name="ShortcutPressKeys" xml:space="preserve"><value>请按键…</value></data>
   <data name="ShortcutInvalid" xml:space="preserve"><value>请使用 Ctrl、Alt 或 Win，或使用功能键。</value></data>
-  <data name="ShortcutDuplicate" xml:space="preserve"><value>已用于“{0}”。</value></data>
+  <data name="ShortcutDuplicate" xml:space="preserve"><value>已用于「{0}」。</value></data>
   <data name="ShortcutUnavailable" xml:space="preserve"><value>不可用。Windows 或其他应用可能已使用此快捷键。</value></data>
   <data name="KeyCtrl" xml:space="preserve"><value>Ctrl</value></data>
   <data name="KeyAlt" xml:space="preserve"><value>Alt</value></data>
@@ -241,10 +242,10 @@
   <data name="PlaySomething" xml:space="preserve"><value>请先播放一首歌。</value></data>
   <data name="ChooseLyricsTip" xml:space="preserve"><value>选择歌词…</value></data>
   <data name="SettingsTip" xml:space="preserve"><value>设置</value></data>
-  <data name="NoneFoundChoose" xml:space="preserve"><value>没找到歌词 · 手动选择…</value></data>
+  <data name="NoneFoundChoose" xml:space="preserve"><value>未找到歌词 · 手动选择…</value></data>
   <data name="LyricsEarlierBy" xml:space="preserve"><value>歌词提前 {0} 秒</value></data>
   <data name="LyricsLaterBy" xml:space="preserve"><value>歌词延后 {0} 秒</value></data>
-  <data name="MatchesTheSong" xml:space="preserve"><value>与歌曲同步</value></data>
+  <data name="MatchesTheSong" xml:space="preserve"><value>未调整</value></data>
   <data name="AnimationLabel" xml:space="preserve"><value>动画</value></data>
   <data name="AnimationDetail" xml:space="preserve"><value>调整歌词岛音量条和 Lyricod Glass 液态玻璃效果的帧率。帧率越高通常越流畅，也可能更耗电。</value></data>
   <data name="FrameRateLow" xml:space="preserve"><value>省电（15 fps）</value></data>
@@ -261,7 +262,7 @@
   <data name="AudioBars" xml:space="preserve"><value>音量条随音乐跳动</value></data>
   <data name="AudioBarsDetail" xml:space="preserve"><value>使用当前播放器的音频信息驱动动画，不会录音或上传音频。</value></data>
   <data name="HideWhenPaused" xml:space="preserve"><value>暂停时隐藏</value></data>
-  <data name="HideWhenPausedDetail" xml:space="preserve"><value>暂停一段时间后，歌词岛会淡出；继续播放时重新出现。</value></data>
+  <data name="HideWhenPausedDetail" xml:space="preserve"><value>暂停片刻后，歌词岛会淡出；继续播放时重新出现。</value></data>
   <data name="StyleHeading" xml:space="preserve"><value>样式</value></data>
   <data name="IslandBehaviourHeading" xml:space="preserve"><value>位置与交互</value></data>
   <data name="IslandSize" xml:space="preserve"><value>大小</value></data>
@@ -282,17 +283,17 @@
   <data name="EffectGlow" xml:space="preserve"><value>发光扫过</value></data>
   <data name="EffectLift" xml:space="preserve"><value>扫过并浮起</value></data>
   <data name="EffectLine" xml:space="preserve"><value>整行亮起</value></data>
-  <data name="NextLine" xml:space="preserve"><value>换行</value></data>
+  <data name="NextLine" xml:space="preserve"><value>歌词切换</value></data>
   <data name="TransitionInstant" xml:space="preserve"><value>立即</value></data>
   <data name="TransitionSlide" xml:space="preserve"><value>向上滑动</value></data>
   <data name="TransitionFade" xml:space="preserve"><value>淡入淡出</value></data>
-  <data name="AutoHideControls" xml:space="preserve"><value>指针静止时隐藏控件</value></data>
-  <data name="AutoHideControlsDetail" xml:space="preserve"><value>在宽窗口和全屏中播放时。</value></data>
+  <data name="AutoHideControls" xml:space="preserve"><value>鼠标静止时隐藏控件</value></data>
+  <data name="AutoHideControlsDetail" xml:space="preserve"><value>仅在宽窗口或全屏播放时生效。</value></data>
 
   <!-- Choose lyrics -->
   <data name="ChooseLyricsTitle" xml:space="preserve"><value>选择歌词</value></data>
   <data name="ChooseLyricsButton" xml:space="preserve"><value>选择…</value></data>
-  <data name="ChooseLyricsPinned" xml:space="preserve"><value>手动选择</value></data>
+  <data name="ChooseLyricsPinned" xml:space="preserve"><value>已手动选择</value></data>
   <data name="ChooseLyricsSearch" xml:space="preserve"><value>搜索歌词</value></data>
   <data name="ChooseLyricsAll" xml:space="preserve"><value>全部</value></data>
   <data name="ChooseLyricsNetease" xml:space="preserve"><value>网易云</value></data>
@@ -318,8 +319,8 @@
   <data name="CheckingUpdates" xml:space="preserve"><value>正在检查…</value></data>
   <data name="UpToDate" xml:space="preserve"><value>已经是最新版本啦。</value></data>
   <data name="CouldntCheckUpdates" xml:space="preserve"><value>无法检查更新。</value></data>
-  <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} 已发布</value></data>
-  <data name="DownloadUpdate" xml:space="preserve"><value>下载…</value></data>
+  <data name="NewVersionAvailable" xml:space="preserve"><value>Lyricod {0} 已发布。</value></data>
+  <data name="DownloadUpdate" xml:space="preserve"><value>前往发布页面下载</value></data>
   <data name="UpdateAvailable" xml:space="preserve"><value>有可用更新：{0}</value></data>
   <data name="NeteaseTip" xml:space="preserve"><value>网易云音乐未提供播放进度，歌词可能不同步。查看解决方法</value></data>
   <data name="NeteaseGuideUrl" xml:space="preserve"><value>https://github.com/Indarkdust/Lyricod-App/blob/main/README.zh-CN.md#%E7%BD%91%E6%98%93%E4%BA%91%E9%9F%B3%E4%B9%90%E6%AD%8C%E8%AF%8D%E4%B8%8D%E5%90%8C%E6%AD%A5</value></data>
@@ -332,7 +333,7 @@
   <data name="FontDefault" xml:space="preserve"><value>微软雅黑（默认）</value></data>
   <data name="FontRecommended" xml:space="preserve"><value>MiSans（推荐）</value></data>
   <data name="FontSearch" xml:space="preserve"><value>搜索已安装的字体</value></data>
-  <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans 是小米推出的字体，适合中、英、日文混排。选择后会从小米下载字体文件，通常约 15 MB；部分情况下需要下载完整字体包。使用时遵循小米的许可协议。</value></data>
+  <data name="MiSansDownloadDetail" xml:space="preserve"><value>MiSans 是小米推出的字体，适合中、英、日文混排。字体文件从小米下载，通常约 15 MB；部分情况下需要下载完整字体包。使用时遵循小米的许可协议。</value></data>
   <data name="FontDownload" xml:space="preserve"><value>下载</value></data>
   <data name="FontRemove" xml:space="preserve"><value>移除</value></data>
   <data name="FontRetry" xml:space="preserve"><value>重试</value></data>
@@ -341,11 +342,11 @@
   <data name="FontDownloadingLicence" xml:space="preserve"><value>正在下载许可协议…</value></data>
   <data name="FontDownloadFailed" xml:space="preserve"><value>无法下载 {0}。</value></data>
   <data name="FontDownloadTimeout" xml:space="preserve"><value>下载超时，请重试。</value></data>
-  <data name="FontRemoveFailed" xml:space="preserve"><value>未能移除全部 {0} 文件。请关闭 Lyricod 后重试。</value></data>
-  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 {0} 或将其复制到应用文件夹。Lyricod 将使用默认字体显示。</value></data>
+  <data name="FontRemoveFailed" xml:space="preserve"><value>{0} 的文件未能全部移除。请重新启动 Lyricod 后再试。</value></data>
+  <data name="FontLoadFailed" xml:space="preserve"><value>无法加载 {0}，暂时使用默认字体。</value></data>
   <data name="FontListFailed" xml:space="preserve"><value>无法读取已安装的字体。</value></data>
   <data name="FontWenKai" xml:space="preserve"><value>霞鹜文楷 Lite</value></data>
-  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>霞鹜文楷是一款开源的楷体风格字体，适合中文和日文假名。Lite 版不含韩文，韩文歌词会改用其他字体显示。选择后会从 GitHub 下载字体文件，约 14 MB。使用时遵循 SIL 开源字体许可协议。</value></data>
+  <data name="WenKaiDownloadDetail" xml:space="preserve"><value>霞鹜文楷是一款开源的楷体风格字体，适合中文和日文假名。Lite 版不含韩文，韩文歌词会改用其他字体显示。字体文件从 GitHub 下载，约 14 MB。使用时遵循 SIL 开源字体许可协议。</value></data>
   <data name="FontViewLicence" xml:space="preserve"><value>查看许可协议</value></data>
   <data name="FontsDownloaded" xml:space="preserve"><value>已下载的字体</value></data>
   <data name="FontInUse" xml:space="preserve"><value>正在使用</value></data>
@@ -359,19 +360,19 @@
   <data name="UpdateDownloading" xml:space="preserve"><value>正在下载更新… {0}%</value></data>
   <data name="UpdatePercent" xml:space="preserve"><value>{0}%</value></data>
   <data name="UpdateRestartVersion" xml:space="preserve"><value>重启并更新至 {0}</value></data>
-  <data name="UpdatePreparing" xml:space="preserve"><value>正在检查并准备更新…</value></data>
+  <data name="UpdatePreparing" xml:space="preserve"><value>正在校验并准备更新…</value></data>
   <data name="UpdateApplying" xml:space="preserve"><value>正在准备重启…</value></data>
   <data name="UpdateRetry" xml:space="preserve"><value>重试</value></data>
   <data name="UpdateDamaged" xml:space="preserve"><value>下载的文件已损坏，请重试。</value></data>
   <data name="UpdateTimeout" xml:space="preserve"><value>下载长时间没有响应，请重试。</value></data>
   <data name="UpdateFailed" xml:space="preserve"><value>更新未完成。请重试，或前往发布页面手动下载。</value></data>
-  <data name="UpdateNotWritable" xml:space="preserve"><value>当前文件夹无法写入。请将 Lyricod 移到有写入权限的位置，或前往发布页面手动下载更新。</value></data>
-  <data name="UpdateApplyFailed" xml:space="preserve"><value>无法启动更新。请重试，或前往发布页面下载。</value></data>
+  <data name="UpdateNotWritable" xml:space="preserve"><value>无法写入 Lyricod 所在的文件夹。请将 Lyricod 移到有写入权限的位置，或前往发布页面手动下载更新。</value></data>
+  <data name="UpdateApplyFailed" xml:space="preserve"><value>无法启动更新。请重试，或前往发布页面手动下载。</value></data>
   <data name="UpdateOpenPageFailed" xml:space="preserve"><value>无法打开发布页面，请重试。</value></data>
-  <data name="CheckFailedRateLimitedUntil" xml:space="preserve"><value>GitHub 限制了同一网络每小时的查询次数，现在已达上限（使用公共网络或代理时较常见）。请在 {0} 之后再试，或直接打开发布页面查看。</value></data>
-  <data name="CheckFailedRateLimited" xml:space="preserve"><value>GitHub 限制了同一网络每小时的查询次数，现在已达上限（使用公共网络或代理时较常见）。请稍后再试，或直接打开发布页面查看。</value></data>
+  <data name="CheckFailedRateLimitedUntil" xml:space="preserve"><value>当前网络对 GitHub 的每小时检查次数已达上限（使用公共网络或代理时较常见）。请在 {0} 后重试，或直接打开发布页面查看。</value></data>
+  <data name="CheckFailedRateLimited" xml:space="preserve"><value>当前网络对 GitHub 的每小时检查次数已达上限（使用公共网络或代理时较常见）。请稍后重试，或直接打开发布页面查看。</value></data>
   <data name="CheckFailedUnreachable" xml:space="preserve"><value>无法连接到 GitHub。请检查网络连接或代理设置后重试。</value></data>
   <data name="CheckFailedServer" xml:space="preserve"><value>GitHub 暂时没有正常响应。请稍后再试，或直接打开发布页面查看。</value></data>
   <data name="OpenReleasePage" xml:space="preserve"><value>打开发布页面</value></data>
-  <data name="NotASong" xml:space="preserve"><value>当前内容可能不是歌曲，因此没有显示歌词。</value></data>
+  <data name="NotASong" xml:space="preserve"><value>可能不是歌曲，所以不显示歌词。</value></data>
 </root>
