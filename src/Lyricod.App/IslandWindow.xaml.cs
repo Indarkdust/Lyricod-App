@@ -56,7 +56,9 @@ public sealed partial class IslandWindow : Window
     LyricLine? _secondLine;
     readonly TransportButtons _transport;
     readonly ProgressLine _progress;
-    readonly DispatcherQueueTimer _pieceTimer, _pointerTimer, _progressTimer, _barTimer, _revealTimer, _pauseTimer;
+    readonly DispatcherQueueTimer _pieceTimer, _pointerTimer, _progressTimer, _barTimer, _revealTimer, _pauseTimer, _holdTimer;
+    readonly Grip _grip;
+    bool _liquidDue;
     /// <summary>Hidden because the music stopped (Settings › Lyricod Island › Hide when paused).</summary>
     bool _pausedAway;
     readonly List<Rectangle> _bars = [];
@@ -171,8 +173,40 @@ public sealed partial class IslandWindow : Window
             try { _liquid?.Wake(); }
             catch (Exception e) { Log.Write(e); }
         });
-        // Dragged while floating and unlocked.
+        // Dragged while floating: unlocked, or by its open mini player.
+        var content = Pill.Child;
+        Pill.Child = null;
+        _grip = new Grip { Background = new SolidColorBrush(Colors.Transparent) };
+        _grip.Children.Add(content);
+        Pill.Child = _grip;
         Pill.PointerPressed += OnPillPressed;
+        _grip.PointerMoved += OnPillMoved;
+        _grip.PointerReleased += OnPillLetGo;
+        _grip.PointerCanceled += OnPillLetGo;
+        _grip.PointerCaptureLost += OnPillLetGo;
+        _holdTimer = DispatcherQueue.CreateTimer();
+        _holdTimer.IsRepeating = false;
+        _holdTimer.Interval = TimeSpan.FromSeconds(HoldSeconds);
+        _holdTimer.Tick += (_, _) => { try { BeginCarry(); } catch (Exception e) { Log.Write(e); } };
+        // While it's dragged the window moves without being placed: the liquid glass looks behind where it is now.
+        // One redraw for however many moves came meanwhile, so the window never waits on its glass.
+        AppWindow.Changed += (_, e) =>
+        {
+            try
+            {
+                if (!_dragging || !e.DidPositionChange || _liquidDue) return;
+                _liquidDue = DispatcherQueue.TryEnqueue(() =>
+                {
+                    try
+                    {
+                        _liquidDue = false;
+                        UpdateLiquid();
+                    }
+                    catch (Exception x) { Log.Write(x); }
+                });
+            }
+            catch (Exception x) { Log.Write(x); }
+        };
         // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and
         // shrinks; text hidden while it widens shows as soon as it fits.
         Pill.SizeChanged += (_, _) =>
@@ -198,6 +232,7 @@ public sealed partial class IslandWindow : Window
             _barTimer.Stop();
             _revealTimer.Stop();
             _pauseTimer.Stop();
+            _holdTimer.Stop();
             _widthAnimation?.Stop();
             _heightAnimation?.Stop();
             _lineAnimation?.Stop();

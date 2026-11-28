@@ -9,7 +9,8 @@ public sealed partial class IslandWindow
 {
     void CheckPointer()
     {
-        if (!_shown || _closed || !Win32.GetCursorPos(out var p)) return;
+        // Held or being dragged, it stays as it is.
+        if (!_shown || _closed || _dragging || _hold != null || !Win32.GetCursorPos(out var p)) return;
         if (Movable)
         {
             // Being moved: no hover action.

@@ -9,7 +9,7 @@ namespace Lyricod;
 
 /// <summary>
 /// Lyricod Glass's liquid effect (see <see cref="LiquidGlass"/>): runs only while it's the chosen
-/// effect and the island shows, not while the pointer hides it or it's being moved.
+/// effect and the island shows, not while the pointer hides it or it's unlocked.
 /// </summary>
 public sealed partial class IslandWindow
 {

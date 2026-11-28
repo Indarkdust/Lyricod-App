@@ -12,6 +12,8 @@ public sealed partial class IslandWindow
     /// <summary>Top centre of the main display, or (floating) where it was dragged.</summary>
     void Place()
     {
+        // Windows has it under the pointer: its saved spot would pull it away. It's placed when let go.
+        if (_dragging) return;
         double k = _overlay.Scale;
         if (Floating)
         {
