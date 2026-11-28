@@ -69,7 +69,8 @@ Name: "{userdesktop}\Lyricod"; Filename: "{app}\app\Lyricod.exe"; WorkingDir: "{
 [Run]
 Filename: "{app}\app\Lyricod.exe"; Description: "Launch Lyricod"; Flags: nowait postinstall skipifsilent
 ; Lyricod's own updater runs Setup silently with /relaunch=1 after quitting: open it again afterwards.
-Filename: "{app}\app\Lyricod.exe"; Flags: nowait; Check: RelaunchAfterUpdate
+; --background tells Lyricod the user didn't start it (BackgroundStart.cs).
+Filename: "{app}\app\Lyricod.exe"; Parameters: "--background"; Flags: nowait; Check: RelaunchAfterUpdate
 
 [Registry]
 ; Startup.cs writes this value itself. Do not enable or disable it during upgrades.

@@ -264,6 +264,9 @@
   <data name="FollowLabel" xml:space="preserve"><value>跟随</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>正在播放的播放器</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>播放过歌曲的播放器会出现在这里。</value></data>
+  <data name="OpenPlayerAtStart" xml:space="preserve"><value>启动 Lyricod 时打开音乐播放器</value></data>
+  <data name="OpenPlayerAtStartDetail" xml:space="preserve"><value>手动启动 Lyricod 时，同时打开上次使用的播放器。随 Windows 启动时不会打开，播放器已在运行时也不会。</value></data>
+  <data name="OpenPlayer" xml:space="preserve"><value>打开 {0}</value></data>
   <data name="HoverHide" xml:space="preserve"><value>暂时隐藏，方便操作下方内容</value></data>
   <data name="AudioBars" xml:space="preserve"><value>音量条随音乐跳动</value></data>
   <data name="AudioBarsDetail" xml:space="preserve"><value>使用当前播放器的音频信息驱动动画，不会录音或上传音频。</value></data>

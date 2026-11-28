@@ -264,6 +264,9 @@
   <data name="FollowLabel" xml:space="preserve"><value>Follow</value></data>
   <data name="FollowAuto" xml:space="preserve"><value>Whichever is playing</value></data>
   <data name="FollowDetail" xml:space="preserve"><value>Players appear here after they've played a song.</value></data>
+  <data name="OpenPlayerAtStart" xml:space="preserve"><value>Open the music player when Lyricod starts</value></data>
+  <data name="OpenPlayerAtStartDetail" xml:space="preserve"><value>Opens the player you last listened with when you start Lyricod yourself. Not when Lyricod starts with Windows, and not if the player is already running.</value></data>
+  <data name="OpenPlayer" xml:space="preserve"><value>Open {0}</value></data>
   <data name="HoverHide" xml:space="preserve"><value>Hide temporarily to access what's underneath</value></data>
   <data name="AudioBars" xml:space="preserve"><value>Audio bars follow the music</value></data>
   <data name="AudioBarsDetail" xml:space="preserve"><value>Uses audio information from the current player for animation. No audio is recorded or uploaded.</value></data>

@@ -37,8 +37,9 @@ public sealed partial class SettingsWindow
         // Whichever is playing, or one player always: those Windows knows about now, and the saved one.
         var players = new List<(string, string)> { ("auto", L.Get("FollowAuto")) };
         foreach (var id in _model.PlayerIds.Append(_settings.PlayerChoice).Where(id => id != "auto").Distinct())
-            players.Add((id, MediaSession.DisplayName(id)));
+            players.Add((id, _model.PlayerNameOf(id)));
         Card(L.Get("FollowLabel"), L.Get("FollowDetail"), Choice(nameof(Settings.PlayerChoice), () => _settings.PlayerChoice, v => _settings.PlayerChoice = v, [.. players]));
+        Card(L.Get("OpenPlayerAtStart"), L.Get("OpenPlayerAtStartDetail"), Toggle(nameof(Settings.OpenPlayerAtStart), () => _settings.OpenPlayerAtStart, v => _settings.OpenPlayerAtStart = v));
         var song = Value();
         var player = Value();
         _songWatchers.Add(() =>

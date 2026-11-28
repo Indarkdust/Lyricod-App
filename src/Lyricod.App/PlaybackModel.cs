@@ -58,7 +58,10 @@ public sealed partial class PlaybackModel
     /// <summary>The player's own position (no offset), for progress bars.</summary>
     public double PlayerPosition => Math.Clamp(_playhead.RawPosition(Now), 0, Duration > 0 ? Duration : double.MaxValue);
     /// <summary>"Microsoft Edge", "Spotify"… for Settings.</summary>
-    public string? PlayerName => NowPlaying is { } n ? MediaSession.DisplayName(n.AppId) : null;
+    public string? PlayerName => NowPlaying is { } n ? PlayerNameOf(n.AppId) : null;
+    /// <summary>The name of any player, by its app id: the followed one, the last one listened with, or another.</summary>
+    public string PlayerNameOf(string appId) => PlayerApp.Name(appId,
+        appId == NowPlaying?.AppId ? _playerPath : appId == _settings.LastPlayerId ? _settings.LastPlayerPath : "");
     public bool LyricsPinned => Track is { } track && _overrides[track].Lyrics != null;
     public int CachedSongs => _provider.CachedCount();
     public IReadOnlyList<string> PlayerIds => _media.AppIds;
@@ -87,6 +90,8 @@ public sealed partial class PlaybackModel
     bool _lengthCorrected;
     bool _refreshing, _refreshAgain;
     bool _stopped;
+    /// <summary>The file the followed player runs from, looked up when it appears; "" when its id doesn't lead to one.</summary>
+    string _playerPath = "";
 
     public static double Now => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
 
@@ -126,6 +131,7 @@ public sealed partial class PlaybackModel
         _media.Changed += OnMediaChanged;
         _media.DetailsChanged += OnMediaDetailsChanged;
         _settings.PropertyChanged += OnSettingChanged;
+        Changed += RememberPlayer;
         _media.Choice = _settings.PlayerChoice;
         ApplyOffset();
     }
@@ -210,6 +216,8 @@ public sealed partial class PlaybackModel
         }
 
         bool trackChanged = now.TrackId != NowPlaying?.TrackId;
+        // Each time the player appears, not only when another takes its place: it may have been updated into another folder.
+        if (now.AppId != NowPlaying?.AppId) _playerPath = PlayerApp.RunningPath(now.AppId) ?? "";
         NowPlaying = now;
         var report = new MediaClockReport(now.Position, now.PositionAt, now.IsPlaying, now.HasTimeline);
         if (_clock.Apply(report, trackChanged, DateTimeOffset.Now, Now)) change |= Change.Clock;
@@ -251,6 +259,18 @@ public sealed partial class PlaybackModel
     {
         if (change != Change.None) Changed?.Invoke(change);
         Tick();
+    }
+
+    /// <summary>
+    /// Keeps the player a song was last heard from, for opening it again: one that is playing, not one left
+    /// paused, and never a web browser.
+    /// </summary>
+    void RememberPlayer(Change change)
+    {
+        if ((change & (Change.Track | Change.Lyrics | Change.Clock)) == 0 || !IsSong || !IsPlaying || NowPlaying is not { AppId: { Length: > 0 } id } || PlayerApp.IsBrowser(id)) return;
+        // The path first: the tray panel looks at both when the id changes.
+        _settings.LastPlayerPath = _playerPath;
+        _settings.LastPlayerId = id;
     }
 
     // ---- Controls ----

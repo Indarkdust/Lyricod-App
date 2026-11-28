@@ -53,7 +53,7 @@ In Settings > Lyrics window > Sung lyrics you can change how sung words are high
 
 ### Tray panel
 
-Lyricod also runs in the system tray. Open its tray panel to control playback, show, hide or lock the lyric views, choose lyrics, or adjust the current song's timing. You can set global shortcuts for common actions in Settings > Shortcuts.
+Lyricod also runs in the system tray. Open its tray panel to control playback, show, hide or lock the lyric views, choose lyrics, or adjust the current song's timing. When nothing is playing, the panel has a button to open the player you last listened with. You can set global shortcuts for common actions in Settings > Shortcuts.
 
 <img src="assets/tray-panel.en.png" alt="Lyricod tray panel with playback controls, the two lyric views with their locks, and lyric settings" width="360">
 
@@ -62,6 +62,8 @@ Lyricod also runs in the system tray. Open its tray panel to control playback, s
 Lyricod reads playback information through Windows media controls. If a player appears there, Lyricod can usually follow it. This includes Spotify, QQ Music, NetEase Cloud Music, Apple Music, and some browser music players.
 
 When multiple players are open, Lyricod follows the one currently playing by default. You can also select a player in Settings > General.
+
+To open your music player together with Lyricod, turn on **Open the music player when Lyricod starts** in Settings > General. It opens the player you last listened with when you start Lyricod yourself, not when Lyricod starts with Windows, and not if the player is already running. A web browser is never the player it opens.
 
 Some players do not report an accurate playback position. In that case, Lyricod keeps time itself, which may cause lyrics to drift after pausing or seeking. See the NetEase Cloud Music section below for details.
 

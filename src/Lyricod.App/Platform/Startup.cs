@@ -1,3 +1,4 @@
+using Lyricod.Core;
 using Microsoft.Win32;
 
 namespace Lyricod.Platform;
@@ -7,7 +8,7 @@ static class Startup
 {
     const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
     const string Name = "Lyricod";
-    static string Command => $"\"{Environment.ProcessPath}\"";
+    static string Command => $"\"{Environment.ProcessPath}\" {BackgroundStart.Flag}";
 
     public static bool IsEnabled
     {
@@ -32,5 +33,16 @@ static class Startup
             return true;
         }
         catch (Exception) { return false; }
+    }
+
+    /// <summary>An entry without the flag gets it, whatever program it names: by the flag Lyricod knows Windows started it.</summary>
+    public static void AddFlag()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
+            if (key?.GetValue(Name) is string value && BackgroundStart.WithFlag(value) is { } flagged) key.SetValue(Name, flagged);
+        }
+        catch (Exception) { /* it stays as it was, and that start counts as the user's */ }
     }
 }

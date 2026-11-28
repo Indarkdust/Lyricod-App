@@ -56,6 +56,8 @@
                     </Grid>
                     <Grid x:Name="ProgressHost" />
                     <StackPanel x:Name="TransportHost" HorizontalAlignment="Center" />
+                    <!-- With nothing playing: opens the player a song was last heard from. -->
+                    <Button x:Name="OpenPlayerButton" HorizontalAlignment="Center" Visibility="Collapsed" Click="OnOpenPlayer" />
                 </StackPanel>
             </Border>
 

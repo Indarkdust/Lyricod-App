@@ -57,6 +57,7 @@ public partial class App : Application
         }
         // Closing a window mustn't quit a tray app.
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
+        Startup.AddFlag();
 
         // The log's errors read against this: which Lyricod, on which Windows.
         Log.Write($"Lyricod {UpdateChecker.Version}{(UpdateChecker.TestBuild is { } build ? $" (test build {build})" : "")} started on Windows {Environment.OSVersion.Version}, "
@@ -99,6 +100,18 @@ public partial class App : Application
         // After a portable update: everything is up, so the launcher can let the old copy go. If
         // anything above threw, this is never reached and the launcher puts the old copy back.
         Platform.UpdateHealth.SignalStarted();
+        if (_settings.OpenPlayerAtStart && BackgroundStart.ByUser(Environment.GetCommandLineArgs(), Platform.UpdateHealth.Pending)) OpenLastPlayer();
+    }
+
+    /// <summary>Opens the player a song was last heard from, unless it's open already.</summary>
+    void OpenLastPlayer()
+    {
+        try
+        {
+            string id = _settings!.LastPlayerId, path = _settings.LastPlayerPath;
+            if (PlayerApp.Target(id, path) is { } target && !PlayerApp.IsRunning(id, path, _model!.PlayerIds)) PlayerApp.Open(target);
+        }
+        catch (Exception e) { Log.Write(e); } // Lyricod carries on without the player
     }
 
     static string Trim(string s, int max) => s.Length <= max ? s : s[..(max - 1)] + "…";
@@ -225,7 +238,7 @@ public partial class App : Application
         try
         {
             if (Environment.ProcessPath is { } path)
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path) { UseShellExecute = false });
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(path, BackgroundStart.Flag) { UseShellExecute = false });
         }
         catch (System.ComponentModel.Win32Exception) { } // it couldn't start: this one still quits, as it would have
     }

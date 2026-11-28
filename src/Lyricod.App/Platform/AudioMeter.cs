@@ -174,34 +174,39 @@ public sealed class AudioMeter : IDisposable
     }
 
     /// <summary>Choosing the root includes browser audio children in the loopback tree.</summary>
-    public static unsafe uint? FindRootProcess(string appId)
+    public static uint? FindRootProcess(string appId)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(appId)) return null;
             string name = Path.GetFileName(appId);
             if (!name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)) name += ".exe";
-            nint snapshot = AudioNative.CreateToolhelp32Snapshot(2, 0);
-            if (snapshot == -1) return null;
-            try
-            {
-                var entry = new AudioProcessEntry { Size = (uint)sizeof(AudioProcessEntry) };
-                var matches = new Dictionary<uint, uint>();
-                if (!AudioNative.Process32First(snapshot, ref entry)) return null;
-                do
-                {
-                    string executable = new(entry.ExeFile);
-                    if (string.Equals(executable, name, StringComparison.OrdinalIgnoreCase))
-                        matches[entry.ProcessId] = entry.ParentProcessId;
-                } while (AudioNative.Process32Next(snapshot, ref entry));
-                // A session id cannot distinguish multiple independent instances of one exe.
-                foreach (uint pid in matches.Keys.Order())
-                    if (!matches.ContainsKey(matches[pid])) return pid;
-                return null;
-            }
-            finally { AudioNative.CloseHandle(snapshot); }
+            var matches = new Dictionary<uint, uint>();
+            foreach (var (id, parent, executable) in Processes())
+                if (string.Equals(executable, name, StringComparison.OrdinalIgnoreCase)) matches[id] = parent;
+            // A session id cannot distinguish multiple independent instances of one exe.
+            foreach (uint pid in matches.Keys.Order())
+                if (!matches.ContainsKey(matches[pid])) return pid;
+            return null;
         }
         catch (Exception) { return null; }
+    }
+
+    /// <summary>Every running process: its id, its parent's, and its program's file name.</summary>
+    public static unsafe List<(uint Id, uint Parent, string Name)> Processes()
+    {
+        var processes = new List<(uint, uint, string)>();
+        nint snapshot = AudioNative.CreateToolhelp32Snapshot(2, 0);
+        if (snapshot == -1) return processes;
+        try
+        {
+            var entry = new AudioProcessEntry { Size = (uint)sizeof(AudioProcessEntry) };
+            if (!AudioNative.Process32First(snapshot, ref entry)) return processes;
+            do processes.Add((entry.ProcessId, entry.ParentProcessId, new string(entry.ExeFile)));
+            while (AudioNative.Process32Next(snapshot, ref entry));
+        }
+        finally { AudioNative.CloseHandle(snapshot); }
+        return processes;
     }
 }
 

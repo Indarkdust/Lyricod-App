@@ -107,6 +107,8 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     // General
     FrameRate _frameRate = FrameRate.Balanced;
     string _playerChoice = "auto";
+    string _lastPlayerId = "", _lastPlayerPath = "";
+    bool _openPlayerAtStart;
     string _language = "";
 
     Dictionary<string, string> _shortcuts = [];
@@ -265,6 +267,12 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public FrameRate FrameRate { get => _frameRate; set => Set(ref _frameRate, value); }
     /// <summary>"auto" follows whichever player is playing; otherwise a player's app id to always follow.</summary>
     public string PlayerChoice { get => _playerChoice; set => Set(ref _playerChoice, value); }
+    /// <summary>The app id of the player a song was last heard from, or "" before the first one.</summary>
+    public string LastPlayerId { get => _lastPlayerId; set => Set(ref _lastPlayerId, value); }
+    /// <summary>The file that player ran from, or "" when its id doesn't lead to one.</summary>
+    public string LastPlayerPath { get => _lastPlayerPath; set => Set(ref _lastPlayerPath, value); }
+    /// <summary>Opens that player when the user starts Lyricod (not when Windows does).</summary>
+    public bool OpenPlayerAtStart { get => _openPlayerAtStart; set => Set(ref _openPlayerAtStart, value); }
     /// <summary>"" follows Windows; otherwise a language Lyricod ships ("en-US", "zh-Hans"). Applies after a restart.</summary>
     public string Language { get => _language; set => Set(ref _language, value); }
 

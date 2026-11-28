@@ -37,6 +37,10 @@ public sealed partial class TrayPanel : Window
     readonly ProgressLine _progress;
     readonly DispatcherQueueTimer _progressTimer;
     bool _shown;
+    /// <summary>What the Open button starts (<see cref="PlayerApp.Target"/>); null when there's no player to open.</summary>
+    string? _playerTarget;
+    /// <summary>Whether <see cref="_playerTarget"/> has been looked up since the panel opened or the last player changed.</summary>
+    bool _playerFound;
     /// <summary>When it last closed: a click on the tray icon that closed it mustn't reopen it.</summary>
     double _hiddenAt;
 
@@ -123,7 +127,31 @@ public sealed partial class TrayPanel : Window
     }
 
     void OnModelChanged(PlaybackModel.Change change) { if (_shown) Update(); }
-    void OnSettingChanged(object? sender, PropertyChangedEventArgs e) { if (_shown) Update(); }
+    void OnSettingChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (!_shown) return;
+        if (e.PropertyName == nameof(Settings.LastPlayerId)) _playerFound = false;
+        Update();
+    }
+
+    /// <summary>
+    /// Works out whether the last player can be opened, and under which name. Done once each time the panel
+    /// comes to show nothing playing, not on every <see cref="Update"/>: it asks Windows about its apps.
+    /// </summary>
+    void FindPlayer()
+    {
+        try
+        {
+            string id = _settings.LastPlayerId;
+            _playerTarget = PlayerApp.Target(id, _settings.LastPlayerPath);
+            if (_playerTarget != null) OpenPlayerButton.Content = L.Format("OpenPlayer", _model.PlayerNameOf(id));
+        }
+        catch (Exception e)
+        {
+            _playerTarget = null;
+            Log.Write(e);
+        }
+    }
 
     /// <summary>Opens above the notification area, or closes if already open.</summary>
     public void Toggle()
@@ -133,6 +161,7 @@ public sealed partial class TrayPanel : Window
             Hide();
             return;
         }
+        _playerFound = false;
         Update();
         SizeToContent();
         _shown = true;
@@ -222,6 +251,17 @@ public sealed partial class TrayPanel : Window
                 NeteaseTip.Visibility = tip;
                 statusChanged = true;
             }
+            if (track == null && !_playerFound)
+            {
+                FindPlayer();
+                _playerFound = true;
+            }
+            var open = track == null && _playerTarget != null ? Visibility.Visible : Visibility.Collapsed;
+            if (OpenPlayerButton.Visibility != open)
+            {
+                OpenPlayerButton.Visibility = open;
+                statusChanged = true;
+            }
             if (_shown && statusChanged) SizeToContent();
             LyricsIcon.Glyph = _model.LyricsPinned ? "\uE718" : "\uE8BD"; // pin, or a speech bubble
             double offset = _model.SongOffset;
@@ -297,6 +337,12 @@ public sealed partial class TrayPanel : Window
     void OnIslandTile(object sender, RoutedEventArgs e) => _settings.ShowIsland = IslandTile.IsChecked == true;
     void OnEarlier(object sender, RoutedEventArgs e) => _model.SetSongOffset(Math.Clamp(_model.SongOffset + 0.25, -10, 10));
     void OnLater(object sender, RoutedEventArgs e) => _model.SetSongOffset(Math.Clamp(_model.SongOffset - 0.25, -10, 10));
+
+    void OnOpenPlayer(object sender, RoutedEventArgs e)
+    {
+        if (_playerTarget is { } target) PlayerApp.Open(target);
+        Hide();
+    }
 
     void OnLyricsRow(object sender, RoutedEventArgs e) { Hide(); _chooseLyrics(); }
     void OnLyricsWindow(object sender, RoutedEventArgs e) { Hide(); _openLyricsWindow(); }

@@ -18,6 +18,29 @@ static partial class Win32
     [LibraryImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool CloseHandle(nint handle);
+
+    public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    public static partial nint OpenProcess(uint access, [MarshalAs(UnmanagedType.Bool)] bool inherit, uint processId);
+
+    /// <summary>The process's program file; <paramref name="size"/> is the buffer's size in characters, then the path's length.</summary>
+    [LibraryImport("kernel32.dll", EntryPoint = "QueryFullProcessImageNameW", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static unsafe partial bool QueryFullProcessImageName(nint process, uint flags, char* path, ref uint size);
+
+    /// <summary>A packaged app's id ("Family!App"); an error code (not 0) for any other process.</summary>
+    [LibraryImport("kernel32.dll")]
+    public static unsafe partial int GetApplicationUserModelId(nint process, ref uint length, char* id);
+
+    /// <summary>Whether Windows knows something by this name; the item list it hands back is freed with <see cref="Marshal.FreeCoTaskMem"/>.</summary>
+    [LibraryImport("shell32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    public static partial int SHParseDisplayName(string name, nint bindContext, out nint item, uint attributesAsked, out uint attributes);
+
+    /// <summary>The name Windows shows for an item; freed with <see cref="Marshal.FreeCoTaskMem"/>.</summary>
+    [LibraryImport("shell32.dll")]
+    public static partial int SHGetNameFromIDList(nint item, uint kind, out nint name);
+
     public const uint MOD_NOREPEAT = 0x4000;
 
     [LibraryImport("user32.dll", SetLastError = true)]

@@ -208,24 +208,6 @@ public sealed class MediaSession : IDisposable
         catch (Exception) { return null; }
     }
 
-    /// <summary>A readable name for a player's app id ("MSEdge" → "Microsoft Edge").</summary>
-    public static string DisplayName(string appId)
-    {
-        try
-        {
-            if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041)
-                && Windows.ApplicationModel.AppInfo.GetFromAppUserModelId(appId)?.DisplayInfo?.DisplayName is { Length: > 0 } name)
-                return name;
-        }
-        catch (Exception) { /* desktop apps often have no app info */ }
-        return appId switch
-        {
-            "MSEdge" => "Microsoft Edge",
-            "Chrome" => "Google Chrome",
-            _ => Path.GetFileNameWithoutExtension(appId.Split('!')[^1]),
-        };
-    }
-
     public async Task PlayPause() { if (Current is { } s) await s.TryTogglePlayPauseAsync(); }
     public async Task Next() { if (Current is { } s) await s.TrySkipNextAsync(); }
     public async Task Previous() { if (Current is { } s) await s.TrySkipPreviousAsync(); }

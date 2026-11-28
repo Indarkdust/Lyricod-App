@@ -43,4 +43,29 @@ public class SettingsTests
         Assert.False(JsonSerializer.Deserialize<Lyricod.Settings>(JsonSerializer.Serialize(settings))!.LookUpOtherPlayers);
         Assert.Equal([nameof(Lyricod.Settings.LookUpOtherPlayers)], properties);
     }
+
+    [Fact]
+    public void TheLastPlayerRoundTripsAndOpeningItAtStartIsOffUntilChosen()
+    {
+        var settings = new Lyricod.Settings();
+        Assert.Equal("", settings.LastPlayerId);
+        Assert.Equal("", settings.LastPlayerPath);
+        Assert.False(settings.OpenPlayerAtStart);
+        // A file without them reads as the same.
+        Assert.False(JsonSerializer.Deserialize<Lyricod.Settings>("""{"PlayerChoice":"cloudmusic.exe"}""")!.OpenPlayerAtStart);
+        Assert.Equal("", JsonSerializer.Deserialize<Lyricod.Settings>("{}")!.LastPlayerId);
+
+        var properties = new List<string?>();
+        settings.PropertyChanged += (_, e) => properties.Add(e.PropertyName);
+        settings.LastPlayerPath = @"C:\Program Files\NetEase\CloudMusic\cloudmusic.exe";
+        settings.LastPlayerId = "cloudmusic.exe";
+        settings.LastPlayerId = "cloudmusic.exe";
+        settings.OpenPlayerAtStart = true;
+        Assert.Equal([nameof(Lyricod.Settings.LastPlayerPath), nameof(Lyricod.Settings.LastPlayerId), nameof(Lyricod.Settings.OpenPlayerAtStart)], properties);
+
+        var saved = JsonSerializer.Deserialize<Lyricod.Settings>(JsonSerializer.Serialize(settings))!;
+        Assert.Equal("cloudmusic.exe", saved.LastPlayerId);
+        Assert.Equal(@"C:\Program Files\NetEase\CloudMusic\cloudmusic.exe", saved.LastPlayerPath);
+        Assert.True(saved.OpenPlayerAtStart);
+    }
 }
