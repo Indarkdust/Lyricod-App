@@ -7,7 +7,7 @@ using Lyricod.Core;
 
 namespace Lyricod;
 
-/// <summary>Default hangs from the top centre of the main display; Floating is fully rounded and can be dragged anywhere.</summary>
+/// <summary>Default hangs from the top centre of the main display; Floating is fully rounded and can be moved anywhere.</summary>
 public enum IslandStyle { Default, Floating }
 
 /// <summary>How the island looks: Classic black, or Lyricod Glass (see-through, with a shine along its edge).</summary>
@@ -57,7 +57,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
 
     // Desktop strip
     bool _showDesktopLyrics = true;
-    bool _desktopLocked = true;
     double _desktopFontSize = 30;
     string _sungColor = "#8CD9FF";
     SecondLine _secondLine = SecondLine.TranslationOrNext;
@@ -66,7 +65,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     // Lyricod Island
     bool _showIsland = true;
     IslandStyle _islandStyle = IslandStyle.Default;
-    bool _islandLocked = true;
     int? _islandX, _islandY, _islandDisplayX, _islandDisplayY;
     IslandTheme _islandTheme = IslandTheme.Classic;
     int _glassTransparency = GlassLook.Lifelike.Transparency;
@@ -126,8 +124,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     List<LyricLanguage> _pronunciationLanguages = [LyricLanguage.Japanese, LyricLanguage.Korean];
 
     public bool ShowDesktopLyrics { get => _showDesktopLyrics; set => Set(ref _showDesktopLyrics, value); }
-    /// <summary>Locked: clicks pass through the strip. Unlocked: it can be dragged.</summary>
-    public bool DesktopLocked { get => _desktopLocked; set => Set(ref _desktopLocked, value); }
     public double DesktopFontSize { get => _desktopFontSize; set => Set(ref _desktopFontSize, Math.Clamp(value, 18, 48)); }
     /// <summary>"#RRGGBB".</summary>
     public string SungColor { get => _sungColor; set => Set(ref _sungColor, value); }
@@ -139,8 +135,6 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     /// <summary>The pill at the top centre of the screen (or where it floats).</summary>
     public bool ShowIsland { get => _showIsland; set => Set(ref _showIsland, value); }
     public IslandStyle IslandStyle { get => _islandStyle; set => Set(ref _islandStyle, Enum.IsDefined(value) ? value : IslandStyle.Default); }
-    /// <summary>Floating only. Locked: the island works as usual. Unlocked: it takes clicks and can be dragged.</summary>
-    public bool IslandLocked { get => _islandLocked; set => Set(ref _islandLocked, value); }
     /// <summary>Where the floating island was dragged to (screen pixels, see <see cref="Core.IslandPlacement"/>),
     /// or null for the top centre.</summary>
     public int? IslandX { get => _islandX; set => Set(ref _islandX, value); }

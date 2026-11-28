@@ -36,6 +36,12 @@ public sealed partial class SettingsWindow : Window
     /// <summary>Lets screenshots see the liquid glass island for a few seconds.</summary>
     public Action? ShowIslandInScreenshots { get; set; }
 
+    /// <summary>Lets a floating island that hides under the pointer be dragged, once.</summary>
+    public Action? MoveIsland { get; set; }
+
+    /// <summary>An island reset to top centre no longer waits to be dragged.</summary>
+    public Action? CancelMoveIsland { get; set; }
+
     static readonly string[] PresetColours = ["#8CD9FF", "#FFD36E", "#FF8FB1", "#9BF59B", "#FFFFFF"];
 
     public SettingsWindow(Settings settings, PlaybackModel model, Action openLyricsWindow, Action openChooseLyrics, GlobalShortcuts shortcuts, UpdateChecker updates, SettingsPane pane = SettingsPane.General)

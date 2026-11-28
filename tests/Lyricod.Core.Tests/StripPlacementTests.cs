@@ -22,4 +22,28 @@ public class StripPlacementTests
         foreach (int step in new[] { 10, 10, 10, -10, -10, -10 }) y = StripPlacement.Top(y, step, 0); // a slider dragged up and back
         Assert.Equal(0, y);
     }
+
+    // A 900 strip with a 24 handle, 6 past the line's end.
+    static double Handle(double end, double from, double to) => StripPlacement.HandleLeft(end, 24, 6, 900, from, to);
+
+    [Fact]
+    public void TheHandleSitsPastTheLinesEndOnAStripThatIsAllOnScreen()
+    {
+        Assert.Equal(656, Handle(650, -510, 1410));
+        // A line as wide as the strip takes: the handle stays on the strip, over the line's end.
+        Assert.Equal(876, Handle(876, -510, 1410));
+        Assert.Equal(876, Handle(900, 0, 900));
+    }
+
+    [Fact]
+    public void TheHandleStaysOnScreenWhenTheStripHangsPastItsEdge()
+    {
+        // The screen ends 700 into the strip: room after the line, then none, then a line that runs off it.
+        Assert.Equal(656, Handle(650, -1220, 700));
+        Assert.Equal(676, Handle(690, -1220, 700));
+        Assert.Equal(676, Handle(760, -1220, 700));
+        // The screen starts 600 into the strip, past the main line's end: a wider row under it still shows.
+        Assert.Equal(600, Handle(520, 600, 2520));
+        Assert.Equal(656, Handle(650, 600, 2520));
+    }
 }

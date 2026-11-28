@@ -1,5 +1,6 @@
 using Lyricod.Core;
 using Lyricod.Platform;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -17,29 +18,36 @@ sealed partial class Grip : Grid
 
 /// <summary>
 /// The floating style (Settings › Lyricod Island › Island style): rounded on all four corners and
-/// left where it was dragged. Unlocked, it takes clicks and moves with the pointer; locked, it
-/// behaves like the default island, and its open mini player, held a moment, carries it. Near a screen edge
+/// left where it was moved to. What moves it goes by what the pointer does to it: its open mini player,
+/// held a moment, carries it; one kept as it is shows a handle under a resting pointer; one that hides
+/// under the pointer can be dragged whole, once, after Move in Settings. Near a screen edge
 /// it grows away from it (see <see cref="IslandPlacement"/>).
 /// </summary>
 public sealed partial class IslandWindow
 {
     bool Floating => _settings.IslandStyle == IslandStyle.Floating;
 
-    /// <summary>Floating and unlocked: takes clicks and can be dragged, with no hover action.</summary>
-    bool Movable => Floating && !_settings.IslandLocked;
+    /// <summary>
+    /// Waiting to be dragged, after Move in Settings (see <see cref="BeginMove"/>): it takes clicks, with no
+    /// hover action, until it has been dragged once. Never saved.
+    /// </summary>
+    bool Movable { get; set; }
 
-    /// <summary>The pointer is moving the island: it stays as it is, and isn't put back at its saved spot, until it's let go.</summary>
-    bool _dragging;
+    /// <summary>Kept as it is under the pointer, a floating island has no mini player to hold: a handle moves it.</summary>
+    bool HasHandle => Floating && _settings.IslandHover == IslandHover.Nothing;
 
-    /// <summary>How long the open mini player is held before it carries a locked island: a slip on the way to a button mustn't move it.</summary>
+    /// <summary>How long the open mini player is held before it carries the island: a slip on the way to a button mustn't move it.</summary>
     const double HoldSeconds = 0.3;
-    /// <summary>How far the pointer may stray meanwhile, in view pixels. Further, sooner, and it was no hold.</summary>
-    const double HoldSlop = 6;
-    /// <summary>A press on the open mini player: which pointer, and where in the window (the pill itself shifts when a line changes its width).</summary>
-    (uint Id, Windows.Foundation.Point From)? _hold;
-    /// <summary>Held long enough, the press carries the island: where the pointer and the window were then, in screen pixels.</summary>
-    (int X, int Y, PointInt32 Window)? _carry;
-    static readonly InputCursor MoveCursor = InputSystemCursor.Create(InputSystemCursorShape.SizeAll);
+    /// <summary>Gap between the pill and its handle, in view pixels.</summary>
+    const double HandleGap = 6;
+
+    readonly OverlayDrag _drag;
+    readonly MoveHandle _handle;
+    readonly HandleReveal _reveal = new();
+    /// <summary>The pointer is on the handle: the window takes clicks.</summary>
+    bool _handleHot;
+    /// <summary>Where the pointer's travel last had the window in this carry, before snapping.</summary>
+    PointInt32? _wanted;
 
     /// <summary>The widest and tallest the pill gets (a long line, the mini player), in view pixels.</summary>
     double MaxPillWidth => Math.Max(2 * SideWidth + MaxText, ExpandedMinWidth);
@@ -55,10 +63,11 @@ public sealed partial class IslandWindow
                 ?? (_settings.IslandDisplayX == null ? DisplayArea.GetFromPoint(new PointInt32(sx - 1, sy - 1), DisplayAreaFallback.None) : null)
             : null;
         var area = (display ?? DisplayArea.Primary).WorkArea;
+        var screen = new ScreenRect(area.X, area.Y, area.Width, area.Height);
         _screenWidth = area.Width / k;
-        double x = display != null ? _settings.IslandX!.Value : area.X + area.Width / 2.0;
+        double x = display != null ? IslandPlacement.Across(_settings.IslandX!.Value, screen) : IslandPlacement.CentreLine(screen);
         double y = display != null ? _settings.IslandY!.Value : area.Y + 16 * k;
-        var anchors = IslandPlacement.Anchors(x, y, new ScreenRect(area.X, area.Y, area.Width, area.Height), MaxPillWidth * k, MaxPillHeight * k);
+        var anchors = IslandPlacement.Anchors(x, y, screen, MaxPillWidth * k, MaxPillHeight * k);
         Pill.HorizontalAlignment = anchors.X switch
         {
             IslandAnchorX.Left => HorizontalAlignment.Left,
@@ -94,107 +103,191 @@ public sealed partial class IslandWindow
     }
 
     /// <summary>
-    /// Unlocked (floating only): the island takes clicks and turns dark grey (see <see cref="ApplyTheme"/>),
-    /// so it's clear it can be dragged. Locked: click-through until the pointer is over it.
+    /// Waiting to be dragged, the island takes clicks and turns dark grey (see <see cref="ApplyTheme"/>), so
+    /// it's clear it can be. Otherwise it's click-through until the pointer opens it or is on its handle.
     /// </summary>
     void ApplyMoveMode()
     {
+        Movable &= Floating && _settings.IslandHover == IslandHover.Hide;
+        _drag.End();
+        HideHandle();
         SetHovered(false);
         _overlay.SetClickThrough(!Movable);
+        _grip.Cursor = Movable ? OverlayDrag.Cursor : null;
         ApplyTheme();
+    }
+
+    /// <summary>
+    /// Move in Settings, for an island that hides under the pointer and so has nothing to hold: all of it can
+    /// be dragged, once, until it hides or is reset, or the hover action or style changes.
+    /// </summary>
+    public void BeginMove()
+    {
+        try
+        {
+            // Not showing, there's nothing to drag: it mustn't come up later still waiting.
+            if (_closed || !_shown || Movable || !Floating || _settings.IslandHover != IslandHover.Hide) return;
+            Movable = true;
+            ApplyMoveMode();
+        }
+        catch (Exception e) { Log.Write(e); }
+    }
+
+    /// <summary>No longer waiting to be dragged: back to click-through and its hover action.</summary>
+    void EndMove()
+    {
+        if (!Movable) return;
+        Movable = false;
+        ApplyMoveMode();
+    }
+
+    /// <summary>Reset to top centre in Settings, which changes nothing for an island already there.</summary>
+    public void CancelMove()
+    {
+        try { if (!_closed) EndMove(); }
+        catch (Exception e) { Log.Write(e); }
     }
 
     void OnPillPressed(object sender, PointerRoutedEventArgs e)
     {
         try
         {
-            if (Movable) { Drag(); return; }
-            // Locked, the open mini player is a handle too: its buttons and progress bar keep their own presses.
-            var point = e.GetCurrentPoint(null);
-            if (_hold != null || !Floating || !_expanded || !point.Properties.IsLeftButtonPressed || !_grip.CapturePointer(e.Pointer)) return;
-            _hold = (e.Pointer.PointerId, point.Position);
-            _holdTimer.Start();
+            if (Movable) _drag.Press(_grip, e);
+            // The open mini player is a handle too, once held: its buttons and progress bar keep their own presses.
+            else if (Floating && _expanded) _drag.Press(_grip, e, HoldSeconds);
         }
         catch (Exception) { /* the screen or window went away */ }
     }
 
-    /// <summary>The hold is long enough: from here the island follows the pointer.</summary>
-    void BeginCarry()
+    void OnHandlePressed(object sender, PointerRoutedEventArgs e)
     {
-        if (_hold == null || !Floating || !_expanded || !Win32.GetCursorPos(out var p)) return;
-        _carry = (p.X, p.Y, AppWindow.Position);
-        _dragging = true;
-        _grip.Cursor = MoveCursor;
+        try { _drag.Press(_handle, e); }
+        catch (Exception) { /* the screen or window went away */ }
+    }
+
+    /// <summary>From here the island follows the pointer.</summary>
+    void OnDragStarted()
+    {
+        _wanted = null;
+        _grip.Cursor = OverlayDrag.Cursor;
         // It's about to come over other parts of the screen: the glass follows at its full rate from the start.
-        _liquid?.Wake();
+        // Queued, as for a window coming forward: a carry can begin inside the press itself.
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+        {
+            try { _liquid?.Wake(); }
+            catch (Exception e) { Log.Write(e); }
+        });
     }
 
     /// <summary>
-    /// Carried, the window goes where the pointer has gone since the hold was long enough, by the screen's
-    /// own measure (the window's would shift with it). Before that, straying drops the press.
+    /// Carried, the window goes where the pointer takes it, except across while the centre of the pill as it
+    /// will rest is near the centre line of the screen under it: there it sits on the line, where a reset
+    /// island sits. The pointer's travel is still counted from the press, so it leaves the line without a jump.
     /// </summary>
-    void OnPillMoved(object sender, PointerRoutedEventArgs e)
+    void OnDragMoved(PointInt32 to)
     {
-        try
-        {
-            if (_hold is not { } hold || e.Pointer.PointerId != hold.Id) return;
-            var point = e.GetCurrentPoint(null);
-            if (!point.Properties.IsLeftButtonPressed) { EndHold(e.Pointer); return; }
-            if (_carry is { } carry)
-            {
-                if (Win32.GetCursorPos(out var p)) AppWindow.Move(new PointInt32(carry.Window.X + p.X - carry.X, carry.Window.Y + p.Y - carry.Y));
-                return;
-            }
-            if (Math.Abs(point.Position.X - hold.From.X) > HoldSlop || Math.Abs(point.Position.Y - hold.From.Y) > HoldSlop) EndHold(e.Pointer);
-        }
-        catch (Exception) { /* the screen or window went away */ }
+        _wanted = to;
+        var from = AppWindow.Position;
+        var (left, top, width, height) = RestingBounds();
+        double centre = to.X + left - from.X + width / 2, middle = to.Y + top - from.Y + height / 2;
+        var area = DisplayArea.GetFromPoint(new PointInt32((int)Math.Round(centre), (int)Math.Round(middle)), DisplayAreaFallback.Nearest).WorkArea;
+        double snapped = IslandPlacement.SnapCentre(centre, new ScreenRect(area.X, area.Y, area.Width, area.Height),
+            IslandPlacement.SnapRange * _overlay.Scale);
+        AppWindow.Move(new PointInt32((int)Math.Round(to.X + snapped - centre), to.Y));
     }
 
-    void OnPillLetGo(object sender, PointerRoutedEventArgs e)
+    /// <summary>
+    /// Let go: a moved island is left, and saved, where it is. One press is the one move: dropped where it
+    /// started, on the centre line say, it's no longer waiting to be dragged either.
+    /// </summary>
+    void OnDragEnded(bool moved)
     {
-        try { if (_hold is { } hold && e.Pointer.PointerId == hold.Id) EndHold(e.Pointer); }
-        catch (Exception) { /* the screen or window went away */ }
-    }
-
-    /// <summary>The button is up, or the press is no longer a hold: a carried island is left, and saved, where it is.</summary>
-    void EndHold(Pointer pointer)
-    {
-        if (_hold == null) return;
-        bool carried = _carry is { } carry && (AppWindow.Position.X != carry.Window.X || AppWindow.Position.Y != carry.Window.Y);
-        _hold = null;
-        _carry = null;
-        _dragging = false;
-        _holdTimer.Stop();
         _grip.Cursor = null;
-        _grip.ReleasePointerCapture(pointer);
-        if (carried) Dropped();
+        if (_closed) return;
+        if (moved) Dropped();
+        EndMove();
     }
 
-    void Drag()
-    {
-        _dragging = true;
-        try
-        {
-            // Windows moves the window as if its title bar were dragged, and returns once the button is let go.
-            Win32.ReleaseCapture();
-            Win32.SendMessage(_overlay.Handle, Win32.WM_NCLBUTTONDOWN, Win32.HTCAPTION, 0);
-        }
-        finally { _dragging = false; }
-        Dropped();
-    }
-
+    /// <summary>Saved where it was let go.</summary>
     void Dropped()
     {
-        if (_closed) return;
+        // A line that came since the pointer last moved may have changed the pill's width, and so the centre
+        // of a pill held by a side: it's snapped again, by the width it's saved with.
+        if (_wanted is { } to) OnDragMoved(to);
         SaveSpot();
         // The pointer was on it all the way: nothing it did meanwhile is a gesture or a leaving.
-        _lastInside = PlaybackModel.Now;
+        double now = PlaybackModel.Now;
+        _lastInside = now;
         _trail.Clear();
+        if (_handle.Shown)
+        {
+            // Saving placed the window afresh; the handle keeps to the pill, and stays its moment from now,
+            // not from the press, should it have come out from under the pointer.
+            PlaceHandle();
+            _reveal.Update(false, true, now);
+        }
     }
 
     /// <summary>
-    /// The pill's bounds with the mini player closed, in physical pixels. Carried, it's dropped open, and
-    /// the island's place is where it closes to: the open pill's own bounds would move an island held
+    /// Shows the handle once the pointer has rested on the pill, and takes clicks only while the pointer is on
+    /// the handle. Returns whether it is.
+    /// </summary>
+    bool UpdateHandle(Win32.POINT pointer, bool overPill, double now)
+    {
+        if (!HasHandle) return false;
+        var origin = AppWindow.Position;
+        double k = _overlay.Scale;
+        bool onHandle = _handle.Shown && _handle.Holds((pointer.X - origin.X) / k, (pointer.Y - origin.Y) / k);
+        bool show = _reveal.Update(overPill, onHandle, now);
+        // Placed as it comes up. After that it keeps to the pill's end only under a pointer at rest on the
+        // pill: one on its way to the handle finds it where it was, whatever line has come meanwhile.
+        bool resting = overPill && _trail.Count > 0 && _trail[^1].X == pointer.X && _trail[^1].Y == pointer.Y;
+        if (show && !onHandle && (resting || !_handle.Shown)) PlaceHandle();
+        _handle.Show(show);
+        bool hot = show && onHandle;
+        if (hot != _handleHot)
+        {
+            _handleHot = hot;
+            _overlay.SetClickThrough(!hot);
+        }
+        return hot;
+    }
+
+    /// <summary>
+    /// Just past the pill's trailing end, level with its middle; before its leading end when there's no room
+    /// after it; over its bars when there's none either side, or the window is cut to the pill's shape.
+    /// </summary>
+    void PlaceHandle()
+    {
+        double k = _overlay.Scale, size = MoveHandle.Size;
+        var (left, top, width, height) = PillBounds();
+        var origin = AppWindow.Position;
+        double start = (left - origin.X) / k, end = start + width / k, window = AppWindow.Size.Width / k;
+        // Room is what the widest layout takes up: that much is kept on screen (see IslandPlacement).
+        double from = Pill.HorizontalAlignment switch
+        {
+            HorizontalAlignment.Left => 0,
+            HorizontalAlignment.Right => window - MaxPillWidth,
+            _ => (window - MaxPillWidth) / 2,
+        };
+        double to = from + MaxPillWidth;
+        if (_shaped) (from, to) = (start, end);
+        double x = IslandPlacement.HandleLeft(start, end, size, HandleGap, from, to, inset: (CoverInset + CoverSize / 2) * LayoutScale - size / 2);
+        _handle.MoveTo(x, (top - origin.Y) / k + (height / k - size) / 2);
+    }
+
+    void HideHandle()
+    {
+        _reveal.Reset();
+        _handle.Show(false);
+        if (!_handleHot) return;
+        _handleHot = false;
+        _overlay.SetClickThrough(true);
+    }
+
+    /// <summary>
+    /// The pill's bounds with the mini player closed, in physical pixels. Carried by its player, it's dropped
+    /// open, and the island's place is where it closes to: the open pill's own bounds would move an island held
     /// by its bottom or a side to wherever its player happened to reach.
     /// </summary>
     (double Left, double Top, double Width, double Height) RestingBounds()

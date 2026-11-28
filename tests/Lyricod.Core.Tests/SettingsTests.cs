@@ -28,6 +28,23 @@ public class SettingsTests
     }
 
     [Fact]
+    public void AFileFromWhenTheViewsHadLocksStillLoads()
+    {
+        // Their unlock switches are gone; what was saved beside them is read as before.
+        var settings = Lyricod.Settings.Read("""
+            {"ShowDesktopLyrics":true,"DesktopLocked":false,"DesktopX":120,"DesktopY":900,
+             "IslandStyle":"Floating","IslandLocked":false,"IslandX":640,"IslandY":48,"IslandHover":"Nothing"}
+            """)!;
+        Assert.Equal(120, settings.DesktopX);
+        Assert.Equal(900, settings.DesktopY);
+        Assert.Equal(Lyricod.IslandStyle.Floating, settings.IslandStyle);
+        Assert.Equal(640, settings.IslandX);
+        Assert.Equal(48, settings.IslandY);
+        Assert.Equal(Lyricod.IslandHover.Nothing, settings.IslandHover);
+        Assert.DoesNotContain("Locked", JsonSerializer.Serialize(settings));
+    }
+
+    [Fact]
     public void OldSettingsKeepLookupEnabled()
     {
         Assert.True(JsonSerializer.Deserialize<Lyricod.Settings>("{}")!.LookUpOtherPlayers);

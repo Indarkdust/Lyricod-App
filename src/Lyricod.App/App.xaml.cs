@@ -163,6 +163,8 @@ public partial class App : Application
             {
                 Restart = Restart,
                 ShowIslandInScreenshots = () => _island?.ShowInScreenshots(),
+                MoveIsland = () => _island?.BeginMove(),
+                CancelMoveIsland = () => _island?.CancelMove(),
             };
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
         }

@@ -52,8 +52,6 @@ static partial class Win32
     public static partial bool UnregisterHotKey(nint hwnd, int id);
 
     public const int LWA_ALPHA = 0x2;
-    public const int WM_NCLBUTTONDOWN = 0xA1;
-    public const int HTCAPTION = 2;
 
     [LibraryImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -69,6 +67,15 @@ static partial class Win32
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetCursorPos(out POINT point);
+
+    /// <summary>The four-way move cursor (IDC_SIZEALL).</summary>
+    public const int MoveCursor = 32646;
+
+    [LibraryImport("user32.dll", EntryPoint = "LoadCursorW")]
+    public static partial nint LoadCursor(nint instance, nint name);
+
+    [LibraryImport("user32.dll")]
+    public static partial nint SetCursor(nint cursor);
 
     [LibraryImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -102,13 +109,6 @@ static partial class Win32
         GetClientRect(hwnd, out var inner);
         return (inner.Right, inner.Bottom);
     }
-
-    [LibraryImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool ReleaseCapture();
-
-    [LibraryImport("user32.dll", EntryPoint = "SendMessageW")]
-    public static partial nint SendMessage(nint hwnd, int msg, nint wParam, nint lParam);
 
     const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
     const int DWMWA_BORDER_COLOR = 34;
@@ -218,7 +218,7 @@ static partial class Win32
     [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW")]
     private static partial nint SetWindowLongPtr(nint hwnd, int index, nint value);
 
-    /// <summary>Sets the extended style and nothing else: a frame refresh can activate the window and take focus (the tray panel closed when its lock was clicked).</summary>
+    /// <summary>Sets the extended style and nothing else: a frame refresh can activate the window and take focus from what the user is in.</summary>
     public static void SetExtendedStyle(nint hwnd, long style) => SetWindowLongPtr(hwnd, GWL_EXSTYLE, (nint)style);
 
     [LibraryImport("gdi32.dll")]

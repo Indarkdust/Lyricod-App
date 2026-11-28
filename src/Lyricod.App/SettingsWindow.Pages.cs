@@ -57,10 +57,9 @@ public sealed partial class SettingsWindow
     void Desktop()
     {
         Card(L.Get("ShowDesktopLyrics"), null, Toggle(nameof(Settings.ShowDesktopLyrics), () => _settings.ShowDesktopLyrics, v => _settings.ShowDesktopLyrics = v));
-        Card(L.Get("LockDesktopLyrics"), L.Get("LockDetail"), Toggle(nameof(Settings.DesktopLocked), () => _settings.DesktopLocked, v => _settings.DesktopLocked = v));
         var reset = new Button { Content = L.Get("ResetPosition") };
         reset.Click += (_, _) => { _settings.DesktopX = null; _settings.DesktopY = null; };
-        Card(L.Get("PositionLabel"), null, reset);
+        Card(L.Get("PositionLabel"), L.Get("MoveDesktopDetail"), reset);
 
         Heading(L.Get("AppearanceHeading"));
         Card(L.Get("TextSize"), null, TextSize());
@@ -102,9 +101,24 @@ public sealed partial class SettingsWindow
         var floating = Fold(L.Get("FoldFloating"), null, () =>
         {
             var resetIsland = new Button { Content = L.Get("ResetIslandPosition") };
-            resetIsland.Click += (_, _) => { _settings.IslandX = null; _settings.IslandY = null; };
-            Card(L.Get("LockIsland"), L.Get("LockIslandDetail"), Toggle(nameof(Settings.IslandLocked), () => _settings.IslandLocked, v => _settings.IslandLocked = v));
-            Card(L.Get("PositionLabel"), null, resetIsland);
+            resetIsland.Click += (_, _) => { _settings.IslandX = null; _settings.IslandY = null; CancelMoveIsland?.Invoke(); };
+            // An island that hides under the pointer has nothing to drag it by until this is pressed.
+            var move = new Button { Content = L.Get("MoveIsland") };
+            move.Click += (_, _) => MoveIsland?.Invoke();
+            var how = Card(L.Get("PositionLabel"), "", Row(move, resetIsland))!;
+            // What moves it goes by what the pointer does to it.
+            void SyncMove()
+            {
+                move.Visibility = _settings.IslandHover == IslandHover.Hide ? Visibility.Visible : Visibility.Collapsed;
+                how.Text = L.Get(_settings.IslandHover switch
+                {
+                    IslandHover.Hide => "MoveIslandByButtonDetail",
+                    IslandHover.Nothing => "MoveIslandByHandleDetail",
+                    _ => "MoveIslandByPlayerDetail",
+                });
+            }
+            Watch(nameof(Settings.IslandHover), SyncMove);
+            SyncMove();
         });
         void SyncFloating() => floating.Visibility = _settings.IslandStyle == IslandStyle.Floating ? Visibility.Visible : Visibility.Collapsed;
         Watch(nameof(Settings.IslandStyle), SyncFloating);
@@ -113,7 +127,7 @@ public sealed partial class SettingsWindow
             (IslandHover.Expand, L.Get("HoverExpand")), (IslandHover.Hide, L.Get("HoverHide")), (IslandHover.Nothing, L.Get("HoverNothing")),
             (IslandHover.ByDirection, L.Get("HoverByDirection"))))!;
         // The line under it explains the gesture, only while "by direction" is chosen. The default
-        // island only pulls down; a floating one pulls either way.
+        // island only pulls down; a floating one pulls the way its mini player opens.
         void SyncHoverDetail()
         {
             hoverDetail.Visibility = _settings.IslandHover == IslandHover.ByDirection ? Visibility.Visible : Visibility.Collapsed;

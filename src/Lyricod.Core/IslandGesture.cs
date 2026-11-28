@@ -1,10 +1,13 @@
 namespace Lyricod.Core;
 
+/// <summary>The way the mini player opens, and so the way the pull goes.</summary>
+public enum IslandPull { Down, Up }
+
 /// <summary>
 /// The move that expands a hide-on-hover island, like pulling down a shade: the pointer sweeps
-/// sideways, then pulls down (up or down for a floating island) over the island. The pull may start
-/// inside and run out past the edge. Anything else hides the island, so brushing past never opens
-/// the mini player.
+/// sideways, then pulls over the island the way its mini player opens (up for a floating island near
+/// the bottom of the screen). The pull may start inside and run out past the edge. Anything else
+/// hides the island, so brushing past never opens the mini player.
 /// </summary>
 public static class IslandGesture
 {
@@ -16,10 +19,10 @@ public static class IslandGesture
 
     /// <param name="path">Where the pointer has been lately, oldest first, ending where it is now (screen pixels).</param>
     /// <param name="island">The island's bounds on screen.</param>
+    /// <param name="direction">The way the pull has to go.</param>
     /// <param name="scale">The display's scale: pixel distances grow with it.</param>
-    /// <param name="downOnly">Only a pull down counts (the default island hangs from the screen's top edge, like a shade).</param>
     public static bool IsSweepThenPull(IReadOnlyList<(double X, double Y)> path, (double Left, double Top, double Width, double Height) island,
-        double scale = 1, bool downOnly = false)
+        IslandPull direction, double scale = 1)
     {
         if (path.Count < 3) return false;
         double sweep = MinSweep * scale, pull = MinPull * scale, slack = 6 * scale;
@@ -28,7 +31,7 @@ public static class IslandGesture
         {
             var c = path[corner];
             // The pull: far enough, the right way, and more up or down than sideways (hands curve)...
-            if (downOnly && end.Y < c.Y) continue;
+            if (direction == IslandPull.Down ? end.Y < c.Y : end.Y > c.Y) continue;
             double pullX = Math.Abs(end.X - c.X), pullY = Math.Abs(end.Y - c.Y);
             if (pullY < pull || pullX > Math.Max(slack, pullY)) continue;
             // ...over the island: it passes through the island's height within its width.

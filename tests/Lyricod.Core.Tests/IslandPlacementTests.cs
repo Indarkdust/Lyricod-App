@@ -87,4 +87,100 @@ public class IslandPlacementTests
         Assert.Equal((-500.0, 50.0), IslandPlacement.Origin(100, 50, (IslandAnchorX.Right, IslandAnchorY.Top), 600, 160));
         Assert.Equal((-200.0, -110.0), IslandPlacement.Origin(100, 50, (IslandAnchorX.Centre, IslandAnchorY.Bottom), 600, 160));
     }
+
+    [Theory]
+    [InlineData(950, 960)]   // coming from the left
+    [InlineData(968.5, 960)] // coming from the right
+    [InlineData(960, 960)]
+    [InlineData(948, 960)]   // at the edge of the range it still sits on the centre
+    [InlineData(972, 960)]
+    [InlineData(947.9, 947.9)] // past it, the island is where the pointer has it
+    [InlineData(972.1, 972.1)]
+    [InlineData(300, 300)]
+    public void ADraggedIslandSitsOnItsScreensCentreLineWhileNearIt(double centre, double expected) =>
+        Assert.Equal(expected, IslandPlacement.SnapCentre(centre, Screen, IslandPlacement.SnapRange));
+
+    [Fact]
+    public void TheCentreLineIsThatOfTheScreenTheIslandIsOn()
+    {
+        // A second screen to the right of the main one, and one to its left.
+        var right = new ScreenRect(1920, 0, 2560, 1400);
+        Assert.Equal(3200, IslandPlacement.SnapCentre(3190, right, 12));
+        Assert.Equal(3200, IslandPlacement.SnapCentre(3212, right, 12));
+        Assert.Equal(3213, IslandPlacement.SnapCentre(3213, right, 12));
+        var left = new ScreenRect(-1280, 0, 1280, 984);
+        Assert.Equal(-640, IslandPlacement.SnapCentre(-630, left, 12));
+        // The main screen's centre line means nothing to an island on another screen.
+        Assert.Equal(960, IslandPlacement.SnapCentre(960, right, 12));
+        // An odd width's centre line falls between two pixels; the island's own centre can too.
+        Assert.Equal(683.5, IslandPlacement.SnapCentre(690, new ScreenRect(0, 0, 1367, 768), 12));
+    }
+
+    [Fact]
+    public void TheRangeGrowsWithTheDisplayScale()
+    {
+        // 12 view pixels are 18 at 150 %.
+        Assert.Equal(960, IslandPlacement.SnapCentre(945, Screen, IslandPlacement.SnapRange * 1.5));
+        Assert.Equal(945, IslandPlacement.SnapCentre(945, Screen, IslandPlacement.SnapRange));
+    }
+
+    [Theory]
+    // The pill's centre is half a pixel from its window's edge, so half a pixel off the line, either side.
+    [InlineData(0, 1366, 301, 150.5, 683)]
+    [InlineData(0, 1366, 300, 347.5, 683)]
+    // An odd width's line is between two pixels: neither is the line, and either is saved as it.
+    [InlineData(0, 1367, 301, 278.5, 684)]
+    [InlineData(0, 1367, 300, 278, 684)]
+    [InlineData(-1367, 1367, 300, 278, -684)]
+    public void AnIslandDroppedOnTheCentreLineComesBackWhereAResetOneSits(double areaLeft, double areaWidth, double pillWidth, double centreInWindow, int saved)
+    {
+        var area = new ScreenRect(areaLeft, 0, areaWidth, 728);
+        double line = IslandPlacement.CentreLine(area);
+        // Carried onto the line, the window sits on a whole pixel.
+        double centre = Math.Round(line - centreInWindow) + centreInWindow;
+        var (x, _) = IslandPlacement.Spot(new(centre - pillWidth / 2, 16, pillWidth, 34), area, MaxWidth, MaxHeight);
+        Assert.Equal(saved, x);
+        // Placed by the line itself, as a reset island is.
+        Assert.Equal(line, IslandPlacement.Across(x, area));
+    }
+
+    [Fact]
+    public void OnlyAPointOnTheCentreLineIsReadAsTheLine()
+    {
+        var even = new ScreenRect(0, 0, 1366, 728);
+        Assert.Equal(682, IslandPlacement.Across(682, even));
+        Assert.Equal(684, IslandPlacement.Across(684, even));
+        var odd = new ScreenRect(0, 0, 1367, 728);
+        Assert.Equal(683.5, IslandPlacement.Across(683, odd));
+        Assert.Equal(682, IslandPlacement.Across(682, odd));
+        Assert.Equal(685, IslandPlacement.Across(685, odd));
+        // Dropped past the snap range, the pill's own centre is saved.
+        Assert.Equal(696, IslandPlacement.Spot(new(545.6, 16, 300, 34), even, MaxWidth, MaxHeight).X);
+    }
+
+    [Fact]
+    public void TheHandleSitsPastThePillsEndWhereThereIsRoom()
+    {
+        // A 300 pill in the middle of 536 of room: a 24 handle, 6 past its end.
+        Assert.Equal(424, IslandPlacement.HandleLeft(118, 418, 24, 6, 0, 536, 5));
+        // Just enough room after it, to the pixel.
+        Assert.Equal(512, IslandPlacement.HandleLeft(206, 506, 24, 6, 0, 536, 5));
+    }
+
+    [Fact]
+    public void TheHandleGoesBeforeThePillWhenThereIsNoRoomAfterIt()
+    {
+        // Held by its right edge, the pill ends where the room does.
+        Assert.Equal(206, IslandPlacement.HandleLeft(236, 536, 24, 6, 0, 536, 5));
+        Assert.Equal(1, IslandPlacement.HandleLeft(31, 507, 24, 6, 1, 536, 5));
+    }
+
+    [Fact]
+    public void TheHandleSitsOverThePillsEndWhenThereIsNoRoomEitherSide()
+    {
+        // A long line: the pill nearly fills the room.
+        Assert.Equal(489, IslandPlacement.HandleLeft(18, 518, 24, 6, 0, 536, 5));
+        // A window cut to the pill's shape has no room outside the pill at all.
+        Assert.Equal(389, IslandPlacement.HandleLeft(118, 418, 24, 6, 118, 418, 5));
+    }
 }

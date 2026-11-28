@@ -167,6 +167,12 @@ sealed class Overlay
         catch (Exception e) { Log.Write("display change: " + e); }
     }
 
+    /// <summary>
+    /// The window is following the pointer: it keeps the move cursor. Windows asks for the cursor anew each
+    /// time the window moves under the pointer, and the answer would be the arrow.
+    /// </summary>
+    public bool Carried { get; set; }
+
     /// <summary>No DWM border colour or rounded corners (Windows 11 draws both round every window).
     /// Run again after showing: Windows resets them.</summary>
     public void StripFrame() => Win32.RemoveFrame(_hwnd);
@@ -193,6 +199,11 @@ sealed class Overlay
                     e.Handled = true;
                     break;
                 case 0x0086: // WM_NCACTIVATE: don't repaint a frame
+                    e.Result = 1;
+                    e.Handled = true;
+                    break;
+                case 0x0020 when Carried: // WM_SETCURSOR
+                    Win32.SetCursor(Win32.LoadCursor(0, Win32.MoveCursor));
                     e.Result = 1;
                     e.Handled = true;
                     break;

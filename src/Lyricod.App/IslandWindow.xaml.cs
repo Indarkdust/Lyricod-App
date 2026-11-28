@@ -56,7 +56,7 @@ public sealed partial class IslandWindow : Window
     LyricLine? _secondLine;
     readonly TransportButtons _transport;
     readonly ProgressLine _progress;
-    readonly DispatcherQueueTimer _pieceTimer, _pointerTimer, _progressTimer, _barTimer, _revealTimer, _pauseTimer, _holdTimer;
+    readonly DispatcherQueueTimer _pieceTimer, _pointerTimer, _progressTimer, _barTimer, _revealTimer, _pauseTimer;
     readonly Grip _grip;
     bool _liquidDue;
     /// <summary>Hidden because the music stopped (Settings › Lyricod Island › Hide when paused).</summary>
@@ -147,7 +147,7 @@ public sealed partial class IslandWindow : Window
             try
             {
                 if (_closed || !PausedLongEnough) return;
-                if (_hovered) { _pauseTimer.Start(); return; } // not from under the pointer
+                if (UnderPointer) { _pauseTimer.Start(); return; } // not from under the pointer
                 _pausedAway = true;
                 UpdateVisibility();
             }
@@ -173,28 +173,29 @@ public sealed partial class IslandWindow : Window
             try { _liquid?.Wake(); }
             catch (Exception e) { Log.Write(e); }
         });
-        // Dragged while floating: unlocked, or by its open mini player.
+        // Moved while floating: by its open mini player, by its handle, or whole after Move in Settings.
         var content = Pill.Child;
         Pill.Child = null;
         _grip = new Grip { Background = new SolidColorBrush(Colors.Transparent) };
         _grip.Children.Add(content);
         Pill.Child = _grip;
+        _handle = new MoveHandle();
+        Root.Children.Add(_handle);
+        _drag = new OverlayDrag(this, _overlay);
+        _drag.Watch(_grip);
+        _drag.Watch(_handle);
+        _drag.Started += OnDragStarted;
+        _drag.Moved += OnDragMoved;
+        _drag.Ended += OnDragEnded;
         Pill.PointerPressed += OnPillPressed;
-        _grip.PointerMoved += OnPillMoved;
-        _grip.PointerReleased += OnPillLetGo;
-        _grip.PointerCanceled += OnPillLetGo;
-        _grip.PointerCaptureLost += OnPillLetGo;
-        _holdTimer = DispatcherQueue.CreateTimer();
-        _holdTimer.IsRepeating = false;
-        _holdTimer.Interval = TimeSpan.FromSeconds(HoldSeconds);
-        _holdTimer.Tick += (_, _) => { try { BeginCarry(); } catch (Exception e) { Log.Write(e); } };
+        _handle.PointerPressed += OnHandlePressed;
         // While it's dragged the window moves without being placed: the liquid glass looks behind where it is now.
         // One redraw for however many moves came meanwhile, so the window never waits on its glass.
         AppWindow.Changed += (_, e) =>
         {
             try
             {
-                if (!_dragging || !e.DidPositionChange || _liquidDue) return;
+                if (!_drag.Carrying || !e.DidPositionChange || _liquidDue) return;
                 _liquidDue = DispatcherQueue.TryEnqueue(() =>
                 {
                     try
@@ -232,7 +233,6 @@ public sealed partial class IslandWindow : Window
             _barTimer.Stop();
             _revealTimer.Stop();
             _pauseTimer.Stop();
-            _holdTimer.Stop();
             _widthAnimation?.Stop();
             _heightAnimation?.Stop();
             _lineAnimation?.Stop();
@@ -297,16 +297,13 @@ public sealed partial class IslandWindow : Window
                     UpdateVisibility();
                     break;
                 case nameof(Settings.IslandHover):
-                    SetHovered(false);
+                    ApplyMoveMode();
                     Pill.Opacity = ShadowHost.Opacity = 1;
                     break;
                 case nameof(Settings.IslandStyle):
                     ApplyMoveMode();
                     ApplyCorners();
                     Place();
-                    break;
-                case nameof(Settings.IslandLocked):
-                    ApplyMoveMode();
                     break;
                 case nameof(Settings.IslandTheme) or nameof(Settings.GlassTransparency) or nameof(Settings.GlassTint) or nameof(Settings.GlassShine) or nameof(Settings.GlassShineStyle)
                     or nameof(Settings.GlassEffect) or nameof(Settings.LiquidBlur) or nameof(Settings.LiquidRefraction):

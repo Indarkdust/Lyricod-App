@@ -18,7 +18,7 @@ The island sits at the top of the screen by default and highlights lyrics word b
 
 ![Lyricod Island highlighting lyrics as music plays](assets/island.gif)
 
-Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. You can also combine both actions: the island hides when the pointer moves onto it. To expand the mini player, move across the island horizontally, then down (or up, for a floating island). The island can fade out after playback pauses.
+Hovering over the island can expand it into a mini player or hide it temporarily so you can use what's behind it. You can also combine both actions: the island hides when the pointer moves onto it. To expand the mini player, move across the island horizontally, then down (or up, for a floating island at the bottom of the screen). The island can fade out after playback pauses.
 
 ![Expanding the lyric island into a mini player](assets/island-gesture.gif)
 
@@ -29,7 +29,7 @@ Hovering over the island can expand it into a mini player or hide it temporarily
 
 </details>
 
-To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides and can be dragged anywhere once unlocked: use the lock on the tray panel's Lyricod Island tile, or **Lock island position** on the same Settings page. A locked island can still be moved: hold its open mini player for a moment, then drag. Near screen edges, it expands inward to keep the lyrics and mini player on screen. While it's unlocked, hover actions and Lyricod Glass's effects are paused.
+To move the island somewhere else, switch to Floating mode in Settings > Lyricod Island. The floating island has rounded corners on all sides. How you move it depends on what it does when the pointer enters. If it expands, hold the open mini player for a moment, then drag. If it's kept as is, rest the pointer on it, then drag the handle that appears. If it hides, press **Move** on the same Settings page, then drag it. As you drag it past the middle of the screen, it snaps to the centre. Near screen edges, it expands inward to keep the lyrics and mini player on screen.
 
 Lyricod Glass gives the island a transparent background. New installs on Windows 11 start with it, and you can switch between Lyricod Glass and the Classic island in Settings > Lyricod Island > Theme. The default Liquid effect adds a slight blur, edge refraction and highlights. You can also choose Clear or Frosted, and adjust transparency and tint. Liquid has extra settings for blur, refraction and a 3D effect (Off, Bright, Soft or Lifelike).
 
@@ -37,7 +37,7 @@ On supported Windows 11 versions, the live Liquid Glass island appears in screen
 
 ### Desktop lyrics
 
-Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. When locked, clicks pass through the lyrics. To drag them to a different position, unlock them with the lock on the tray panel's Desktop lyrics tile, or in Settings > Desktop lyrics.
+Display lyrics above other windows: the current line, and under it the translation, pronunciation, both, or the next line. Clicks pass through the lyrics. To move them, rest the pointer on them, then drag the handle that appears at the end of the line.
 
 ![Desktop lyrics with word-by-word highlighting, pronunciation and translation](assets/desktop-lyrics.gif)
 
@@ -53,9 +53,9 @@ In Settings > Lyrics window > Sung lyrics you can change how sung words are high
 
 ### Tray panel
 
-Lyricod also runs in the system tray. Open its tray panel to control playback, show, hide or lock the lyric views, choose lyrics, or adjust the current song's timing. When nothing is playing, the panel has a button to open the player you last listened with. You can set global shortcuts for common actions in Settings > Shortcuts.
+Lyricod also runs in the system tray. Open its tray panel to control playback, show or hide the lyric views, choose lyrics, or adjust the current song's timing. When nothing is playing, the panel has a button to open the player you last listened with. You can set global shortcuts for common actions in Settings > Shortcuts.
 
-<img src="assets/tray-panel.en.png" alt="Lyricod tray panel with playback controls, the two lyric views with their locks, and lyric settings" width="360">
+<img src="assets/tray-panel.en.png" alt="Lyricod tray panel with playback controls, the two lyric views, and lyric settings" width="360">
 
 ## Supported players
 

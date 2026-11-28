@@ -62,7 +62,6 @@ public class IslandSettingsTests
         var settings = new Settings();
         Assert.True(settings.ShowIsland);
         Assert.Equal(IslandStyle.Default, settings.IslandStyle);
-        Assert.True(settings.IslandLocked);
         Assert.Null(settings.IslandX);
         Assert.Null(settings.IslandY);
         // A file saved with the island off keeps it off.

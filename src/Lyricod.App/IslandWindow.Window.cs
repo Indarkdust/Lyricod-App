@@ -12,8 +12,8 @@ public sealed partial class IslandWindow
     /// <summary>Top centre of the main display, or (floating) where it was dragged.</summary>
     void Place()
     {
-        // Windows has it under the pointer: its saved spot would pull it away. It's placed when let go.
-        if (_dragging) return;
+        // It's under the pointer: its saved spot would pull it away. It's placed when let go.
+        if (_drag.Carrying) return;
         double k = _overlay.Scale;
         if (Floating)
         {
@@ -39,6 +39,9 @@ public sealed partial class IslandWindow
     }
 
     bool PausedLongEnough => _settings.IslandHideWhenPaused && _model.Track != null && !_model.IsPlaying;
+
+    /// <summary>Hovered, or being dragged: one waiting to be dragged has no hover, and mustn't go from the pointer's grip.</summary>
+    bool UnderPointer => _hovered || _drag.Active;
 
     /// <summary>Starts the wait before hiding when the music stops; brings the island back when it plays.</summary>
     void UpdatePaused()
@@ -94,6 +97,10 @@ public sealed partial class IslandWindow
             _pointerTimer.Stop();
             _progressTimer.Stop();
             _pieceTimer.Stop();
+            _drag.End();
+            // It mustn't come back still waiting to be dragged, taking clicks.
+            EndMove();
+            HideHandle();
             SetHovered(false);
             _trail.Clear();
             AnimateShown(false, () => { if (!_shown && !_closed) AppWindow.Hide(); });

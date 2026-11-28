@@ -10,10 +10,10 @@ public sealed partial class IslandWindow
     void CheckPointer()
     {
         // Held or being dragged, it stays as it is.
-        if (!_shown || _closed || _dragging || _hold != null || !Win32.GetCursorPos(out var p)) return;
+        if (!_shown || _closed || _drag.Active || !Win32.GetCursorPos(out var p)) return;
         if (Movable)
         {
-            // Being moved: no hover action.
+            // Waiting to be dragged: no hover action.
             _pointerTimer.Interval = TimeSpan.FromMilliseconds(250);
             return;
         }
@@ -29,15 +29,18 @@ public sealed partial class IslandWindow
         _pointerTimer.Interval = TimeSpan.FromMilliseconds(near || _hovered ? 33 : 250);
         double now = PlaybackModel.Now;
         // "By direction" hides the island however the pointer comes in; sweeping sideways and then
-        // pulling down over it (floating: up or down; inside or carrying on out of it) opens the mini
-        // player instead.
+        // pulling over it the way the mini player opens (inside, or carrying on out of it) opens that
+        // instead. It opens upwards only from a floating island held by its bottom edge.
         bool pulled = false;
         if (gesture)
         {
             var path = _trail.ConvertAll(s => (s.X, s.Y));
             path.Add((p.X, p.Y));
-            pulled = IslandGesture.IsSweepThenPull(path, (left - 2, top - above, width + 4, height + 2 + above), _overlay.Scale, downOnly: !Floating);
+            pulled = IslandGesture.IsSweepThenPull(path, (left - 2, top - above, width + 4, height + 2 + above),
+                Pill.VerticalAlignment == VerticalAlignment.Bottom ? IslandPull.Up : IslandPull.Down, _overlay.Scale);
         }
+        // On its handle, the pointer is still on the island.
+        if (UpdateHandle(p, inside, now)) inside = true;
         if (inside)
         {
             _lastInside = now;
@@ -73,8 +76,8 @@ public sealed partial class IslandWindow
             _hoverAction = _settings.IslandHover == IslandHover.ByDirection
                 ? (hideByDirection ? IslandHover.Hide : IslandHover.Expand) : _settings.IslandHover;
         bool expand = hovered && _hoverAction == IslandHover.Expand;
-        // Takes clicks only while expanded; otherwise whatever is underneath stays usable.
-        _overlay.SetClickThrough(!expand);
+        // Takes clicks only while expanded or on its handle; otherwise whatever is underneath stays usable.
+        _overlay.SetClickThrough(!expand && !_handleHot);
         // "Hide": out of the way while the pointer is over it, so what's underneath can be seen too.
         if (_hoverAction == IslandHover.Hide)
         {

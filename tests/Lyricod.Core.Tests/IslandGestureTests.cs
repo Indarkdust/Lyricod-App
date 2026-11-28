@@ -5,9 +5,12 @@ public class IslandGestureTests
     // A default island at the top of the screen (x 100–300, y 0–34) and a floating one (x 100–300, y 100–140).
     static readonly (double, double, double, double) Docked = (100, 0, 200, 34), Floating = (100, 100, 200, 40);
 
-    // As the app asks: the default island opens only on a pull down.
+    // As the app asks: the pull goes the way the mini player opens. Down, unless a test says up.
     static bool Opens((double, double, double, double) island, params (double X, double Y)[] path) =>
-        IslandGesture.IsSweepThenPull(path, island, downOnly: island == Docked);
+        IslandGesture.IsSweepThenPull(path, island, IslandPull.Down);
+
+    static bool OpensUpwards((double, double, double, double) island, params (double X, double Y)[] path) =>
+        IslandGesture.IsSweepThenPull(path, island, IslandPull.Up);
 
     [Fact]
     public void SweepingAlongTheTopThenPullingDownOutOfItOpens() =>
@@ -23,16 +26,27 @@ public class IslandGestureTests
         Assert.True(Opens(Docked, (40, 8), (90, 8), (140, 10), (170, 16), (184, 28), (190, 44), (192, 58)));
 
     [Fact]
-    public void ComingInFromTheSideThenUpOpens() =>
-        Assert.True(Opens(Floating, (40, 175), (90, 175), (150, 172), (156, 150), (158, 132)));
+    public void AnIslandThatOpensUpwardsOpensOnAPullUp() =>
+        Assert.True(OpensUpwards(Floating, (40, 175), (90, 175), (150, 172), (156, 150), (158, 132)));
 
     [Fact]
-    public void PullingUpOverTheDefaultIslandDoesNotOpen()
+    public void AnIslandThatOpensUpwardsDoesNotOpenOnAPullDown()
     {
-        // Along under it, then up into it: a floating island would open.
+        // Along above it, then down through it: one that opens downwards would open.
+        (double, double)[] path = [(40, 70), (90, 70), (150, 72), (156, 100), (158, 130)];
+        Assert.False(OpensUpwards(Floating, path));
+        Assert.True(Opens(Floating, path));
+    }
+
+    [Fact]
+    public void PullingUpOverAnIslandThatOpensDownwardsDoesNotOpen()
+    {
+        // Along under it, then up into it: one that opens upwards would open.
         (double, double)[] path = [(60, 60), (120, 60), (180, 58), (184, 40), (186, 20)];
         Assert.False(Opens(Docked, path));
-        Assert.True(IslandGesture.IsSweepThenPull(path, Docked));
+        Assert.True(OpensUpwards(Docked, path));
+        // A floating island held by its top edge opens downwards too.
+        Assert.False(Opens(Floating, (40, 175), (90, 175), (150, 172), (156, 150), (158, 132)));
     }
 
     [Fact]
@@ -82,11 +96,11 @@ public class IslandGestureTests
     public void DistancesGrowWithTheDisplayScale()
     {
         (double, double)[] path = [(150, 10), (200, 10), (204, 30), (205, 46)]; // 50 sideways, 36 down
-        Assert.True(IslandGesture.IsSweepThenPull(path, Docked, scale: 1));
-        Assert.False(IslandGesture.IsSweepThenPull(path, Docked, scale: 2));
+        Assert.True(IslandGesture.IsSweepThenPull(path, Docked, IslandPull.Down, scale: 1));
+        Assert.False(IslandGesture.IsSweepThenPull(path, Docked, IslandPull.Down, scale: 2));
     }
 
     [Fact]
     public void TooShortAPathDoesNotOpen() =>
-        Assert.False(IslandGesture.IsSweepThenPull([(200, 10), (200, 50)], Docked));
+        Assert.False(IslandGesture.IsSweepThenPull([(200, 10), (200, 50)], Docked, IslandPull.Down));
 }

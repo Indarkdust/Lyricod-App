@@ -10,7 +10,6 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Windows.Foundation;
 using Windows.Graphics;
@@ -48,10 +47,17 @@ public sealed partial class DesktopLyricsWindow : Window
     LyricLine? _piece;
     double _textWidth;
     bool? _shown;
-    bool _placing;
     /// <summary>Whether the window has its strip size yet (before that, its size is Windows' default).</summary>
     bool _placed;
     readonly Overlay _overlay;
+    readonly OverlayDrag _drag;
+    readonly MoveHandle _handle;
+    readonly HandleReveal _reveal = new();
+    readonly DispatcherQueueTimer _pointerTimer;
+    /// <summary>The pointer is on the handle: the window takes clicks.</summary>
+    bool _handleHot;
+    /// <summary>Where the pointer was when last checked.</summary>
+    Win32.POINT _pointer;
 
     public DesktopLyricsWindow(PlaybackModel model, Settings settings)
     {
@@ -62,6 +68,8 @@ public sealed partial class DesktopLyricsWindow : Window
         // and stays out of Alt-Tab.
         _overlay = new Overlay(this);
         _hwnd = _overlay.Handle;
+        // Clicks reach whatever is underneath, except on the move handle (see CheckPointer).
+        _overlay.SetClickThrough(true);
 
         _compositor = ElementCompositionPreview.GetElementVisual(Root).Compositor;
         _sung = new SweepPainter(Dim, LitHost);
@@ -71,7 +79,18 @@ public sealed partial class DesktopLyricsWindow : Window
         AttachShadow(Second, SecondShadow);
         AttachShadow(Third, ThirdShadow);
         LineHost.RenderTransformOrigin = new Point(0.5, 0.5);
-        MoveHint.Text = L.Get("MoveHint");
+
+        _handle = new MoveHandle();
+        Root.Children.Add(_handle);
+        _drag = new OverlayDrag(this, _overlay);
+        _drag.Watch(_handle);
+        _handle.PointerPressed += (_, e) => { try { _drag.Press(_handle, e); } catch (Exception x) { Log.Write(x); } };
+        _drag.Moved += to => AppWindow.Move(to);
+        _drag.Ended += OnDragEnded;
+        // The pointer is checked often only near the lyrics; a few times a second otherwise.
+        _pointerTimer = DispatcherQueue.CreateTimer();
+        _pointerTimer.Interval = TimeSpan.FromMilliseconds(250);
+        _pointerTimer.Tick += (_, _) => { try { CheckPointer(); } catch (Exception e) { Log.Write(e); } };
 
         _pieceTimer = DispatcherQueue.CreateTimer();
         _pieceTimer.IsRepeating = false;
@@ -80,30 +99,23 @@ public sealed partial class DesktopLyricsWindow : Window
         _model.Changed += OnModelChanged;
         Fonts.Changed += OnFontChanged;
         _settings.PropertyChanged += OnSettingChanged;
-        AppWindow.Changed += OnAppWindowChanged;
+        DisplayPower.Changed += OnDisplayChanged;
         Closed += (_, _) =>
         {
             _model.Changed -= OnModelChanged;
             Fonts.Changed -= OnFontChanged;
             _settings.PropertyChanged -= OnSettingChanged;
+            DisplayPower.Changed -= OnDisplayChanged;
             _pieceTimer.Stop();
+            _pointerTimer.Stop();
         };
 
         ApplyStyle();
-        ApplyLock();
         Place();
         Render();
     }
 
     // ---- Window ----
-
-    /// <summary>Locked: clicks pass through to whatever is underneath. Unlocked: drag to move.</summary>
-    void ApplyLock()
-    {
-        bool locked = _settings.DesktopLocked;
-        _overlay.SetClickThrough(locked);
-        MoveFrame.Visibility = locked ? Visibility.Collapsed : Visibility.Visible;
-    }
 
     /// <summary>Main line, plus the rows the layout puts under it, plus padding (view pixels).</summary>
     double StripHeight()
@@ -124,9 +136,10 @@ public sealed partial class DesktopLyricsWindow : Window
     /// <summary>Sizes the strip and puts it where the user left it, or at the bottom centre.</summary>
     void Place()
     {
+        // It's under the pointer: its saved spot would pull it away. It's placed when let go.
+        if (_drag.Carrying) return;
         double scale = Win32.Scale(_hwnd);
         var size = new SizeInt32((int)(StripWidth * scale), (int)(StripHeight() * scale));
-        _placing = true;
         try
         {
             // The first time, the saved spot is the strip's own top-left.
@@ -145,7 +158,7 @@ public sealed partial class DesktopLyricsWindow : Window
                     area.Y + area.Height - size.Height - (int)(40 * scale), size.Width, size.Height));
             }
         }
-        finally { _placing = false; _placed = true; }
+        finally { _placed = true; }
     }
 
     static int ScreenTop(int x, int y, SizeInt32 size) =>
@@ -157,19 +170,99 @@ public sealed partial class DesktopLyricsWindow : Window
         return area != null;
     }
 
-    void OnAppWindowChanged(AppWindow sender, AppWindowChangedEventArgs args)
+    // ---- Moving ----
+
+    /// <summary>Gap between the line's end and the handle, in view pixels.</summary>
+    const double HandleGap = 6;
+
+    /// <summary>The main line's drawn width (a piece too wide for the strip is drawn smaller).</summary>
+    double LineWidth => Dim.ActualWidth * LineScale.ScaleX;
+
+    /// <summary>The rows showing, in the window (view pixels), or null with nothing to show: the pointer resting there brings up the handle.</summary>
+    Rect? RowsBounds()
     {
-        if (!args.DidPositionChange || _placing || _settings.DesktopLocked) return;
-        _settings.DesktopX = sender.Position.X;
-        _settings.DesktopY = sender.Position.Y;
+        double width = LineWidth;
+        if (Second.Visibility == Visibility.Visible) width = Math.Max(width, Second.ActualWidth);
+        if (Third.Visibility == Visibility.Visible) width = Math.Max(width, Third.ActualWidth);
+        if (width <= 0) return null;
+        // The rows are centred in the strip, inside the panel's padding.
+        width = Math.Min(width, Root.ActualWidth);
+        double height = Math.Min(Rows.ActualHeight - Rows.Padding.Top - Rows.Padding.Bottom, Root.ActualHeight);
+        return new Rect((Root.ActualWidth - width) / 2, (Root.ActualHeight - height) / 2, width, height);
     }
 
-    void OnPointerPressed(object sender, PointerRoutedEventArgs e)
+    /// <summary>
+    /// Just after the main line's end, level with it; over its end when there's no room after it on the strip,
+    /// or on the screen the pointer is on: the strip is wider than its text and may hang past that screen's edge.
+    /// </summary>
+    void PlaceHandle(Rect rows, Win32.POINT pointer)
     {
-        if (_settings.DesktopLocked) return;
-        // Let Windows move the window as if its title bar were dragged.
-        Win32.ReleaseCapture();
-        Win32.SendMessage(_hwnd, Win32.WM_NCLBUTTONDOWN, Win32.HTCAPTION, 0);
+        double k = Win32.Scale(_hwnd), end = (Root.ActualWidth + LineWidth) / 2;
+        int left = AppWindow.Position.X;
+        var area = DisplayArea.GetFromPoint(new PointInt32(pointer.X, pointer.Y), DisplayAreaFallback.Nearest).WorkArea;
+        double x = StripPlacement.HandleLeft(end, MoveHandle.Size, HandleGap, Root.ActualWidth, (area.X - left) / k, (area.X + area.Width - left) / k);
+        _handle.MoveTo(x, rows.Top + (LineHost.ActualHeight - MoveHandle.Size) / 2);
+    }
+
+    /// <summary>
+    /// Follows the pointer, often only while it's near the lyrics. Resting on them brings up the move handle, and
+    /// only while the pointer is on that does the window take clicks.
+    /// </summary>
+    void CheckPointer()
+    {
+        // Being dragged, it stays as it is.
+        if (_shown != true || _drag.Active || !Win32.GetCursorPos(out var p)) return;
+        double k = Win32.Scale(_hwnd);
+        var origin = AppWindow.Position;
+        double x = (p.X - origin.X) / k, y = (p.Y - origin.Y) / k;
+        var rows = RowsBounds();
+        bool over = rows is { } r && r.Contains(new Point(x, y));
+        bool onHandle = _handle.Shown && _handle.Holds(x, y);
+        bool near = rows is { } n && x >= n.Left - 160 && x <= n.Right + 160 && y >= n.Top - 120 && y <= n.Bottom + 120;
+        _pointerTimer.Interval = TimeSpan.FromMilliseconds(near || _handle.Shown ? 33 : 250);
+        bool show = _reveal.Update(over, onHandle, PlaybackModel.Now);
+        // Placed as it comes up. After that it keeps to the line's end only under a pointer at rest on the
+        // lyrics: one on its way to the handle finds it where it was, whatever line has come meanwhile.
+        bool resting = over && p.X == _pointer.X && p.Y == _pointer.Y;
+        _pointer = p;
+        if (show && !onHandle && (resting || !_handle.Shown) && rows is { } at) PlaceHandle(at, p);
+        _handle.Show(show);
+        bool hot = show && onHandle;
+        if (hot == _handleHot) return;
+        _handleHot = hot;
+        _overlay.SetClickThrough(!hot);
+    }
+
+    void HideHandle()
+    {
+        _reveal.Reset();
+        _handle.Show(false);
+        if (!_handleHot) return;
+        _handleHot = false;
+        _overlay.SetClickThrough(true);
+    }
+
+    /// <summary>Let go: saved where it is, as the strip's own top-left.</summary>
+    void OnDragEnded(bool moved)
+    {
+        if (moved)
+        {
+            _settings.DesktopX = AppWindow.Position.X;
+            _settings.DesktopY = AppWindow.Position.Y;
+        }
+        // A placing that came while it was carried (a new height, say) waited for this.
+        Place();
+    }
+
+    /// <summary>With the display off, the pointer isn't followed.</summary>
+    void OnDisplayChanged()
+    {
+        try
+        {
+            if (DisplayPower.Off) _pointerTimer.Stop();
+            else if (_shown == true) _pointerTimer.Start();
+        }
+        catch (Exception e) { Log.Write(e); }
     }
 
     void UpdateVisibility()
@@ -182,8 +275,15 @@ public sealed partial class DesktopLyricsWindow : Window
             AppWindow.Show(false);
             _overlay.StripFrame();
             _overlay.KeepOnTop();
+            if (!DisplayPower.Off) _pointerTimer.Start();
         }
-        else AppWindow.Hide();
+        else
+        {
+            _pointerTimer.Stop();
+            _drag.End();
+            HideHandle();
+            AppWindow.Hide();
+        }
     }
 
     // ---- Text ----
@@ -261,9 +361,6 @@ public sealed partial class DesktopLyricsWindow : Window
     {
         switch (e.PropertyName)
         {
-            case nameof(Settings.DesktopLocked):
-                ApplyLock();
-                break;
             case nameof(Settings.DesktopFontSize) or nameof(Settings.SungColor):
                 ApplyStyle();
                 Place();

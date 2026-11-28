@@ -28,7 +28,7 @@ public sealed partial class IslandWindow
 
     bool Glass => _settings.IslandTheme == IslandTheme.Glass;
 
-    /// <summary>The liquid glass is showing, with its 3D effect on (it doesn't run while a floating island is unlocked).</summary>
+    /// <summary>The liquid glass is showing, with its 3D effect on (it doesn't run while a floating island waits to be dragged).</summary>
     bool GlassLit => _liquid != null && _settings.GlassShine;
 
     /// <summary>The pill's fill and shadow, and the glass effect behind it.</summary>

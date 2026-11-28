@@ -7,7 +7,7 @@ namespace Lyricod;
 /// Lyricod Glass's frosted blur: Windows' acrylic behind the island window, with the
 /// window clipped to the pill's shape so the blur takes the island's outline. Windows doesn't smooth
 /// a clipped window's edges, so its corners can look slightly stepped. The blur is off while the
-/// island is hidden by the pointer, fading away, or unlocked.
+/// island is hidden by the pointer, fading away, or waiting to be dragged.
 /// </summary>
 public sealed partial class IslandWindow
 {
