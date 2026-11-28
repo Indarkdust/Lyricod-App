@@ -88,7 +88,7 @@ public sealed partial class LyricsWindow : Window
         _drift = new ArtworkDrift(ArtHost);
         _extraRuler = new TextRuler(ExtraMeasurer);
         _transport = new TransportButtons(model);
-        _progress = new ProgressLine(model);
+        _progress = new ProgressLine(model, hoverPreview: true);
         L.Tip(TranslationButton, "TranslationsTip");
         L.Tip(PronunciationButton, "PronunciationTip");
         L.Tip(FullScreenButton, "FullScreenTip");
