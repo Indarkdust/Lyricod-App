@@ -90,10 +90,9 @@ jobs:
         run: |
           # A copy of one of these versions downloads only the files that changed since: a portable
           # one, or an installed one that has the launcher (Setup installs the zip's files).
-          # The tool makes no patch from a version that is from before patches. Each patch is
-          # applied to the old zip here and is kept only if that gives the new one exactly, and if
-          # it is under half the whole zip. Patches only save a download: a release goes ahead
-          # without any that can't be made, and those copies get the whole zip.
+          # Each patch is applied to the old zip here and is kept only if that gives the new one
+          # exactly, and if it is under half the whole zip. Patches only save a download: a release
+          # goes ahead without any that can't be made, and those copies get the whole zip.
           $version = '${{ steps.version.outputs.version }}'
           $tags = gh release list --repo $env:GITHUB_REPOSITORY --exclude-drafts --exclude-pre-releases --limit 20 --json tagName --jq '.[].tagName'
           if ($LASTEXITCODE -ne 0) { Write-Host '::warning::No patches: the releases could not be listed'; $tags = @() }

@@ -18,7 +18,7 @@ public sealed record PatchManifest(Version From, Version To, string Arch, string
 /// file is checked against the list, and anything amiss throws: the whole download is used instead.</summary>
 public static class UpdatePatch
 {
-    /// <summary>The list inside every patch. The release tool looks for this name in an older build to tell whether it knows patches.</summary>
+    /// <summary>The list inside every patch.</summary>
     public const string ManifestName = "patch.json";
     const string Carried = "files/";
     static readonly string[] Needed = ["Lyricod.exe", "README.txt", "app/Lyricod.exe"];
