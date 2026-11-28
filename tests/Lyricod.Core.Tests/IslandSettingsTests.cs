@@ -103,7 +103,7 @@ public class IslandSettingsTests
         Assert.True(settings.GlassShine);
         Assert.Equal(ShineStyle.Lifelike, settings.GlassShineStyle);
         Assert.True(settings.GlassIsLifelike);
-        Assert.Equal(new GlassLook(GlassTint.Light, 88, 7, 50), Look(settings));
+        Assert.Equal(new GlassLook(GlassTint.Neutral, 90, 7, 50), Look(settings));
         Assert.Null(settings.GlassLookAside);
         settings.GlassTransparency = 0;
         Assert.Equal(10, settings.GlassTransparency);
@@ -257,16 +257,17 @@ public class IslandSettingsTests
     public void LifelikesSetShowsOnlyOnLiquidGlass()
     {
         var settings = new Settings();
+        settings.GlassTint = GlassTint.Light;
         settings.LiquidBlur = 30;
+        var own = GlassLook.Lifelike with { Tint = GlassTint.Light, Blur = 30 };
         var changed = new List<string?>();
         settings.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
         settings.ChooseGlassEffect(GlassEffect.Frosted);
         Assert.False(settings.GlassIsLifelike);
         Assert.Equal(ShineStyle.Lifelike, settings.GlassShineStyle);
         Assert.Equal(GlassLook.Others, Look(settings));
-        Assert.Equal(GlassLook.Lifelike with { Blur = 30 }, settings.GlassLookAside);
-        Assert.Equal([nameof(Settings.GlassEffect), nameof(Settings.GlassLookAside), nameof(Settings.GlassTint),
-            nameof(Settings.GlassTransparency), nameof(Settings.LiquidBlur)], changed);
+        Assert.Equal(own, settings.GlassLookAside);
+        Assert.Equal([nameof(Settings.GlassEffect), nameof(Settings.GlassLookAside), nameof(Settings.GlassTint), nameof(Settings.LiquidBlur)], changed);
         // Between clear and frosted nothing trades, nor does the 3D effect there.
         settings.GlassTransparency = 60;
         var mine = GlassLook.Others with { Transparency = 60 };
@@ -276,10 +277,10 @@ public class IslandSettingsTests
         Assert.Equal(mine, Look(settings));
         settings.ChooseGlassShine(ShineStyle.Lifelike);
         Assert.Equal(mine, Look(settings));
-        Assert.Equal(GlassLook.Lifelike with { Blur = 30 }, settings.GlassLookAside);
+        Assert.Equal(own, settings.GlassLookAside);
         settings.ChooseGlassEffect(GlassEffect.Liquid);
         Assert.True(settings.GlassIsLifelike);
-        Assert.Equal(GlassLook.Lifelike with { Blur = 30 }, Look(settings));
+        Assert.Equal(own, Look(settings));
         Assert.Equal(mine, settings.GlassLookAside);
     }
 
@@ -339,7 +340,7 @@ public class IslandSettingsTests
     }
 
     [Theory]
-    [InlineData("{\"IslandTheme\":\"Classic\"}", IslandTheme.Classic, GlassTint.Light)]
+    [InlineData("{\"IslandTheme\":\"Classic\"}", IslandTheme.Classic, GlassTint.Neutral)]
     [InlineData("{\"IslandTheme\":\"Glass\",\"GlassTint\":\"Album\"}", IslandTheme.Glass, GlassTint.Album)]
     [InlineData("{\"IslandTheme\":1,\"GlassTint\":1}", IslandTheme.Glass, GlassTint.Album)]
     [InlineData("{\"IslandTheme\":\"Glass\",\"GlassTint\":\"Light\"}", IslandTheme.Glass, GlassTint.Light)]

@@ -23,7 +23,7 @@ public enum GlassEffect { Clear, Frosted, Liquid }
 public sealed record GlassLook(GlassTint Tint, int Transparency, int Blur, int Refraction)
 {
     /// <summary>What each set starts as: the values its looks were tuned with.</summary>
-    public static readonly GlassLook Lifelike = new(GlassTint.Light, 88, 7, 50), Others = new(GlassTint.Neutral, 90, 10, 50);
+    public static readonly GlassLook Lifelike = new(GlassTint.Neutral, 90, 7, 50), Others = new(GlassTint.Neutral, 90, 10, 50);
 }
 
 public enum IslandHover { Expand, Hide, Nothing, ByDirection }
@@ -165,8 +165,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public GlassLook? GlassLookAside { get => _glassLookAside; set => Set(ref _glassLookAside, value); }
     /// <summary>Whether this PC can run the liquid effect; <see cref="Load"/> is told.</summary>
     bool _liquidSupported = true;
-    /// <summary>Which set is showing: Lifelike's only where Lifelike itself shows, on liquid glass with the 3D effect on.
-    /// Its light tint has nothing to light on clear or frosted glass and only dims the lyrics there.</summary>
+    /// <summary>Which set is showing: Lifelike's only where Lifelike itself shows, on liquid glass with the 3D effect on.</summary>
     [JsonIgnore] public bool GlassIsLifelike => _glassShine && _glassShineStyle == ShineStyle.Lifelike && _glassEffect == GlassEffect.Liquid && _liquidSupported;
 
     /// <summary>Chooses the 3D effect: a style, or null for off, which keeps the style. Moving to or from where Lifelike shows trades the sets.</summary>
