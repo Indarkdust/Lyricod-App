@@ -38,6 +38,8 @@ public sealed partial class PlaybackModel
             ArtworkColor = colour;
             ArtworkSize = size;
             _artworkWhole = whole;
+            // Cut short with no colour to read says nothing yet: the whole cover is still to come.
+            if (whole || colour != null) _artworkPendingSince = null;
             if (whole)
             {
                 _artworkCutSince = 0;

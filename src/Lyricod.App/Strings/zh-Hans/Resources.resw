@@ -147,9 +147,9 @@
   <data name="HoverByDirection" xml:space="preserve"><value>按移入方向隐藏或展开</value></data>
   <data name="HoverByDirectionDetail" xml:space="preserve"><value>移入歌词岛时会先隐藏。想展开迷你播放器，可以先横向划过，再向下移动。</value></data>
   <data name="HoverByDirectionFloatingDetail" xml:space="preserve"><value>移入歌词岛时会先隐藏。想展开迷你播放器，可以先横向划过，再向上或向下移动。</value></data>
-  <data name="AlbumColour" xml:space="preserve"><value>歌词颜色跟随专辑封面</value></data>
+  <data name="AlbumColour" xml:space="preserve"><value>配色跟随专辑封面</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>关闭后使用下面设置的颜色。</value></data>
-  <data name="IslandColour" xml:space="preserve"><value>歌词颜色</value></data>
+  <data name="IslandColour" xml:space="preserve"><value>歌词岛配色</value></data>
   <data name="Open" xml:space="preserve"><value>打开</value></data>
   <data name="LyricsWindowLabel" xml:space="preserve"><value>歌词窗口</value></data>
   <data name="LyricsWindowDetail" xml:space="preserve"><value>显示整首歌词。按 F11 全屏，按空格键播放或暂停。</value></data>

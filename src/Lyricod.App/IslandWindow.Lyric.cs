@@ -13,6 +13,7 @@ public sealed partial class IslandWindow
     void Render()
     {
         if (!_shown) return;
+        double Secondary = TodayLook ? 0.6 : IslandWindow.Secondary, Unsung = TodayLook ? 0.4 : IslandWindow.Unsung; // trial
         var lyrics = _model.Lyrics;
         var line = lyrics is { IsSynced: true } ? _model.CurrentLine : null;
         var song = lyrics != null ? Romanizer.SongLanguage(lyrics) : null;
@@ -21,7 +22,7 @@ public sealed partial class IslandWindow
         SecondRow.Height = new GridLength(HasSecondRow ? SecondHeight : 0);
         Second.Visibility = HasSecondRow ? Visibility.Visible : Visibility.Collapsed;
         SecondText.Text = under?.Text ?? "";
-        SecondDim.Opacity = under is { IsExtra: false } ? 0.4 : 0.6;
+        SecondDim.Opacity = under is { IsExtra: false } ? Unsung : Secondary;
         if (under is { } u)
         {
             SecondText.FontFamily = Fonts.For(u.Text, song);
@@ -41,7 +42,7 @@ public sealed partial class IslandWindow
             Lyric.FontFamily = Fonts.For(Lyric.Text, null);
             Lyric.FontSize = 13 * LayoutScale;
             Lyric.FontWeight = Fonts.SemiboldWeight;
-            LyricDim.Opacity = 0.6;
+            LyricDim.Opacity = Secondary;
             Lyric.MaxWidth = MaxText;
             Lyric.TextTrimming = TextTrimming.CharacterEllipsis;
             _pieceWidth = Math.Min(Math.Ceiling(MeasureLyric(Lyric.Text)) + 1, MaxText);
@@ -58,7 +59,7 @@ public sealed partial class IslandWindow
             Lyric.FontFamily = font;
             Lyric.FontSize = 15 * LayoutScale;
             Lyric.FontWeight = LyricWeight;
-            LyricDim.Opacity = 0.4;
+            LyricDim.Opacity = Unsung;
             Lyric.MaxWidth = double.PositiveInfinity;
             Lyric.TextTrimming = TextTrimming.None;
             _pieces = LinePieces.Split(line, MaxText - 1, MeasureLyric);

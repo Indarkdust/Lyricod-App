@@ -33,6 +33,12 @@ public sealed partial class IslandWindow : Window
     // The cover sits as far from the side as from the bottom, and its corner is the island's corner
     // minus that gap, so the two corners share a centre (12 and 6).
     const double CoverInset = 6, CoverSize = 22, CoverRadius = 6, PillRadius = CoverInset + CoverRadius;
+    /// <summary>
+    /// How strong the island's text is, all of it one colour (see <see cref="ApplyColour"/>): the song's
+    /// title; the row under the lyric, the artist and the times; the lyric not yet sung and the next line.
+    /// </summary>
+    const double Full = 1, Secondary = 0.7, Unsung = 0.5;
+    bool TodayLook => _settings.IslandAccentTrial == IslandAccentTrial.Today; // trial
     double RowHeight => (CoverSize + 2 * CoverInset) * LayoutScale;
     double SecondHeight => 18 * LayoutScale;
     double ExpandedHeight => 84 * LayoutScale;
@@ -61,6 +67,8 @@ public sealed partial class IslandWindow : Window
     bool _liquidDue;
     /// <summary>Hidden because the music stopped (Settings › Lyricod Island › Hide when paused).</summary>
     bool _pausedAway;
+    /// <summary>The accent showing (see <see cref="Accent"/>).</summary>
+    Windows.UI.Color? _accent;
     readonly List<Rectangle> _bars = [];
     readonly List<Visual> _barVisuals = [];
     readonly AudioMeter _meter = new();
@@ -106,7 +114,7 @@ public sealed partial class IslandWindow : Window
         // One bar per band of the meter, 2 wide, 1.5 apart, 3 to 14 tall.
         for (int i = 0; i < AudioMeter.BandCount; i++)
         {
-            var bar = new Rectangle { Width = 2, Height = BarHeight, RadiusX = 1, RadiusY = 1, Fill = new SolidColorBrush(Colors.White) };
+            var bar = new Rectangle { Width = 2, Height = BarHeight, RadiusX = 1, RadiusY = 1 };
             _bars.Add(bar);
             Bars.Children.Add(bar);
             var visual = ElementCompositionPreview.GetElementVisual(bar);
@@ -240,6 +248,9 @@ public sealed partial class IslandWindow : Window
             StopLiquid();
         };
         ApplyMoveMode();
+        SongTitle.Opacity = Full;
+        SongArtist.Opacity = _progress.TimeOpacity = Secondary;
+        ApplyColour();
         ApplyLayout();
         Place();
         UpdatePaused();
@@ -289,6 +300,10 @@ public sealed partial class IslandWindow : Window
                 case nameof(Settings.IslandAlbumColour) or nameof(Settings.IslandColor):
                     ApplyColour();
                     break;
+                case nameof(Settings.IslandAccentTrial): // trial
+                    ApplyColour(); // trial
+                    Render(); // trial
+                    break; // trial
                 case nameof(Settings.IslandSecondLine):
                     Render();
                     break;
@@ -360,22 +375,52 @@ public sealed partial class IslandWindow : Window
         Art.Source = small;
         BigArt.Source = big;
         ApplyColour();
+        ApplyTheme(); // glass tinted with the album's colour follows the cover
     }
 
     /// <summary>The row under the lyric is lit as the lyric is, without the glow: that's too much on small text.</summary>
     SungEffect SecondEffect => _settings.IslandEffect == SungEffect.Line ? SungEffect.Line : SungEffect.Sweep;
 
-    /// <summary>The album's colour, or the island's chosen colour.</summary>
-    Windows.UI.Color LyricColour =>
-        _settings.IslandAlbumColour && _model.ArtworkColor is { } c ? c : DesktopLyricsWindow.ParseColor(_settings.IslandColor);
+    /// <summary>
+    /// The island's one colour: the album's, or the chosen one when that's off or the cover has no clear
+    /// colour. The one showing stays while the next cover hasn't come, and when the music goes away, so
+    /// the island doesn't pass through the chosen colour between two albums' or as it fades out.
+    /// </summary>
+    Windows.UI.Color Accent()
+    {
+        var chosen = DesktopLyricsWindow.ParseColor(_settings.IslandColor);
+        if (!_settings.IslandAlbumColour) return chosen;
+        return _model.ArtworkColor ?? (_model.ArtworkPending || _model.Track == null ? _accent : null) ?? chosen;
+    }
 
+    /// <summary>
+    /// Colours the island from its accent. What's sung, the bars and the progress bar take it as it is;
+    /// the text takes it lightened until it reads on the island (a deep blue wouldn't). The text's brush
+    /// stays opaque, its strength in opacity around it: the sweep takes the text's shape, and would fade
+    /// with a see-through one.
+    /// </summary>
     void ApplyColour()
     {
-        var colour = LyricColour;
-        _sweep.Color = _secondSweep.Color = colour;
-        var brush = new SolidColorBrush(colour);
+        var accent = Accent();
+        _accent = accent;
+        var text = Lifted(accent, AccentColor.TextLuminance);
+        var trial = _settings.IslandAccentTrial; // trial
+        if (trial == IslandAccentTrial.Today) text = Colors.White; // trial
+        if (trial == IslandAccentTrial.Plain) text = accent; // trial
+        if (trial == IslandAccentTrial.LiftedAll) accent = Lifted(accent, 0.3); // trial
+        _sweep.Color = _secondSweep.Color = accent;
+        var brush = new SolidColorBrush(accent);
         foreach (var bar in _bars) bar.Fill = brush;
         _progress.BarBrush = brush;
-        ApplyTheme(); // glass tinted with the album's colour follows the cover
+        var textBrush = new SolidColorBrush(text);
+        Lyric.Foreground = SecondText.Foreground = SongTitle.Foreground = SongArtist.Foreground = textBrush;
+        _progress.TimeBrush = textBrush;
+        SongArtist.Opacity = _progress.TimeOpacity = TodayLook ? 0.6 : Secondary; // trial
+    }
+
+    static Windows.UI.Color Lifted(Windows.UI.Color colour, double luminance)
+    {
+        var (r, g, b) = AccentColor.Lifted((colour.R, colour.G, colour.B), luminance);
+        return Windows.UI.Color.FromArgb(255, r, g, b);
     }
 }

@@ -32,6 +32,7 @@ public enum IslandWeight { Regular, Medium, Semibold, Bold, Heavy }
 
 /// <summary>Layout size of the Windows island, including its mini player.</summary>
 public enum IslandSize { Small, Medium, Large, ExtraLarge }
+public enum IslandAccentTrial { Today, Plain, LiftedText, LiftedAll } // trial
 
 /// <summary>How the sung part of a line shows (the island and the lyrics window).</summary>
 public enum SungEffect { Sweep, Glow, Line, Lift }
@@ -81,6 +82,7 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     bool _islandHideWhenPaused = true;
     bool _islandAlbumColour = true;
     string? _islandColor;
+    IslandAccentTrial _islandAccentTrial = IslandAccentTrial.LiftedText; // trial
     SecondLine _islandSecondLine = SecondLine.None;
     IslandWeight _islandWeight = IslandWeight.Semibold;
     SungEffect _islandEffect = SungEffect.Sweep;
@@ -232,9 +234,11 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public IslandHover IslandHover { get => _islandHover; set => Set(ref _islandHover, value); }
     /// <summary>The island goes away a moment after the music stops, and comes back when it plays.</summary>
     public bool IslandHideWhenPaused { get => _islandHideWhenPaused; set => Set(ref _islandHideWhenPaused, value); }
+    /// <summary>The island's accent (its lyrics, song, bars and progress bar) is the cover's colour.</summary>
     public bool IslandAlbumColour { get => _islandAlbumColour; set => Set(ref _islandAlbumColour, value); }
-    /// <summary>"#RRGGBB", used when album colour is off or unavailable.</summary>
+    /// <summary>"#RRGGBB": the accent when album colour is off, or the cover has no clear colour.</summary>
     public string IslandColor { get => _islandColor ?? "#8CD9FF"; set => Set(ref _islandColor, value); }
+    public IslandAccentTrial IslandAccentTrial { get => _islandAccentTrial; set => Set(ref _islandAccentTrial, value); } // trial
     public SecondLine IslandSecondLine { get => _islandSecondLine; set => Set(ref _islandSecondLine, value); }
     public IslandWeight IslandWeight { get => _islandWeight; set => Set(ref _islandWeight, value); }
     public SungEffect IslandEffect { get => _islandEffect; set => Set(ref _islandEffect, value); }

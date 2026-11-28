@@ -14,7 +14,7 @@ It works with Spotify, QQ Music, NetEase Cloud Music, Apple Music, and supported
 
 ### Lyricod Island
 
-The island sits at the top of the screen by default and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line under it. Lyric colours can follow the album artwork or use a colour you choose.
+The island sits at the top of the screen by default and highlights lyrics word by word as the song plays. It adjusts its width to the current line and can show translations, pronunciation, or the next line under it. Its lyrics, song title, artist, audio bars and progress bar share one accent colour, which can follow the album artwork or be a colour you choose.
 
 ![Lyricod Island highlighting lyrics as music plays](assets/island.gif)
 

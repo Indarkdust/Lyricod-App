@@ -147,9 +147,9 @@
   <data name="HoverByDirection" xml:space="preserve"><value>Hide or expand based on entry direction</value></data>
   <data name="HoverByDirectionDetail" xml:space="preserve"><value>Moving onto the island hides it. To open the mini player, move sideways across the island, then down.</value></data>
   <data name="HoverByDirectionFloatingDetail" xml:space="preserve"><value>Moving onto the island hides it. To open the mini player, move sideways across the island, then up or down.</value></data>
-  <data name="AlbumColour" xml:space="preserve"><value>Match lyric colour to album art</value></data>
+  <data name="AlbumColour" xml:space="preserve"><value>Match accent colour to album art</value></data>
   <data name="AlbumColourDetail" xml:space="preserve"><value>Turn off to use the colour selected below.</value></data>
-  <data name="IslandColour" xml:space="preserve"><value>Lyric colour</value></data>
+  <data name="IslandColour" xml:space="preserve"><value>Island accent colour</value></data>
   <data name="Open" xml:space="preserve"><value>Open</value></data>
   <data name="LyricsWindowLabel" xml:space="preserve"><value>Lyrics window</value></data>
   <data name="LyricsWindowDetail" xml:space="preserve"><value>Shows the full lyrics. Press F11 for full screen or Space to play or pause.</value></data>

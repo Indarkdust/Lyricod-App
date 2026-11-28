@@ -92,6 +92,8 @@ public sealed partial class SettingsWindow
         Watch(nameof(Settings.IslandAlbumColour), SyncColours);
         SyncColours();
         Card(L.Get("IslandColour"), null, colours);
+        Card("Accent trial (temporary)", null, Choice(nameof(Settings.IslandAccentTrial), () => _settings.IslandAccentTrial, v => _settings.IslandAccentTrial = v, // trial
+            (IslandAccentTrial.Today, "Today"), (IslandAccentTrial.Plain, "Plain accent"), (IslandAccentTrial.LiftedText, "Lifted text"), (IslandAccentTrial.LiftedAll, "Lifted everything"))); // trial
         Card(L.Get("AudioBars"), L.Get("AudioBarsDetail"), Toggle(nameof(Settings.IslandAudioBars), () => _settings.IslandAudioBars, v => _settings.IslandAudioBars = v));
 
         Heading(L.Get("IslandBehaviourHeading"));

@@ -36,9 +36,10 @@
                             <Image x:Name="Art" Stretch="UniformToFill" />
                         </Border>
                         <Grid Grid.Column="1" x:Name="LyricBox" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <!-- Dimmed by the wrapper, not the text: the sweep takes the text's shape. -->
-                            <Grid x:Name="LyricDim" Opacity="0.4">
-                                <TextBlock x:Name="Lyric" Foreground="White" FontSize="15" TextWrapping="NoWrap" />
+                            <!-- Dimmed by the wrapper, not the text: the sweep takes the text's shape. Colours and
+                                 strengths are set in code (ApplyColour, Render). -->
+                            <Grid x:Name="LyricDim">
+                                <TextBlock x:Name="Lyric" FontSize="15" TextWrapping="NoWrap" />
                             </Grid>
                             <Grid x:Name="LyricSweep" IsHitTestVisible="False" />
                         </Grid>
@@ -49,8 +50,8 @@
                     <!-- Translation, pronunciation or the next line, as the island's layout asks. Dimmed by
                          a wrapper, like the lyric: a pronunciation the source timed is lit as it's sung. -->
                     <Grid x:Name="Second" Grid.Row="1" HorizontalAlignment="Center" Margin="28,-4,28,4" Visibility="Collapsed">
-                        <Grid x:Name="SecondDim" Opacity="0.6">
-                            <TextBlock x:Name="SecondText" FontSize="11" Foreground="White" TextTrimming="CharacterEllipsis" />
+                        <Grid x:Name="SecondDim">
+                            <TextBlock x:Name="SecondText" FontSize="11" TextTrimming="CharacterEllipsis" />
                         </Grid>
                         <Grid x:Name="SecondSweep" IsHitTestVisible="False" />
                     </Grid>
@@ -70,7 +71,7 @@
                             </Border>
                             <StackPanel x:Name="SongLabels" Grid.Column="1" VerticalAlignment="Center" Spacing="1">
                                 <TextBlock x:Name="SongTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                <TextBlock x:Name="SongArtist" FontSize="12" Opacity="0.6" TextTrimming="CharacterEllipsis" />
+                                <TextBlock x:Name="SongArtist" FontSize="12" TextTrimming="CharacterEllipsis" />
                             </StackPanel>
                             <StackPanel x:Name="TransportHost" Grid.Column="2" VerticalAlignment="Center" />
                             <Rectangle x:Name="PlayerDivider" Grid.Column="3" Width="1" Height="18" Fill="#33FFFFFF" VerticalAlignment="Center" />

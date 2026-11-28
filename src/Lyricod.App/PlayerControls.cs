@@ -110,6 +110,10 @@ sealed partial class ProgressLine : Grid
 
     public Brush BarBrush { set => _bar.Foreground = value; }
 
+    /// <summary>The times' colour and strength, for an owner that gives them its own (the island).</summary>
+    public Brush TimeBrush { set => _elapsed.Foreground = _left.Foreground = value; }
+    public double TimeOpacity { set => _elapsed.Opacity = _left.Opacity = value; }
+
     /// <summary>
     /// The bar as WinUI draws it, a thin track and a thicker rounded part for what has played, without
     /// WinUI's slide to each new value: that animation is still running when the next value comes,

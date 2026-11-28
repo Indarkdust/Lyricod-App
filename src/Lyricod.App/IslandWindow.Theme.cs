@@ -55,7 +55,7 @@ public sealed partial class IslandWindow
         Pill.Background = new SolidColorBrush(Color.FromArgb(alpha, tint.R, tint.G, tint.B));
     }
 
-    /// <summary>The glass's colour: neutral, the album's darkened (it's tuned to stand out on black) so white lyrics stay readable on it, or a light wash.</summary>
+    /// <summary>The glass's colour: neutral, the album's darkened (it's tuned to stand out on black) so the lyrics stay readable on it, or a light wash.</summary>
     Color GlassColour() => _settings.GlassTint switch
     {
         GlassTint.Album when _model.ArtworkColor is { } c => Darken(c, 0.45),

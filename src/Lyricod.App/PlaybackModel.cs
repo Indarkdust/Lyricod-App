@@ -50,6 +50,8 @@ public sealed partial class PlaybackModel
     public byte[]? Artwork { get; private set; }
     /// <summary>The cover's dominant colour, tuned for black backgrounds.</summary>
     public Windows.UI.Color? ArtworkColor { get; private set; }
+    /// <summary>The song's cover hasn't come yet, or not enough of it to tell, but still may: no <see cref="ArtworkColor"/> doesn't yet say the cover has none.</summary>
+    public bool ArtworkPending => _artworkPendingSince != null;
     public (int Width, int Height)? ArtworkSize { get; private set; }
     /// <summary>Song length in seconds; 0 when the player doesn't say.</summary>
     public double Duration => NowPlaying?.Duration ?? 0;
@@ -77,6 +79,9 @@ public sealed partial class PlaybackModel
     /// <summary>Reads a cover that came cut short again, 1.5 s on (see <see cref="LoadArtwork"/>).</summary>
     readonly DispatcherQueueTimer _artworkWait;
     bool _artworkWhole;
+    /// <summary>When the song changed (<see cref="Now"/>), while its cover is waited for: covers come within a moment, so only this long.</summary>
+    double? _artworkPendingSince;
+    const double ArtworkPendingSeconds = 4;
     /// <summary>When the cover came cut short, waiting for it whole (<see cref="Environment.TickCount64"/>; 0 when not waiting).</summary>
     long _artworkCutSince;
     /// <summary>Everything the source returned, with pronunciation worked out.</summary>
@@ -195,6 +200,7 @@ public sealed partial class PlaybackModel
             {
                 NowPlaying = null; Track = null; Lyrics = null; _allLyrics = null; CurrentIndex = null;
                 Artwork = null; ArtworkColor = null; ArtworkSize = null; _artworkWhole = false; _artworkCutSince = 0;
+                _artworkPendingSince = null;
                 _loading?.Cancel();
                 BestMatchScore = null;
                 IsSearching = false; // the cancelled search won't say it's done
@@ -222,6 +228,7 @@ public sealed partial class PlaybackModel
             LoadLyrics(Track, ignoreCache: false);
             Artwork = null; ArtworkColor = null; ArtworkSize = null; _artworkTries = 0;
             _artworkWhole = false; _artworkCutSince = 0;
+            _artworkPendingSince = Now;
             _artworkWait.Stop();
             _artworkRetry.Stop();
             _artworkRetry.Start();
@@ -241,6 +248,14 @@ public sealed partial class PlaybackModel
         }
         // Browsers hand over the cover a moment after the song: ask again on the next few reports.
         if (Artwork == null && _artworkTries < 4) LoadArtwork(now.TrackId);
+        // A song whose cover, or enough of it to tell its colour, hasn't come by now is taken to have none
+        // (one that comes later still shows).
+        // Checked here, not on a timer: a loaded song is read at least every two seconds.
+        if (_artworkPendingSince is { } since && Now - since > ArtworkPendingSeconds)
+        {
+            _artworkPendingSince = null;
+            change |= Change.Artwork;
+        }
         // Polled whenever a song is loaded: a missed report (a player starting after loading)
         // mustn't leave the clock stopped.
         _safetyPoll.Start();
