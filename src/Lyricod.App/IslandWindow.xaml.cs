@@ -164,7 +164,13 @@ public sealed partial class IslandWindow : Window
             Place();
             Render();
         };
-        _overlay.ForegroundChanged += () => _liquid?.Wake();
+        // Queued, not run inside the window event: a capture rate changed there can leave this thread
+        // asleep until its next message, lyrics and glass standing still meanwhile.
+        _overlay.ForegroundChanged += () => DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+        {
+            try { _liquid?.Wake(); }
+            catch (Exception e) { Log.Write(e); }
+        });
         // Dragged while floating and unlocked.
         Pill.PointerPressed += OnPillPressed;
         // The pill's corner, and Lyricod Glass's shadow and frosted shape, keep up with its size as it grows and
