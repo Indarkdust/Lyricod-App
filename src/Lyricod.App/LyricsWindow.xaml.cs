@@ -103,7 +103,12 @@ public sealed partial class LyricsWindow : Window
         _relayout.Interval = TimeSpan.FromMilliseconds(120);
         _relayout.Tick += (_, _) => { try { Relayout(); } catch (Exception e) { Log.Write(e); } };
 
-        Root.SizeChanged += (_, _) => _relayout.Start();
+        Root.SizeChanged += (_, _) =>
+        {
+            _relayout.Start();
+            // The bar moves with the window, out from under a pointer resting on it, and no pointer event says so.
+            try { _progress.Hover(null); } catch (Exception e) { Log.Write(e); }
+        };
         _browse = DispatcherQueue.CreateTimer();
         _browse.IsRepeating = false;
         _browse.Interval = TimeSpan.FromSeconds(3);

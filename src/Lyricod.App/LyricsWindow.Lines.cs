@@ -460,5 +460,7 @@ public sealed partial class LyricsWindow
     {
         bool hide = _settings.LyricsAutoHide && _wide && _model.IsPlaying && _pointerIdle;
         TopButtons.Opacity = BigProgressHost.Opacity = BigTransportHost.Opacity = hide ? 0 : 1;
+        // A preview under a pointer that stopped on the bar goes with it.
+        if (hide) _progress.Hover(null);
     }
 }
