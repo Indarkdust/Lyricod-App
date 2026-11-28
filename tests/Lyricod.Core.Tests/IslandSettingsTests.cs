@@ -232,11 +232,12 @@ public class IslandSettingsTests
     public void RestoringGlassDefaultsGivesANewInstallsGlassAndNothingElse()
     {
         var settings = JsonSerializer.Deserialize<Settings>(OldFile, Json)!;
-        settings.GlassEffect = GlassEffect.Frosted;
         settings.IslandSize = IslandSize.Large;
         settings.ChooseGlassShine(ShineStyle.Lifelike);
         settings.LiquidRefraction = 80;
         settings.ChooseGlassShine(null);
+        settings.ChooseGlassEffect(GlassEffect.Frosted);
+        Assert.NotNull(settings.GlassLookAside);
         settings.RestoreGlassDefaults();
 
         var fresh = new Settings();
@@ -250,6 +251,81 @@ public class IslandSettingsTests
         // The others start tuned again too.
         settings.ChooseGlassShine(ShineStyle.Bright);
         Assert.Equal(GlassLook.Others, Look(settings));
+    }
+
+    [Fact]
+    public void LifelikesSetShowsOnlyOnLiquidGlass()
+    {
+        var settings = new Settings();
+        settings.LiquidBlur = 30;
+        var changed = new List<string?>();
+        settings.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+        settings.ChooseGlassEffect(GlassEffect.Frosted);
+        Assert.False(settings.GlassIsLifelike);
+        Assert.Equal(ShineStyle.Lifelike, settings.GlassShineStyle);
+        Assert.Equal(GlassLook.Others, Look(settings));
+        Assert.Equal(GlassLook.Lifelike with { Blur = 30 }, settings.GlassLookAside);
+        Assert.Equal([nameof(Settings.GlassEffect), nameof(Settings.GlassLookAside), nameof(Settings.GlassTint),
+            nameof(Settings.GlassTransparency), nameof(Settings.LiquidBlur)], changed);
+        // Between clear and frosted nothing trades, nor does the 3D effect there.
+        settings.GlassTransparency = 60;
+        var mine = GlassLook.Others with { Transparency = 60 };
+        settings.ChooseGlassEffect(GlassEffect.Clear);
+        Assert.Equal(mine, Look(settings));
+        settings.ChooseGlassShine(ShineStyle.Bright);
+        Assert.Equal(mine, Look(settings));
+        settings.ChooseGlassShine(ShineStyle.Lifelike);
+        Assert.Equal(mine, Look(settings));
+        Assert.Equal(GlassLook.Lifelike with { Blur = 30 }, settings.GlassLookAside);
+        settings.ChooseGlassEffect(GlassEffect.Liquid);
+        Assert.True(settings.GlassIsLifelike);
+        Assert.Equal(GlassLook.Lifelike with { Blur = 30 }, Look(settings));
+        Assert.Equal(mine, settings.GlassLookAside);
+    }
+
+    [Fact]
+    public void WhereLiquidCantRunTheGlassStartsWithTheOthersSet()
+    {
+        var settings = Settings.Fresh(liquidSupported: false);
+        Assert.True(settings.IsNew);
+        Assert.False(settings.GlassIsLifelike);
+        Assert.Equal(GlassEffect.Liquid, settings.GlassEffect);
+        Assert.Equal(ShineStyle.Lifelike, settings.GlassShineStyle);
+        Assert.Equal(GlassLook.Others, Look(settings));
+        Assert.Null(settings.GlassLookAside);
+        // Nothing there shows Lifelike, so nothing trades.
+        settings.ChooseGlassEffect(GlassEffect.Frosted);
+        Assert.Equal(GlassLook.Others, Look(settings));
+        settings.ChooseGlassEffect(GlassEffect.Liquid);
+        Assert.Equal(GlassLook.Others, Look(settings));
+        settings.ChooseGlassShine(ShineStyle.Bright);
+        Assert.Equal(GlassLook.Others, Look(settings));
+        settings.ChooseGlassShine(ShineStyle.Lifelike);
+        Assert.Equal(GlassLook.Others, Look(settings));
+        Assert.Null(settings.GlassLookAside);
+        // Where it can run, a first run is Lifelike's.
+        var able = Settings.Fresh(liquidSupported: true);
+        Assert.True(able.GlassIsLifelike);
+        Assert.Equal(GlassLook.Lifelike, Look(able));
+    }
+
+    [Fact]
+    public void ASavedFileFollowsWhatThisPcCanRun()
+    {
+        // A file that kept its glass keeps it, and Restore defaults gives what a first run there would.
+        var saved = Settings.Read(OldFile, liquidSupported: false)!;
+        Assert.Equal(Own, Look(saved));
+        saved.ChooseGlassShine(ShineStyle.Lifelike);
+        Assert.Equal(Own, Look(saved));
+        saved.RestoreGlassDefaults();
+        Assert.False(saved.GlassIsLifelike);
+        Assert.Equal(GlassLook.Others, Look(saved));
+        Assert.Null(saved.GlassLookAside);
+        // One from before there was Lyricod Glass starts as a first run does, either way.
+        Assert.Equal(GlassLook.Others, Look(Settings.Read("{\"DesktopFontSize\":40}", liquidSupported: false)!));
+        Assert.Equal(GlassLook.Lifelike, Look(Settings.Read("{\"DesktopFontSize\":40}")!));
+        // What says whether liquid can run is the PC's, not the file's.
+        Assert.DoesNotContain("upported", JsonSerializer.Serialize(saved, Json));
     }
 
     [Theory]

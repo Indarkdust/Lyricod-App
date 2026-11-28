@@ -146,7 +146,7 @@ public sealed partial class SettingsWindow
     void GlassSettings()
     {
         // Clear, frosted or liquid (each says what it costs, and where it can't run).
-        var effectDetail = Card(L.Get("GlassEffect"), "", Choice(nameof(Settings.GlassEffect), () => _settings.GlassEffect, v => _settings.GlassEffect = v,
+        var effectDetail = Card(L.Get("GlassEffect"), "", Choice(nameof(Settings.GlassEffect), () => _settings.GlassEffect, v => _settings.ChooseGlassEffect(v),
             (GlassEffect.Clear, L.Get("GlassEffectClear")), (GlassEffect.Frosted, L.Get("GlassEffectFrosted")), (GlassEffect.Liquid, L.Get("GlassEffectLiquid"))))!;
         // The 3D effect is the liquid glass's: it lights the edge its lens bends. Off, or on in one of its looks.
         Shine ShineNow() => !_settings.GlassShine ? Shine.Off : _settings.GlassShineStyle switch

@@ -61,7 +61,7 @@ public partial class App : Application
         // The log's errors read against this: which Lyricod, on which Windows.
         Log.Write($"Lyricod {UpdateChecker.Version}{(UpdateChecker.TestBuild is { } build ? $" (test build {build})" : "")} started on Windows {Environment.OSVersion.Version}, "
             + System.Runtime.InteropServices.RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant());
-        _settings = Settings.Load();
+        _settings = Settings.Load(LiquidGlass.IsSupported);
         // A first run gets Lyricod Glass where its liquid effect can run (Windows 11); elsewhere the classic island.
         if (_settings.IsNew && LiquidGlass.IsSupported) _settings.IslandTheme = IslandTheme.Glass;
         // The language chosen in Settings, read once: a change applies after a restart.

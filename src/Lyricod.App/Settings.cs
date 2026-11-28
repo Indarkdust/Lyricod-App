@@ -19,7 +19,7 @@ public enum GlassTint { Neutral, Album, Light }
 /// <summary>What Lyricod Glass does with what's behind it: shows it clearly, frosts it (acrylic), or redraws it blurred and bent at the edges.</summary>
 public enum GlassEffect { Clear, Frosted, Liquid }
 
-/// <summary>Lyricod Glass's tint and amounts. Lifelike keeps a set of its own; the other 3D effects, and none, share one.</summary>
+/// <summary>Lyricod Glass's tint and amounts. Lifelike keeps a set of its own; the other 3D effects, none, and glass that isn't liquid share one.</summary>
 public sealed record GlassLook(GlassTint Tint, int Transparency, int Blur, int Refraction)
 {
     /// <summary>What each set starts as: the values its looks were tuned with.</summary>
@@ -160,18 +160,29 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
     public int LiquidBlur { get => _liquidBlur; set => Set(ref _liquidBlur, Math.Clamp(value, 0, 100)); }
     /// <summary>Liquid glass: how strongly its edges bend what's behind, in percent.</summary>
     public int LiquidRefraction { get => _liquidRefraction; set => Set(ref _liquidRefraction, Math.Clamp(value, 0, 100)); }
-    /// <summary>The set that isn't showing: the other 3D effects' while Lifelike is chosen, Lifelike's otherwise.
+    /// <summary>The set that isn't showing: the others' while Lifelike shows, Lifelike's otherwise.
     /// Null until the first swap, which starts that set from its tuned values.</summary>
     public GlassLook? GlassLookAside { get => _glassLookAside; set => Set(ref _glassLookAside, value); }
-    /// <summary>Which set is showing. Lifelike with the 3D effect off shows the others'.</summary>
-    [JsonIgnore] public bool GlassIsLifelike => _glassShine && _glassShineStyle == ShineStyle.Lifelike;
+    /// <summary>Whether this PC can run the liquid effect; <see cref="Load"/> is told.</summary>
+    bool _liquidSupported = true;
+    /// <summary>Which set is showing: Lifelike's only where Lifelike itself shows, on liquid glass with the 3D effect on.
+    /// Its light tint has nothing to light on clear or frosted glass and only dims the lyrics there.</summary>
+    [JsonIgnore] public bool GlassIsLifelike => _glassShine && _glassShineStyle == ShineStyle.Lifelike && _glassEffect == GlassEffect.Liquid && _liquidSupported;
 
-    /// <summary>Chooses the 3D effect: a style, or null for off, which keeps the style. Moving between Lifelike and anything else trades the sets.</summary>
-    public void ChooseGlassShine(ShineStyle? style) => Together(() =>
+    /// <summary>Chooses the 3D effect: a style, or null for off, which keeps the style. Moving to or from where Lifelike shows trades the sets.</summary>
+    public void ChooseGlassShine(ShineStyle? style) => Choose(() =>
     {
-        bool lifelike = GlassIsLifelike;
         if (style is { } chosen) GlassShineStyle = chosen;
         GlassShine = style != null;
+    });
+
+    /// <summary>Chooses the glass effect. Lifelike shows only on liquid glass, so leaving or coming back to it trades the sets too.</summary>
+    public void ChooseGlassEffect(GlassEffect effect) => Choose(() => GlassEffect = effect);
+
+    void Choose(Action change) => Together(() =>
+    {
+        bool lifelike = GlassIsLifelike;
+        change();
         if (GlassIsLifelike != lifelike) SwapGlassLook();
     });
 
@@ -194,12 +205,19 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
             GlassEffect = fresh.GlassEffect;
             GlassShineStyle = fresh.GlassShineStyle;
             GlassShine = fresh.GlassShine;
-            GlassTint = fresh.GlassTint;
-            GlassTransparency = fresh.GlassTransparency;
-            LiquidBlur = fresh.LiquidBlur;
-            LiquidRefraction = fresh.LiquidRefraction;
-            GlassLookAside = fresh.GlassLookAside;
+            StartGlassLook();
         });
+    }
+
+    /// <summary>Both sets from their tuned values: the one showing now, and nothing aside.</summary>
+    void StartGlassLook()
+    {
+        var look = GlassIsLifelike ? GlassLook.Lifelike : GlassLook.Others;
+        GlassTint = look.Tint;
+        GlassTransparency = look.Transparency;
+        LiquidBlur = look.Blur;
+        LiquidRefraction = look.Refraction;
+        GlassLookAside = null;
     }
 
     /// <summary>Settings that change as one are saved once, when all are set: a write that fails part-way would leave half of them in the file.</summary>
@@ -271,29 +289,49 @@ public sealed class Settings : INotifyPropertyChanged, IJsonOnDeserialized
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 
-    public static Settings Load()
+    public static Settings Load(bool liquidSupported)
     {
         Settings? s = null;
         try
         {
-            if (File.Exists(FilePath)) s = Read(File.ReadAllText(FilePath));
+            if (File.Exists(FilePath)) s = Read(File.ReadAllText(FilePath), liquidSupported);
         }
         catch (Exception e) when (e is IOException or JsonException or UnauthorizedAccessException) { }
-        s ??= new Settings { IsNew = true };
+        s ??= Fresh(liquidSupported);
         s._ready = true; // reading the file set every property; saving starts now
+        return s;
+    }
+
+    /// <summary>A first run's settings. Where the liquid effect can't run, Lifelike never shows, so the glass starts with the others' set.</summary>
+    internal static Settings Fresh(bool liquidSupported)
+    {
+        var s = new Settings { IsNew = true, _liquidSupported = liquidSupported };
+        s.StartGlassLook();
         return s;
     }
 
     /// <summary>A value this version can't read (a newer or test build's choice, a hand edit) is left out, so that
     /// setting keeps its default instead of the whole file being dropped.</summary>
-    internal static Settings? Read(string json)
+    internal static Settings? Read(string json, bool liquidSupported = true)
     {
         var file = JsonNode.Parse(json) as JsonObject;
+        // Saved before there was Lyricod Glass: its glass starts as a first run's does.
+        string[] look = [nameof(GlassTint), nameof(GlassTransparency), nameof(LiquidBlur), nameof(LiquidRefraction), nameof(GlassLookAside)];
+        bool glass = file != null && Array.Exists(look, file.ContainsKey);
         while (true)
         {
             // Saved before the 3D effect had styles, or with one this version can't read: its glass is the bright one's.
             if (file?.ContainsKey(nameof(GlassTransparency)) == true) file.TryAdd(nameof(GlassShineStyle), nameof(ShineStyle.Bright));
-            try { return file.Deserialize<Settings>(Json); }
+            try
+            {
+                var s = file.Deserialize<Settings>(Json);
+                if (s != null)
+                {
+                    s._liquidSupported = liquidSupported;
+                    if (!glass) s.StartGlassLook();
+                }
+                return s;
+            }
             catch (JsonException e) when (e.Path?.Split('.', '[') is [_, var name, ..] && file!.Remove(name)) { }
         }
     }
